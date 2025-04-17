@@ -32,7 +32,7 @@ This repository contains a web application for managing port operations, built u
 
 2. Navigate to the `backend` directory:
    ```bash
-   cd backend
+   cd stage_back
    ```
 
 3. Configure your database in `application.properties` or `application.yml`.
@@ -46,7 +46,7 @@ This repository contains a web application for managing port operations, built u
 
 5. Navigate to the `frontend` directory:
    ```bash
-   cd ../frontend
+   cd ..front
    ```
 
 6. Install dependencies:
@@ -68,9 +68,9 @@ This repository contains a web application for managing port operations, built u
 
 ```plaintext
 spring_boot-react-ges_port/
-├── backend/        # Spring Boot back-end
-├── frontend/       # React front-end
-└── README.md       # Project documentation
+├── stage_back/        # Spring Boot back-end
+├── front/             # React front-end
+└── README.md          # Project documentation
 ```
 
 ## Contributing
