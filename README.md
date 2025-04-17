@@ -14,7 +14,7 @@ This repository contains a web application for managing port operations, built u
 
 ### Prerequisites
 
-- **Java 17+**
+- **Java 17+( recommended JDK 24 )**
 - **Node.js 18+** and **npm**
 - **Maven/Gradle** (for building the Spring Boot application)
 - A relational database (e.g., MySQL, PostgreSQL)
