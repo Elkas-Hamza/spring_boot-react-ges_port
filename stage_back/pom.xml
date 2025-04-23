@@ -64,7 +64,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Jakarta Persistence API (JPA) -->
+
+
+
+
 
     </dependencies>
 

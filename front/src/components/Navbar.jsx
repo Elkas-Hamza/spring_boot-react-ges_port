@@ -10,11 +10,17 @@ const Navbar = () => {
           System De Management Des Port 
         </Typography>
         <Box>
-          <Button color="inherit" component={Link} to="/">
+          <Button color="inherit" component={Link} to="/arrets">
             Arrets
           </Button>
           <Button color="inherit" component={Link} to="/escales">
             Escales
+          </Button>
+          <Button color="inherit" component={Link} to="/personnel">
+            personnel
+          </Button>
+          <Button color="inherit" component={Link} to="/soustraiteure">
+          sous traiteure
           </Button>
         </Box>
       </Toolbar>
