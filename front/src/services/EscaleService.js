@@ -22,7 +22,6 @@ class EscaleService {
   deleteEscale(id) {
     console.log(`Attempting to delete escale with ID: ${id}`);
     return axios.delete(`${API_URL}/${id}`);
-    
   }
 }
 

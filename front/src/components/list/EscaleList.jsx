@@ -18,7 +18,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  TextField
+  TextField,
 } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
 import { Link } from "react-router-dom";
@@ -32,12 +32,12 @@ const EscaleList = () => {
   const [error, setError] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [escaleToDelete, setEscaleToDelete] = useState(null);
-  const [notification, setNotification] = useState({ 
-    open: false, 
-    message: '', 
-    severity: 'success' 
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
   });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchEscales();
@@ -45,7 +45,7 @@ const EscaleList = () => {
 
   useEffect(() => {
     if (searchQuery) {
-      const filtered = escales.filter(e =>
+      const filtered = escales.filter((e) =>
         `${e.num_escale} ${e.nom_navire}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
@@ -64,8 +64,8 @@ const EscaleList = () => {
       setFilteredEscales(response.data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching escales:', err);
-      setError('Erreur lors du chargement des données. Veuillez réessayer.');
+      console.error("Error fetching escales:", err);
+      setError("Erreur lors du chargement des données. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -84,20 +84,25 @@ const EscaleList = () => {
   const handleDeleteEscale = async () => {
     try {
       await EscaleService.deleteEscale(escaleToDelete.num_escale);
-      setEscales(prev => prev.filter(e => e.num_escale !== escaleToDelete.num_escale));
-      setFilteredEscales(prev => prev.filter(e => e.num_escale !== escaleToDelete.num_escale));
+      setEscales((prev) =>
+        prev.filter((e) => e.num_escale !== escaleToDelete.num_escale)
+      );
+      setFilteredEscales((prev) =>
+        prev.filter((e) => e.num_escale !== escaleToDelete.num_escale)
+      );
       handleCloseDeleteDialog();
-      setNotification({ 
-        open: true, 
-        message: 'Escale supprimée avec succès', 
-        severity: 'success' 
+      setNotification({
+        open: true,
+        message: "Escale supprimée avec succès",
+        severity: "success",
       });
     } catch (err) {
-      console.error('Error deleting escale:', err);
-      setNotification({ 
-        open: true, 
-        message: 'Erreur lors de la suppression il y a des arrets sous cet escale', 
-        severity: 'error' 
+      console.error("Error deleting escale:", err);
+      setNotification({
+        open: true,
+        message:
+          "Erreur lors de la suppression il y a des arrets sous cet escale",
+        severity: "error",
       });
       handleCloseDeleteDialog();
     }
@@ -109,12 +114,14 @@ const EscaleList = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3 
-      }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Management Des Escales
         </Typography>
@@ -138,11 +145,13 @@ const EscaleList = () => {
       />
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       ) : (
         <TableContainer component={Paper} elevation={3}>
           <Table>
@@ -180,13 +189,18 @@ const EscaleList = () => {
         <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Êtes-vous sûr de vouloir supprimer l'escale {escaleToDelete?.num_escale} - {escaleToDelete?.nom_navire} ?
-            Cette action est irréversible.
+            Êtes-vous sûr de vouloir supprimer l'escale{" "}
+            {escaleToDelete?.num_escale} - {escaleToDelete?.nom_navire} ? Cette
+            action est irréversible.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteDialog}>Annuler</Button>
-          <Button onClick={handleDeleteEscale} color="error" variant="contained">
+          <Button
+            onClick={handleDeleteEscale}
+            color="error"
+            variant="contained"
+          >
             Supprimer
           </Button>
         </DialogActions>
@@ -196,12 +210,12 @@ const EscaleList = () => {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert 
-          onClose={handleCloseNotification} 
+        <Alert
+          onClose={handleCloseNotification}
           severity={notification.severity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {notification.message}
         </Alert>

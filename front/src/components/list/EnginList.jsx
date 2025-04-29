@@ -47,7 +47,7 @@ const EnginList = () => {
     if (window.confirm("Are you sure you want to delete this equipment?")) {
       try {
         await EnginService.deleteEngin(id);
-        setEngins(engins.filter(engin => engin.id_engin !== id));
+        setEngins(engins.filter((engin) => engin.id_engin !== id));
       } catch (error) {
         console.error("Error deleting engin:", error);
         alert("Error deleting equipment. Please try again.");
@@ -55,20 +55,30 @@ const EnginList = () => {
     }
   };
 
-  const filteredEngins = engins.filter(engin =>
+  const filteredEngins = engins.filter((engin) =>
     engin.nom_engin.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <Typography align="center">Loading...</Typography>;
-  if (error) return <Typography color="error" align="center">{error}</Typography>;
+  if (error)
+    return (
+      <Typography color="error" align="center">
+        {error}
+      </Typography>
+    );
 
   return (
     <>
       <Typography variant="h4" gutterBottom>
         Equipment Management
       </Typography>
-      
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Button
           component={Link}
           to="/engins/new"
@@ -78,7 +88,7 @@ const EnginList = () => {
         >
           Add New Equipment
         </Button>
-        
+
         <TextField
           variant="outlined"
           placeholder="Search equipment..."
@@ -144,4 +154,4 @@ const EnginList = () => {
   );
 };
 
-export default EnginList; 
+export default EnginList;

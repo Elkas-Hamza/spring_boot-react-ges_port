@@ -178,18 +178,36 @@ const ArretForm = () => {
         </FormControl>
 
         {selectedEscaleDetails && (
-          <Box sx={{ mt: 2, mb: 2, p: 2, border: "1px solid #e0e0e0", borderRadius: 1 }}>
+          <Box
+            sx={{
+              mt: 2,
+              mb: 2,
+              p: 2,
+              border: "1px solid #e0e0e0",
+              borderRadius: 1,
+            }}
+          >
             <Typography variant="subtitle1" gutterBottom>
               Détails de l'escale sélectionnée:
             </Typography>
             <Typography variant="body2">
-              Nom du navire: {selectedEscaleDetails.nom_navire || selectedEscaleDetails.NOM_navire}
+              Nom du navire:{" "}
+              {selectedEscaleDetails.nom_navire ||
+                selectedEscaleDetails.NOM_navire}
             </Typography>
             <Typography variant="body2">
-              Date d'escortage: {formatDate(selectedEscaleDetails.date_accostage || selectedEscaleDetails.DATE_accostage)}
+              Date d'escortage:{" "}
+              {formatDate(
+                selectedEscaleDetails.date_accostage ||
+                  selectedEscaleDetails.DATE_accostage
+              )}
             </Typography>
             <Typography variant="body2">
-              Date de sortie: {formatDate(selectedEscaleDetails.date_sortie || selectedEscaleDetails.DATE_sortie)}
+              Date de sortie:{" "}
+              {formatDate(
+                selectedEscaleDetails.date_sortie ||
+                  selectedEscaleDetails.DATE_sortie
+              )}
             </Typography>
           </Box>
         )}

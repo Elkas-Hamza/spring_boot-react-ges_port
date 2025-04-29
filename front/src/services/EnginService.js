@@ -26,4 +26,4 @@ class EnginService {
 
 const enginServiceInstance = new EnginService();
 
-export default enginServiceInstance; 
+export default enginServiceInstance;

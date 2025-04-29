@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = 'http://localhost:8080/api/operations';
+const API_URL = "http://localhost:8080/api/operations";
 
 class OperationService {
   getAllOperations() {
@@ -10,15 +10,15 @@ class OperationService {
   getOperationById(id) {
     return axios.get(`${API_URL}/${id}`);
   }
-  
+
   getOperationsByEscale(escaleId) {
     return axios.get(`${API_URL}/escales/${escaleId}`);
   }
-  
+
   getOperationsByShiftId(shiftId) {
     return axios.get(`${API_URL}/shift/${shiftId}`);
   }
-  
+
   getOperationsByEquipeId(equipeId) {
     return axios.get(`${API_URL}/equipe/${equipeId}`);
   }
@@ -38,4 +38,4 @@ class OperationService {
 
 const operationServiceInstance = new OperationService();
 
-export default operationServiceInstance; 
+export default operationServiceInstance;

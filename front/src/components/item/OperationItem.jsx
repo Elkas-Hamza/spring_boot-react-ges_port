@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const OperationItem = ({ operation, onDelete }) => {
   // Format date strings to readable format
   const formatDateTime = (dateTimeStr) => {
-    if (!dateTimeStr) return '';
+    if (!dateTimeStr) return "";
     const date = new Date(dateTimeStr);
     return date.toLocaleString();
   };
@@ -14,7 +14,7 @@ const OperationItem = ({ operation, onDelete }) => {
     <TableRow>
       <TableCell>{operation.id_operation}</TableCell>
       <TableCell>{operation.id_shift}</TableCell>
-      <TableCell>{operation.NUM_escale}</TableCell>
+      <TableCell>{operation.id_escale}</TableCell>
       <TableCell>{operation.id_conteneure}</TableCell>
       <TableCell>{operation.id_engin}</TableCell>
       <TableCell>{formatDateTime(operation.date_debut)}</TableCell>
@@ -36,4 +36,4 @@ const OperationItem = ({ operation, onDelete }) => {
   );
 };
 
-export default OperationItem; 
+export default OperationItem;

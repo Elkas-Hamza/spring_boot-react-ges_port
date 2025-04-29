@@ -8,24 +8,24 @@ import {
   Snackbar,
   Paper,
   Box,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import EquipeService from "../../services/EquipeService";
 
 const EquipeForm = () => {
   const [equipe, setEquipe] = useState({
-    nom_equipe: ""
+    nom_equipe: "",
   });
-  
+
   const [loading, setLoading] = useState(false);
-  
+
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  
+
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
@@ -34,12 +34,12 @@ const EquipeForm = () => {
     if (isEdit) {
       setLoading(true);
       EquipeService.getEquipeById(id)
-        .then(response => {
+        .then((response) => {
           setEquipe({
-            nom_equipe: response.data.nom_equipe
+            nom_equipe: response.data.nom_equipe,
           });
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error fetching equipe:", error);
           setNotification({
             open: true,
@@ -74,29 +74,31 @@ const EquipeForm = () => {
       if (isEdit) {
         // In edit mode, update the equipe name
         await EquipeService.updateEquipe(id, { nom_equipe: equipe.nom_equipe });
-        
+
         setNotification({
           open: true,
           message: "Équipe modifiée avec succès",
           severity: "success",
         });
-        
+
         // Navigate back to details page after editing
         setTimeout(() => navigate(`/equipes/${id}`), 1000);
       } else {
         // In create mode, create a new equipe with just the name
         console.log("Creating equipe with name:", equipe.nom_equipe);
-        const response = await EquipeService.createEquipe({ nom_equipe: equipe.nom_equipe });
+        const response = await EquipeService.createEquipe({
+          nom_equipe: equipe.nom_equipe,
+        });
         console.log("Equipe created:", response.data);
         const createdId = response.data.id_equipe;
         console.log("Created equipe ID:", createdId);
-        
+
         setNotification({
           open: true,
           message: "Équipe créée avec succès",
           severity: "success",
         });
-        
+
         // Navigate to the equipe list instead of directly to details
         setTimeout(() => {
           console.log("Navigating to equipe list after creation");
@@ -150,7 +152,12 @@ const EquipeForm = () => {
           />
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-            <Button component={Link} to="/equipes" variant="outlined" color="secondary">
+            <Button
+              component={Link}
+              to="/equipes"
+              variant="outlined"
+              color="secondary"
+            >
               Annuler
             </Button>
             <Button type="submit" variant="contained" color="primary">
@@ -166,7 +173,11 @@ const EquipeForm = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
           {notification.message}
         </Alert>
       </Snackbar>
@@ -174,4 +185,4 @@ const EquipeForm = () => {
   );
 };
 
-export default EquipeForm; 
+export default EquipeForm;

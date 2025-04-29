@@ -1,14 +1,14 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Create an axios instance with CORS credentials support
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api/soustraiteurs',
-  withCredentials: true
+  baseURL: "http://localhost:8080/api/soustraiteurs",
+  withCredentials: true,
 });
 
 class SoustraiteureService {
   getAllSoustraiteure() {
-    return axiosInstance.get('');
+    return axiosInstance.get("");
   }
 
   getSoustraiteureById(matricule) {
@@ -16,7 +16,7 @@ class SoustraiteureService {
   }
 
   createSoustraiteure(data) {
-    return axiosInstance.post('', data);
+    return axiosInstance.post("", data);
   }
 
   updateSoustraiteure(matricule, data) {

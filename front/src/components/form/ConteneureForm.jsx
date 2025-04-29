@@ -7,7 +7,7 @@ import {
   Box,
   Alert,
   Snackbar,
-  Paper
+  Paper,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ConteneureService from "../../services/ConteneureService";
@@ -116,7 +116,7 @@ const ConteneureForm = () => {
               disabled
             />
           )}
-          
+
           <TextField
             name="nom_conteneure"
             label="Nom du Conteneure"
@@ -166,4 +166,4 @@ const ConteneureForm = () => {
   );
 };
 
-export default ConteneureForm; 
+export default ConteneureForm;

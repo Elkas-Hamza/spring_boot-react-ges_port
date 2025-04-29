@@ -9,7 +9,7 @@ import {
   MenuItem,
   CircularProgress,
   Paper,
-  Box
+  Box,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import OperationService from "../../services/OperationService";
@@ -23,7 +23,7 @@ const OperationForm = () => {
     id_engin: "",
     id_equipe: "",
     date_debut: "",
-    date_fin: ""
+    date_fin: "",
   });
 
   const [shifts, setShifts] = useState([]);
@@ -32,19 +32,20 @@ const OperationForm = () => {
   const [engins, setEngins] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  
+
   const { id } = useParams();
   const navigate = useNavigate();
 
   // Fetch escales from the EscaleService
   useEffect(() => {
-    axios.get('http://localhost:8080/api/escales')
+    axios
+      .get("http://localhost:8080/api/escales")
       .then((response) => {
         console.log("Escales data:", response.data);
         setEscales(response.data);
@@ -58,14 +59,14 @@ const OperationForm = () => {
     try {
       const response = await OperationService.getOperationById(id);
       const operationData = response.data;
-      
+
       // Format dates for the form
       const formatDate = (dateString) => {
         if (!dateString) return "";
         const date = new Date(dateString);
         return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDThh:mm
       };
-      
+
       // Set operation state
       setOperation({
         id_shift: operationData.id_shift || "",
@@ -74,7 +75,7 @@ const OperationForm = () => {
         id_engin: operationData.id_engin || "",
         id_equipe: operationData.id_equipe || "",
         date_debut: formatDate(operationData.date_debut) || "",
-        date_fin: formatDate(operationData.date_fin) || ""
+        date_fin: formatDate(operationData.date_fin) || "",
       });
     } catch (error) {
       console.error("Error fetching operation:", error);
@@ -93,30 +94,30 @@ const OperationForm = () => {
       fetchShifts(),
       fetchConteneurs(),
       fetchEngins(),
-      fetchEquipes()
+      fetchEquipes(),
     ])
-    .then(() => {
-      // If editing, fetch operation data
-      if (id) {
-        return fetchOperation();
-      }
-    })
-    .catch(error => {
-      console.error("Error loading form data:", error);
-      setNotification({
-        open: true,
-        message: "Erreur lors du chargement des données du formulaire",
-        severity: "error",
+      .then(() => {
+        // If editing, fetch operation data
+        if (id) {
+          return fetchOperation();
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading form data:", error);
+        setNotification({
+          open: true,
+          message: "Erreur lors du chargement des données du formulaire",
+          severity: "error",
+        });
+      })
+      .finally(() => {
+        setLoading(false);
       });
-    })
-    .finally(() => {
-      setLoading(false);
-    });
   }, [id, fetchOperation]);
 
   const fetchShifts = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/shifts');
+      const response = await axios.get("http://localhost:8080/api/shifts");
       console.log("Shifts data:", response.data);
       setShifts(response.data || []);
       return response.data;
@@ -128,7 +129,9 @@ const OperationForm = () => {
 
   const fetchConteneurs = async () => {
     try {
-      const conteneursResponse = await axios.get('http://localhost:8080/api/conteneurs');
+      const conteneursResponse = await axios.get(
+        "http://localhost:8080/api/conteneurs"
+      );
       console.log("Conteneurs data:", conteneursResponse.data);
       setConteneurs(conteneursResponse.data || []);
       return conteneursResponse.data;
@@ -140,7 +143,9 @@ const OperationForm = () => {
 
   const fetchEngins = async () => {
     try {
-      const enginsResponse = await axios.get('http://localhost:8080/api/engins');
+      const enginsResponse = await axios.get(
+        "http://localhost:8080/api/engins"
+      );
       console.log("Engins data:", enginsResponse.data);
       setEngins(enginsResponse.data || []);
       return enginsResponse.data;
@@ -152,7 +157,9 @@ const OperationForm = () => {
 
   const fetchEquipes = async () => {
     try {
-      const equipesResponse = await axios.get('http://localhost:8080/api/equipes');
+      const equipesResponse = await axios.get(
+        "http://localhost:8080/api/equipes"
+      );
       console.log("Equipes data:", equipesResponse.data);
       setEquipes(equipesResponse.data || []);
       return equipesResponse.data;
@@ -206,7 +213,7 @@ const OperationForm = () => {
       id_engin: operation.id_engin,
       id_equipe: operation.id_equipe,
       date_debut: operation.date_debut,
-      date_fin: operation.date_fin
+      date_fin: operation.date_fin,
     };
 
     console.log("Formatted data:", formattedData);
@@ -307,7 +314,10 @@ const OperationForm = () => {
           >
             <MenuItem value="">Sélectionner un conteneur</MenuItem>
             {conteneurs.map((conteneur) => (
-              <MenuItem key={conteneur.id_conteneure} value={conteneur.id_conteneure}>
+              <MenuItem
+                key={conteneur.id_conteneure}
+                value={conteneur.id_conteneure}
+              >
                 {conteneur.id_conteneure} - {conteneur.nom_conteneure}
               </MenuItem>
             ))}
@@ -378,7 +388,12 @@ const OperationForm = () => {
           />
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-            <Button component={Link} to="/operations" variant="outlined" color="secondary">
+            <Button
+              component={Link}
+              to="/operations"
+              variant="outlined"
+              color="secondary"
+            >
               Annuler
             </Button>
             <Button type="submit" variant="contained" color="primary">
@@ -394,7 +409,11 @@ const OperationForm = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
           {notification.message}
         </Alert>
       </Snackbar>
@@ -402,4 +421,4 @@ const OperationForm = () => {
   );
 };
 
-export default OperationForm; 
+export default OperationForm;

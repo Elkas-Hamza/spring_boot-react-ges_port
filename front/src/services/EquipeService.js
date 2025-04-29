@@ -1,58 +1,59 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Create axios instance with interceptors for debugging
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api/equipes',
-  withCredentials: true
+  baseURL: "http://localhost:8080/api/equipes",
+  withCredentials: true,
 });
 
 // Add request/response interceptors for debugging
-axiosInstance.interceptors.request.use(request => {
-  console.log('Starting Request', request);
+axiosInstance.interceptors.request.use((request) => {
+  console.log("Starting Request", request);
   return request;
 });
 
 axiosInstance.interceptors.response.use(
-  response => {
-    console.log('Response:', response);
+  (response) => {
+    console.log("Response:", response);
     return response;
   },
-  error => {
-    console.log('Response Error:', error.response);
+  (error) => {
+    console.log("Response Error:", error.response);
     if (error.response && error.response.status === 404) {
-      console.log('404 Not Found Error - Request URL:', error.config.url);
-      console.log('404 Not Found Error - Request Method:', error.config.method);
-      console.log('404 Not Found Error - Request Headers:', error.config.headers);
+      console.log("404 Not Found Error - Request URL:", error.config.url);
+      console.log("404 Not Found Error - Request Method:", error.config.method);
+      console.log(
+        "404 Not Found Error - Request Headers:",
+        error.config.headers
+      );
     }
     return Promise.reject(error);
   }
 );
 
-const API_URL = 'http://localhost:8080/api/equipes';
-
 class EquipeService {
   getAllEquipes() {
-    return axiosInstance.get('');
+    return axiosInstance.get("");
   }
 
   getEquipeById(id) {
     return axiosInstance.get(`/${id}`);
   }
-  
+
   searchEquipes(name) {
     return axiosInstance.get(`/search?name=${name}`);
   }
-  
+
   getEquipesByPersonnel(personnelId) {
     return axiosInstance.get(`/personnel/${personnelId}`);
   }
-  
+
   getEquipesBySoustraiteur(soustraiteurId) {
     return axiosInstance.get(`/soustraiteur/${soustraiteurId}`);
   }
 
   createEquipe(equipe) {
-    return axiosInstance.post('', equipe);
+    return axiosInstance.post("", equipe);
   }
 
   updateEquipe(id, equipe) {
@@ -62,42 +63,50 @@ class EquipeService {
   deleteEquipe(id) {
     return axiosInstance.delete(`/${id}`);
   }
-  
+
   addPersonnelToEquipe(equipeId, personnelId) {
     console.log(`Adding personnel ${personnelId} to equipe ${equipeId}`);
-    
+
     // Use the direct API URL to ensure the path is correct
-    return axios.post(`http://localhost:8080/api/equipes/${equipeId}/personnel`, { 
-      personnelId: personnelId
-    }, {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
+    return axios.post(
+      `http://localhost:8080/api/equipes/${equipeId}/personnel`,
+      {
+        personnelId: personnelId,
+      },
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
-  
+
   removePersonnelFromEquipe(equipeId, personnelId) {
     return axiosInstance.delete(`/${equipeId}/personnel/${personnelId}`);
   }
-  
+
   addSoustraiteurToEquipe(equipeId, soustraiteurId) {
     console.log(`Adding sous-traiteur ${soustraiteurId} to equipe ${equipeId}`);
-    
+
     // Use the direct API URL to ensure the path is correct
-    return axios.post(`http://localhost:8080/api/equipes/${equipeId}/soustraiteur`, { 
-      soustraiteurId: soustraiteurId
-    }, {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
+    return axios.post(
+      `http://localhost:8080/api/equipes/${equipeId}/soustraiteur`,
+      {
+        soustraiteurId: soustraiteurId,
+      },
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
   }
-  
+
   removeSoustraiteurFromEquipe(equipeId, soustraiteurId) {
     return axiosInstance.delete(`/${equipeId}/soustraiteur/${soustraiteurId}`);
   }
 }
 
-export default new EquipeService(); 
+export default new EquipeService();

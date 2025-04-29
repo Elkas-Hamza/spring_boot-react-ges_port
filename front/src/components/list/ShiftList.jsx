@@ -47,7 +47,7 @@ const ShiftList = () => {
     if (window.confirm("Are you sure you want to delete this shift?")) {
       try {
         await ShiftService.deleteShift(id);
-        setShifts(shifts.filter(shift => shift.id_shift !== id));
+        setShifts(shifts.filter((shift) => shift.id_shift !== id));
       } catch (error) {
         console.error("Error deleting shift:", error);
         alert("Error deleting shift. Please try again.");
@@ -61,20 +61,30 @@ const ShiftList = () => {
     return timeString.substring(0, 5); // Format as HH:MM
   };
 
-  const filteredShifts = shifts.filter(shift =>
+  const filteredShifts = shifts.filter((shift) =>
     shift.id_shift.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <Typography align="center">Loading...</Typography>;
-  if (error) return <Typography color="error" align="center">{error}</Typography>;
+  if (error)
+    return (
+      <Typography color="error" align="center">
+        {error}
+      </Typography>
+    );
 
   return (
     <>
       <Typography variant="h4" gutterBottom>
         Shift Management
       </Typography>
-      
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Button
           component={Link}
           to="/shifts/new"
@@ -84,7 +94,7 @@ const ShiftList = () => {
         >
           Add New Shift
         </Button>
-        
+
         <TextField
           variant="outlined"
           placeholder="Search shift by ID..."
@@ -152,4 +162,4 @@ const ShiftList = () => {
   );
 };
 
-export default ShiftList; 
+export default ShiftList;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { TableRow, TableCell, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 
@@ -18,10 +18,7 @@ const SoustraiteureItem = ({ soustraiteure, onDelete }) => {
         >
           Modifier
         </Button>
-        <Button 
-          color="error" 
-          onClick={() => onDelete(soustraiteure)}
-        >
+        <Button color="error" onClick={() => onDelete(soustraiteure)}>
           Supprimer
         </Button>
       </TableCell>

@@ -7,7 +7,7 @@ import {
   Alert,
   Snackbar,
   Paper,
-  Box
+  Box,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import SoustraiteureService from "../../services/SoustraiteureService";
@@ -16,12 +16,12 @@ const SoustraiteureForm = () => {
   const [soustraiteure, setSoustraiteure] = useState({
     nom_soustraiteure: "",
     prenom_soustraiteure: "",
-    fonction_soustraiteure: ""
+    fonction_soustraiteure: "",
   });
   const [notification, setNotification] = useState({
     open: false,
     message: "",
-    severity: "success"
+    severity: "success",
   });
   const { matricule } = useParams();
   const navigate = useNavigate();
@@ -36,7 +36,8 @@ const SoustraiteureForm = () => {
           setSoustraiteure({
             nom_soustraiteure: soustraiteureData.nom_soustraiteure || "",
             prenom_soustraiteure: soustraiteureData.prenom_soustraiteure || "",
-            fonction_soustraiteure: soustraiteureData.fonction_soustraiteure || ""
+            fonction_soustraiteure:
+              soustraiteureData.fonction_soustraiteure || "",
           });
           setLoading(false);
         })
@@ -79,9 +80,12 @@ const SoustraiteureForm = () => {
         // For updates, we need to reinclude the matricule
         const soustraiteureToUpdate = {
           ...soustraiteure,
-          matricule_soustraiteure: matricule
+          matricule_soustraiteure: matricule,
         };
-        await SoustraiteureService.updateSoustraiteure(matricule, soustraiteureToUpdate);
+        await SoustraiteureService.updateSoustraiteure(
+          matricule,
+          soustraiteureToUpdate
+        );
         setNotification({
           open: true,
           message: "Soustraiteure modifié avec succès",

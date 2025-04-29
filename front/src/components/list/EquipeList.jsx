@@ -16,7 +16,7 @@ import {
   TextField,
   Snackbar,
   Alert,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 import { Delete, Edit, Add, Search, Visibility } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
@@ -60,7 +60,7 @@ const EquipeList = () => {
       fetchEquipes();
       return;
     }
-    
+
     setLoading(true);
     EquipeService.searchEquipes(searchTerm)
       .then((response) => {
@@ -167,15 +167,20 @@ const EquipeList = () => {
                     <TableCell>{equipe.id_equipe}</TableCell>
                     <TableCell>{equipe.nom_equipe}</TableCell>
                     <TableCell>
-                      {(equipe.personnel ? equipe.personnel.length : 0) + 
-                       (equipe.soustraiteurs ? equipe.soustraiteurs.length : 0)} membres
+                      {(equipe.personnel ? equipe.personnel.length : 0) +
+                        (equipe.soustraiteurs
+                          ? equipe.soustraiteurs.length
+                          : 0)}{" "}
+                      membres
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex" }}>
                         <Tooltip title="Voir détails">
                           <IconButton
                             color="info"
-                            onClick={() => navigate(`/equipes/${equipe.id_equipe}`)}
+                            onClick={() =>
+                              navigate(`/equipes/${equipe.id_equipe}`)
+                            }
                           >
                             <Visibility />
                           </IconButton>
@@ -183,7 +188,9 @@ const EquipeList = () => {
                         <Tooltip title="Modifier">
                           <IconButton
                             color="primary"
-                            onClick={() => navigate(`/equipes/edit/${equipe.id_equipe}`)}
+                            onClick={() =>
+                              navigate(`/equipes/edit/${equipe.id_equipe}`)
+                            }
                           >
                             <Edit />
                           </IconButton>
@@ -218,7 +225,11 @@ const EquipeList = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
           {notification.message}
         </Alert>
       </Snackbar>
@@ -226,4 +237,4 @@ const EquipeList = () => {
   );
 };
 
-export default EquipeList; 
+export default EquipeList;

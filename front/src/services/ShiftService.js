@@ -26,4 +26,4 @@ class ShiftService {
 
 const shiftServiceInstance = new ShiftService();
 
-export default shiftServiceInstance; 
+export default shiftServiceInstance;

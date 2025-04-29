@@ -7,7 +7,7 @@ import {
   Box,
   Alert,
   Snackbar,
-  Paper
+  Paper,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ShiftService from "../../services/ShiftService";
@@ -35,8 +35,12 @@ const ShiftForm = () => {
           // Format times for input fields
           const formattedShift = {
             ...response.data,
-            heure_debut: response.data.heure_debut ? response.data.heure_debut.substring(0, 5) : "",
-            heure_fin: response.data.heure_fin ? response.data.heure_fin.substring(0, 5) : "",
+            heure_debut: response.data.heure_debut
+              ? response.data.heure_debut.substring(0, 5)
+              : "",
+            heure_fin: response.data.heure_fin
+              ? response.data.heure_fin.substring(0, 5)
+              : "",
           };
           setShift(formattedShift);
           setLoading(false);
@@ -197,4 +201,4 @@ const ShiftForm = () => {
   );
 };
 
-export default ShiftForm; 
+export default ShiftForm;

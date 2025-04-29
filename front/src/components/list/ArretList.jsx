@@ -43,7 +43,12 @@ const ArretList = () => {
       <Typography variant="h4" gutterBottom>
         Management Des Arret
       </Typography>
-      <Button component={Link} to="/arrets/create" variant="contained" sx={{ mb: 3 }}>
+      <Button
+        component={Link}
+        to="/arrets/create"
+        variant="contained"
+        sx={{ mb: 3 }}
+      >
         Cree un nouveau arret
       </Button>
 

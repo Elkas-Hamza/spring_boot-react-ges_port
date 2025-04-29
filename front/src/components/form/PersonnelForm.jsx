@@ -7,7 +7,7 @@ import {
   Alert,
   Snackbar,
   Paper,
-  Box
+  Box,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import PersonnelService from "../../services/PersonnelService";
@@ -16,7 +16,7 @@ const PersonnelForm = () => {
   const [personnel, setPersonnel] = useState({
     nom_personnel: "",
     prenom_personnel: "",
-    fonction_personnel: ""
+    fonction_personnel: "",
   });
   const [notification, setNotification] = useState({
     open: false,
@@ -36,7 +36,7 @@ const PersonnelForm = () => {
           setPersonnel({
             nom_personnel: personnelData.nom_personnel || "",
             prenom_personnel: personnelData.prenom_personnel || "",
-            fonction_personnel: personnelData.fonction_personnel || ""
+            fonction_personnel: personnelData.fonction_personnel || "",
           });
           setLoading(false);
         })
@@ -79,7 +79,7 @@ const PersonnelForm = () => {
         // For updates, we need to reinclude the matricule
         const personnelToUpdate = {
           ...personnel,
-          matricule_personnel: matricule
+          matricule_personnel: matricule,
         };
         await PersonnelService.updatePersonnel(matricule, personnelToUpdate);
         setNotification({

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Container, 
-  Typography, 
-  Button, 
-  Box, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   IconButton,
   Dialog,
@@ -19,7 +19,7 @@ import {
   DialogTitle,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import { Add, Edit, Delete } from "@mui/icons-material";
 import { Link } from "react-router-dom";
@@ -34,7 +34,7 @@ const ConteneureList = () => {
   const [notification, setNotification] = useState({
     open: false,
     message: "",
-    severity: "success"
+    severity: "success",
   });
 
   const fetchConteneures = async () => {
@@ -67,13 +67,15 @@ const ConteneureList = () => {
 
   const handleConfirmDelete = async () => {
     if (!conteneureToDelete) return;
-    
+
     try {
-      await ConteneureService.deleteConteneure(conteneureToDelete.id_conteneure);
+      await ConteneureService.deleteConteneure(
+        conteneureToDelete.id_conteneure
+      );
       setNotification({
         open: true,
         message: "Conteneure supprimé avec succès",
-        severity: "success"
+        severity: "success",
       });
       fetchConteneures();
     } catch (error) {
@@ -81,7 +83,7 @@ const ConteneureList = () => {
       setNotification({
         open: true,
         message: "Erreur lors de la suppression du conteneure",
-        severity: "error"
+        severity: "error",
       });
     } finally {
       handleCloseDeleteDialog();
@@ -89,13 +91,20 @@ const ConteneureList = () => {
   };
 
   const handleCloseNotification = () => {
-    setNotification(prev => ({ ...prev, open: false }));
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h4" component="h1">
             Liste des Conteneures
           </Typography>
@@ -125,7 +134,9 @@ const ConteneureList = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Nom du Conteneure</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>
+                      Nom du Conteneure
+                    </TableCell>
                     <TableCell sx={{ fontWeight: "bold" }} align="right">
                       Actions
                     </TableCell>
@@ -171,15 +182,13 @@ const ConteneureList = () => {
       </Box>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={openDeleteDialog}
-        onClose={handleCloseDeleteDialog}
-      >
+      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Êtes-vous sûr de vouloir supprimer le conteneure "{conteneureToDelete?.nom_conteneure}" ?
-            Cette action est irréversible.
+            Êtes-vous sûr de vouloir supprimer le conteneure "
+            {conteneureToDelete?.nom_conteneure}" ? Cette action est
+            irréversible.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -211,4 +220,4 @@ const ConteneureList = () => {
   );
 };
 
-export default ConteneureList; 
+export default ConteneureList;
