@@ -20,7 +20,22 @@ const Navbar = () => {
             personnel
           </Button>
           <Button color="inherit" component={Link} to="/soustraiteure">
-          sous traiteure
+            sous traiteure
+          </Button>
+          <Button color="inherit" component={Link} to="/operations">
+            Opérations
+          </Button>
+          <Button color="inherit" component={Link} to="/conteneures">
+            Conteneure
+          </Button>
+          <Button color="inherit" component={Link} to="/shifts">
+            Shifts
+          </Button>
+          <Button color="inherit" component={Link} to="/engins">
+            Equipment
+          </Button>
+          <Button color="inherit" component={Link} to="/equipes">
+            Équipes
           </Button>
         </Box>
       </Toolbar>

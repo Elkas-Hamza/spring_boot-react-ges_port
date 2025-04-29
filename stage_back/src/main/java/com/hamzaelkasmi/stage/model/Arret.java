@@ -7,13 +7,18 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "arret")
 public class Arret {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_arret")
-    private int ID_arret;
+    @GeneratedValue(generator = "arret-id-generator")
+    @org.hibernate.annotations.GenericGenerator(
+            name = "arret-id-generator",
+            strategy = "com.hamzaelkasmi.stage.generateure.ArretIdGenerator"
+    )
+    @Column(name = "ID_arret", nullable = false, unique = true)
+    private String ID_arret;
 
     @Column(name = "NUM_escale", nullable = false)
-    private int NUM_escale;
+    private String NUM_escale;
 
     @Column(name = "MOTIF_arret", nullable = false, length = 256)
     private String MOTIF_arret;
@@ -30,19 +35,19 @@ public class Arret {
     private LocalDateTime DATE_FIN_arret;
 
     // Getters and Setters
-    public int getID_arret() {
+    public String getID_arret() {
         return ID_arret;
     }
 
-    public void setID_arret(int ID_arret) {
+    public void setID_arret(String ID_arret) {
         this.ID_arret = ID_arret;
     }
 
-    public int getNUM_escale() {
+    public String getNUM_escale() {
         return NUM_escale;
     }
 
-    public void setNUM_escale(int NUM_escale) {
+    public void setNUM_escale(String NUM_escale) {
         this.NUM_escale = NUM_escale;
     }
 

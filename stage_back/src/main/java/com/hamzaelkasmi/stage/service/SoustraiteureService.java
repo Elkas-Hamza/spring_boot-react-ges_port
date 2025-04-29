@@ -17,19 +17,15 @@ public class SoustraiteureService {
         return soustraiteureRepository.findAll();
     }
 
-    public Optional<Soustraiteure> getSoustraiteureById(int id) {
-        return soustraiteureRepository.findById(id);
-    }
-
-    public Soustraiteure getSoustraiteureByMatricule(String matricule) {
-        return soustraiteureRepository.findByMatriculeSoustraiteure(matricule).orElse(null);
+    public Optional<Soustraiteure> getSoustraiteureById(String matricule) {
+        return soustraiteureRepository.findById(matricule);
     }
 
     public Soustraiteure saveSoustraiteure(Soustraiteure soustraiteure) {
         return soustraiteureRepository.save(soustraiteure);
     }
 
-    public void deleteSoustraiteure(int id) {
-        soustraiteureRepository.deleteById(id);
+    public void deleteSoustraiteure(String matricule) {
+        soustraiteureRepository.deleteById(matricule);
     }
 }

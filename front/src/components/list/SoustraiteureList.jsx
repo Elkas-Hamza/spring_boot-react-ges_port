@@ -42,7 +42,7 @@ const SoustraiteureList = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = soustraiteures.filter(s =>
-        `${s.nom_soustraiteure} ${s.prenom_soustraiteure} ${s.fonction_soustraiteure}`
+        `${s.matricule_soustraiteure} ${s.nom_soustraiteure} ${s.prenom_soustraiteure} ${s.fonction_soustraiteure}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       );
@@ -95,9 +95,9 @@ const SoustraiteureList = () => {
     try {
       if (!soustraiteureToDelete) return;
       
-      await SoustraiteureService.deleteSoustraiteure(soustraiteureToDelete.id_soustraiteure);
-      setSoustraiteures(prev => prev.filter(s => s.id_soustraiteure !== soustraiteureToDelete.id_soustraiteure));
-      setFilteredSoustraiteures(prev => prev.filter(s => s.id_soustraiteure !== soustraiteureToDelete.id_soustraiteure));
+      await SoustraiteureService.deleteSoustraiteure(soustraiteureToDelete.matricule_soustraiteure);
+      setSoustraiteures(prev => prev.filter(s => s.matricule_soustraiteure !== soustraiteureToDelete.matricule_soustraiteure));
+      setFilteredSoustraiteures(prev => prev.filter(s => s.matricule_soustraiteure !== soustraiteureToDelete.matricule_soustraiteure));
       handleCloseDeleteDialog();
       setNotification({ open: true, message: 'Soustraiteure supprimé avec succès', severity: 'success' });
     } catch (err) {
@@ -134,7 +134,7 @@ const SoustraiteureList = () => {
       </Box>
 
       <TextField
-        label="Rechercher par nom, prénom ou fonction"
+        label="Rechercher par matricule, nom, prénom ou fonction"
         variant="outlined"
         fullWidth
         value={searchQuery}
@@ -153,7 +153,6 @@ const SoustraiteureList = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
                 <TableCell>Matricule</TableCell>
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
@@ -165,7 +164,7 @@ const SoustraiteureList = () => {
               {filteredSoustraiteures.length > 0 ? (
                 filteredSoustraiteures.map((soustraiteure) => (
                   <SoustraiteureItem
-                    key={soustraiteure.ID_soustraiteure}
+                    key={soustraiteure.matricule_soustraiteure}
                     soustraiteure={soustraiteure}
                     onDelete={handleOpenDeleteDialog}
                     onEdit={handleEditSoustraiteure}
@@ -173,7 +172,7 @@ const SoustraiteureList = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={5} align="center">
                     Aucun soustraiteure trouvé
                   </TableCell>
                 </TableRow>

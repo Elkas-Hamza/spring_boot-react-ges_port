@@ -2,28 +2,26 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
--- -----------------------------------------------------
--- Schema gestion_res
--- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `gestion_res` ;
+DROP SCHEMA IF EXISTS `gestion_res`;
 CREATE SCHEMA IF NOT EXISTS `gestion_res` DEFAULT CHARACTER SET utf8;
-USE `gestion_res` ;
+USE `gestion_res`;
 
 -- -----------------------------------------------------
 -- Table `gestion_res`.`engin`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`engin` (
-  `ID_engin` INT NOT null auto_increment,
+  `ID_engin` VARCHAR(45) NOT NULL,
   `NOM_engin` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`ID_engin`),
   UNIQUE INDEX `ID_engin_UNIQUE` (`ID_engin` ASC) VISIBLE,
-  UNIQUE INDEX `NOM_engin_UNIQUE` (`NOM_engin` ASC) VISIBLE)
-ENGINE = InnoDB AUTO_INCREMENT=1000;
+  UNIQUE INDEX `NOM_engin_UNIQUE` (`NOM_engin` ASC) VISIBLE
+) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS `gestion_res`.`engin_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_engin`
 BEFORE INSERT ON `gestion_res`.`engin`
@@ -31,11 +29,9 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_engin VARCHAR(45);
-
   INSERT INTO `gestion_res`.`engin_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_engin = CONCAT('ENG-', LPAD(next_num, 3, '0'));
-
   SET NEW.ID_engin = formatted_engin;
 END$$
 DELIMITER ;
@@ -43,95 +39,87 @@ DELIMITER ;
 -- -----------------------------------------------------
 -- Table `gestion_res`.`personnel`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`personnel` (
-  `ID_personnel` INT NOT NULL auto_increment,
+  `ID_personnel` INT NOT NULL AUTO_INCREMENT,
   `MATRICULE_personnel` VARCHAR(45) NOT NULL,
   `NOM_personnel` VARCHAR(45) NOT NULL,
   `PRENOM_personnel` VARCHAR(45) NOT NULL,
   `FONCTION_personnel` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`ID_personnel`, `MATRICULE_personnel`),
   UNIQUE INDEX `ID_personnelle_UNIQUE` (`ID_personnel` ASC) VISIBLE,
-  UNIQUE INDEX `MATRICULE_personnelle_UNIQUE` (`MATRICULE_personnel` ASC) VISIBLE)
-ENGINE = InnoDB AUTO_INCREMENT=1000;
+  UNIQUE INDEX `MATRICULE_personnelle_UNIQUE` (`MATRICULE_personnel` ASC) VISIBLE
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `gestion_res`.`matricule_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
-DELIMITER $$
 
+DELIMITER $$
 CREATE TRIGGER `before_insert_personnel`
 BEFORE INSERT ON `gestion_res`.`personnel`
 FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_matricule VARCHAR(45);
-
   INSERT INTO `gestion_res`.`matricule_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_matricule = CONCAT('MARMA-', LPAD(next_num, 3, '0'));
-
   SET NEW.MATRICULE_personnel = formatted_matricule;
 END$$
-
 DELIMITER ;
 
-
 -- -----------------------------------------------------
--- Table `gestion_res`.`sous-traiteur`
+-- Table `gestion_res`.`soustraiteure`
 -- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`soustraiteure` (
+  `ID_soustraiteure` INT NOT NULL AUTO_INCREMENT,
+  `MATRICULE_soustraiteure` VARCHAR(45) NOT NULL,
+  `NOM_soustraiteure` VARCHAR(45) NOT NULL,
+  `PRENOM_soustraiteure` VARCHAR(45) NOT NULL,
+  `FONCTION_soustraiteure` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`ID_soustraiteure`, `MATRICULE_soustraiteure`),
+  UNIQUE INDEX `ID_soustraiteure_UNIQUE` (`ID_soustraiteure` ASC) VISIBLE,
+  UNIQUE INDEX `MATRICULE_sous_raiteur_UNIQUE` (`MATRICULE_soustraiteure` ASC) VISIBLE
+) ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS `gestion_res`.`sous_traiteur` (
-  `ID_sous_traiteur` INT NOT NULL auto_increment,
-  `MATRICULE_sous_traiteur` VARCHAR(45) NOT NULL,
-  `NOM_sous_traiteur` VARCHAR(45) NOT NULL,
-  `PRENOM_sous_traiteur` VARCHAR(45) NOT NULL,
-  `FONCTION_sous_traiteur` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`ID_sous_traiteur`, `MATRICULE_sous_traiteur`),
-  UNIQUE INDEX `ID_sous_traiteur_UNIQUE` (`ID_sous_traiteur` ASC) VISIBLE,
-  UNIQUE INDEX `MATRICULE_sous_traiteur_UNIQUE` (`MATRICULE_sous_traiteur` ASC) VISIBLE)
-ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`sous_matricule_counter`(
+CREATE TABLE IF NOT EXISTS `gestion_res`.`sous_matricule_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
-DELIMITER $$
 
-CREATE TRIGGER `before_insert_sous_traiteur`
-BEFORE INSERT ON `gestion_res`.`sous_traiteur`
+DELIMITER $$
+CREATE TRIGGER `before_insert_soustraiteure`
+BEFORE INSERT ON `gestion_res`.`soustraiteure`
 FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_matricule VARCHAR(45);
-
   INSERT INTO `gestion_res`.`sous_matricule_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_matricule = CONCAT('SUSTR-', LPAD(next_num, 3, '0'));
-
-  SET NEW.MATRICULE_sous_traiteur = formatted_matricule;
+  SET NEW.MATRICULE_soustraiteure = formatted_matricule;
 END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
 -- Table `gestion_res`.`escale`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`escale` (
-  `NUM_escale` INT NOT NULL auto_increment,
+  `NUM_escale` VARCHAR(45) NOT NULL,
   `NOM_navire` VARCHAR(256) NOT NULL,
   `DATE_accostage` DATETIME NOT NULL,
   `DATE_sortie` DATETIME NOT NULL,
   PRIMARY KEY (`NUM_escale`, `NOM_navire`),
   UNIQUE INDEX `NUM_escale_UNIQUE` (`NUM_escale` ASC) VISIBLE,
-  INDEX `NOM_navire_idx` (`NOM_navire` ASC) VISIBLE) 
-ENGINE = InnoDB;
+  INDEX `NOM_navire_idx` (`NOM_navire` ASC) VISIBLE
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `gestion_res`.`num_escale_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_escale`
 BEFORE INSERT ON `gestion_res`.`escale`
@@ -139,11 +127,9 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_num_escale VARCHAR(45);
-
   INSERT INTO `gestion_res`.`num_escale_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_num_escale = CONCAT('ESC-', LPAD(next_num, 3, '0'));
-
   SET NEW.NUM_escale = formatted_num_escale;
 END$$
 DELIMITER ;
@@ -151,26 +137,35 @@ DELIMITER ;
 -- -----------------------------------------------------
 -- Table `gestion_res`.`arret`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`arret` (
-  `ID_arret` INT NOT NULL auto_increment,
-  `NUM_escale` INT NOT NULL,
+  `ID_arret` VARCHAR(45) NOT NULL,
+  `ID_operation` VARCHAR(45),
+  `NUM_escale` VARCHAR(45) NOT NULL,
   `MOTIF_arret` VARCHAR(256) NOT NULL,
   `DURE_arret` INT NOT NULL,
   `DATE_DEBUT_arret` DATETIME NOT NULL,
   `DATE_FIN_arret` DATETIME NOT NULL,
   PRIMARY KEY (`ID_arret`),
   UNIQUE INDEX `ID_arret_UNIQUE` (`ID_arret` ASC) VISIBLE,
-  CONSTRAINT `NUM_escale`
+  INDEX `NUM_escale_idx` (`NUM_escale` ASC) VISIBLE,
+  INDEX `ID_operation_idx` (`ID_operation` ASC) VISIBLE,
+  CONSTRAINT `fk_arret_num_escale`
     FOREIGN KEY (`NUM_escale`)
     REFERENCES `gestion_res`.`escale` (`NUM_escale`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_arret_id_operation`
+    FOREIGN KEY (`ID_operation`)
+    REFERENCES `gestion_res`.`operation`(`ID_operation`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS `gestion_res`.`arret_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_arret`
 BEFORE INSERT ON `gestion_res`.`arret`
@@ -178,60 +173,58 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_arret VARCHAR(45);
-
   INSERT INTO `gestion_res`.`arret_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_arret = CONCAT('AR-', LPAD(next_num, 3, '0'));
-
   SET NEW.ID_arret = formatted_arret;
 END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table `gestion_res`.`marchandise`
+-- Table `gestion_res`.`conteneure`
 -- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure` (
+  `ID_conteneure` VARCHAR(45) NOT NULL,
+  `NOM_conteneure` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`ID_conteneure`),
+  UNIQUE INDEX `ID_conteneure_UNIQUE` (`ID_conteneure` ASC) VISIBLE
+) ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS `gestion_res`.`marchandise` (
-  `ID_marchandise` INT NOT NULL auto_increment,
-  `NOM_marchandise` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`ID_marchandise`),
-  UNIQUE INDEX `ID_marchandise_UNIQUE` (`ID_marchandise` ASC) VISIBLE)
-ENGINE = InnoDB;
-CREATE TABLE IF NOT EXISTS `gestion_res`.`marchandise_counter` (
+CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
-CREATE TRIGGER `before_insert_marchandise`
-BEFORE INSERT ON `gestion_res`.`marchandise`
+CREATE TRIGGER `before_insert_conteneure`
+BEFORE INSERT ON `gestion_res`.`conteneure`
 FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
-  DECLARE formatted_marchandise VARCHAR(45);
-
-  INSERT INTO `gestion_res`.`marchandise_counter` VALUES ();
+  DECLARE formatted_conteneure VARCHAR(45);
+  INSERT INTO `gestion_res`.`conteneure_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
-  SET formatted_marchandise = CONCAT('MAR-', LPAD(next_num, 3, '0'));
-
-  SET NEW.NOM_marchandise = formatted_marchandise;
+  SET formatted_conteneure = CONCAT('CTR-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_conteneure = formatted_conteneure;
 END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
 -- Table `gestion_res`.`shift`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`shift` (
-  `ID_shift` INT NOT NULL auto_increment,
-  `DATE_debut` TIME NOT NULL,
-  `DATE_fin` TIME NOT NULL,
+  `ID_shift` VARCHAR(45) NOT NULL,
+  `HEURE_debut` TIME NOT NULL,
+  `HEURE_fin` TIME NOT NULL,
   PRIMARY KEY (`ID_shift`),
-  UNIQUE INDEX `ID_shift_UNIQUE` (`ID_shift` ASC) VISIBLE)
-ENGINE = InnoDB;
+  UNIQUE INDEX `ID_shift_UNIQUE` (`ID_shift` ASC) VISIBLE
+) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS `gestion_res`.`shift_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_shift`
 BEFORE INSERT ON `gestion_res`.`shift`
@@ -239,58 +232,94 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_shift VARCHAR(45);
-
   INSERT INTO `gestion_res`.`shift_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_shift = CONCAT('SH-', LPAD(next_num, 3, '0'));
-
   SET NEW.ID_shift = formatted_shift;
+END$$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`equipe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe` (
+  `ID_equipe` VARCHAR(45) NOT NULL,
+  `NOM_equipe` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`ID_equipe`),
+  UNIQUE INDEX `ID_equipe_UNIQUE` (`ID_equipe` ASC) VISIBLE,
+  UNIQUE INDEX `NOM_equipe_UNIQUE` (`NOM_equipe` ASC) VISIBLE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_equipe`
+BEFORE INSERT ON `gestion_res`.`equipe`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_equipe VARCHAR(45);
+  INSERT INTO `gestion_res`.`equipe_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_equipe = CONCAT('EQ-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_equipe = formatted_equipe;
 END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
 -- Table `gestion_res`.`operation`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`operation` (
-  `ID_operation` INT NOT NULL auto_increment,
-  `ID_shift` INT NOT NULL,
-  `NOM_navire` VARCHAR(256) NOT NULL,
-  `ID_marchandise` INT NOT NULL,
-  `ID_engin` INT NOT NULL,
-  `DATE_debut` TIME NOT NULL,
-  `DATE_fin` TIME NOT NULL,
+  `ID_operation` VARCHAR(45) NOT NULL,
+  `ID_shift` VARCHAR(45), -- Removed NOT NULL to allow SET NULL behavior
+  `ID_escale` VARCHAR(45) NOT NULL,
+  `ID_conteneure` VARCHAR(45) NOT NULL,
+  `ID_engin` VARCHAR(45) NOT NULL,
+  `ID_equipe` VARCHAR(45) NOT NULL,
+  `DATE_debut` DATETIME NOT NULL,
+  `DATE_fin` DATETIME NOT NULL,
   PRIMARY KEY (`ID_operation`),
   UNIQUE INDEX `ID_operation_UNIQUE` (`ID_operation` ASC) VISIBLE,
   INDEX `ID_shift_idx` (`ID_shift` ASC) VISIBLE,
-  INDEX `ID_marchandise_idx` (`ID_marchandise` ASC) VISIBLE,
-  INDEX `NOM_navire_idx` (`NOM_navire` ASC) VISIBLE,
+  INDEX `ID_conteneure_idx` (`ID_conteneure` ASC) VISIBLE,
+  INDEX `ID_escale_idx` (`ID_escale` ASC) VISIBLE,
   INDEX `ID_engin_idx` (`ID_engin` ASC) VISIBLE,
+  INDEX `ID_equipe_idx` (`ID_equipe` ASC) VISIBLE,
   CONSTRAINT `ID_shift`
     FOREIGN KEY (`ID_shift`)
     REFERENCES `gestion_res`.`shift` (`ID_shift`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT `ID_marchandise`
-    FOREIGN KEY (`ID_marchandise`)
-    REFERENCES `gestion_res`.`marchandise` (`ID_marchandise`)
+  CONSTRAINT `ID_conteneure`
+    FOREIGN KEY (`ID_conteneure`)
+    REFERENCES `gestion_res`.`conteneure` (`ID_conteneure`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT `NOM_navire`
-    FOREIGN KEY (`NOM_navire`)
-    REFERENCES `gestion_res`.`escale` (`NOM_navire`)
+  CONSTRAINT `ID_escale`
+    FOREIGN KEY (`ID_escale`)
+    REFERENCES `gestion_res`.`escale` (`NUM_escale`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `ID_engin`
     FOREIGN KEY (`ID_engin`)
     REFERENCES `gestion_res`.`engin` (`ID_engin`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
+    ON UPDATE CASCADE,
+  CONSTRAINT `ID_equipe`
+    FOREIGN KEY (`ID_equipe`)
+    REFERENCES `gestion_res`.`equipe` (`ID_equipe`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS `gestion_res`.`operation_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_operation`
 BEFORE INSERT ON `gestion_res`.`operation`
@@ -298,75 +327,28 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_operation VARCHAR(45);
-
   INSERT INTO `gestion_res`.`operation_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_operation = CONCAT('OP-', LPAD(next_num, 3, '0'));
-
   SET NEW.ID_operation = formatted_operation;
 END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table `gestion_res`.`operation_has_sous-traiteur`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`operation_has_sous-traiteur` (
-  `operation_ID_operation` INT NOT NULL,
-  `sous-traiteur_ID_sous-traiteur` INT NOT NULL,
-  `sous-traiteur_MATRICULE_sous-traiteur` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`operation_ID_operation`, `sous-traiteur_ID_sous-traiteur`, `sous-traiteur_MATRICULE_sous-traiteur`),
-  INDEX `fk_operation_has_sous-traiteur_sous-traiteur1_idx` (`sous-traiteur_ID_sous-traiteur` ASC, `sous-traiteur_MATRICULE_sous-traiteur` ASC) VISIBLE,
-  INDEX `fk_operation_has_sous-traiteur_operation1_idx` (`operation_ID_operation` ASC) VISIBLE,
-  CONSTRAINT `fk_operation_has_sous-traiteur_operation1`
-    FOREIGN KEY (`operation_ID_operation`)
-    REFERENCES `gestion_res`.`operation` (`ID_operation`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_operation_has_sous-traiteur_sous-traiteur1`
-    FOREIGN KEY (`sous-traiteur_ID_sous-traiteur`, `sous-traiteur_MATRICULE_sous-traiteur`)
-    REFERENCES `gestion_res`.`sous-traiteur` (`ID_sous-traiteur`, `MATRICULE_sous-traiteur`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table `gestion_res`.`operation_has_personnel`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`operation_has_personnel` (
-  `operation_ID_operation` INT NOT NULL,
-  `personnel_ID_personnel` INT NOT NULL,
-  `personnel_MATRICULE_personnel` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`operation_ID_operation`, `personnel_ID_personnel`, `personnel_MATRICULE_personnel`),
-  INDEX `fk_operation_has_personnel_personnel1_idx` (`personnel_ID_personnel` ASC, `personnel_MATRICULE_personnel` ASC) VISIBLE,
-  INDEX `fk_operation_has_personnel_operation1_idx` (`operation_ID_operation` ASC) VISIBLE,
-  CONSTRAINT `fk_operation_has_personnel_operation1`
-    FOREIGN KEY (`operation_ID_operation`)
-    REFERENCES `gestion_res`.`operation` (`ID_operation`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_operation_has_personnel_personnel1`
-    FOREIGN KEY (`personnel_ID_personnel`, `personnel_MATRICULE_personnel`)
-    REFERENCES `gestion_res`.`personnel` (`ID_personnel`, `MATRICULE_personnel`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
 -- Table `gestion_res`.`motif`
 -- -----------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS `gestion_res`.`motif` (
-`ID_motif` INT NOT NULL auto_increment ,
-`NOM_motif` VARCHAR(45) NOT NULL,
+  `ID_motif` VARCHAR(45) NOT NULL,
+  `NOM_motif` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`ID_motif`),
-  UNIQUE INDEX `ID_motif_UNIQUE` (`ID_motif` ASC) VISIBLE)
-ENGINE = InnoDB;
+  UNIQUE INDEX `ID_motif_UNIQUE` (`ID_motif` ASC) VISIBLE
+) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS `gestion_res`.`motif_counter` (
   `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+
 DELIMITER $$
 CREATE TRIGGER `before_insert_motif`
 BEFORE INSERT ON `gestion_res`.`motif`
@@ -374,14 +356,56 @@ FOR EACH ROW
 BEGIN
   DECLARE next_num INT;
   DECLARE formatted_motif VARCHAR(45);
-
   INSERT INTO `gestion_res`.`motif_counter` VALUES ();
   SET next_num = LAST_INSERT_ID();
   SET formatted_motif = CONCAT('MOT-', LPAD(next_num, 3, '0'));
-
   SET NEW.ID_motif = formatted_motif;
 END$$
 DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`equipe_has_personnel`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe_has_personnel` (
+  `equipe_ID_equipe` VARCHAR(45) ,
+  `personnel_ID_personnel` INT ,
+  `personnel_MATRICULE_personnel` VARCHAR(45) ,
+  PRIMARY KEY (`equipe_ID_equipe`, `personnel_ID_personnel`, `personnel_MATRICULE_personnel`),
+  INDEX `fk_equipe_has_personnel_personnel1_idx` (`personnel_ID_personnel` ASC, `personnel_MATRICULE_personnel` ASC) VISIBLE,
+  INDEX `fk_equipe_has_personnel_equipe1_idx` (`equipe_ID_equipe` ASC) VISIBLE,
+  CONSTRAINT `fk_equipe_has_personnel_equipe1`
+    FOREIGN KEY (`equipe_ID_equipe`)
+    REFERENCES `gestion_res`.`equipe` (`ID_equipe`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_equipe_has_personnel_personnel1`
+    FOREIGN KEY (`personnel_ID_personnel`, `personnel_MATRICULE_personnel`)
+    REFERENCES `gestion_res`.`personnel` (`ID_personnel`, `MATRICULE_personnel`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`equipe_has_soustraiteure`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe_has_soustraiteure` (
+  `equipe_ID_equipe` VARCHAR(45) ,
+  `soustraiteure_ID_soustraiteure` INT,
+  `soustraiteure_MATRICULE_soustraiteure` VARCHAR(45) ,
+  PRIMARY KEY (`equipe_ID_equipe`, `soustraiteure_ID_soustraiteure`, `soustraiteure_MATRICULE_soustraiteure`),
+  INDEX `fk_equipe_has_soustraiteure_soustraiteure1_idx` (`soustraiteure_ID_soustraiteure` ASC, `soustraiteure_MATRICULE_soustraiteure` ASC) VISIBLE,
+  INDEX `fk_equipe_has_soustraiteure_equipe1_idx` (`equipe_ID_equipe` ASC) VISIBLE,
+  CONSTRAINT `fk_equipe_has_soustraiteure_equipe1`
+    FOREIGN KEY (`equipe_ID_equipe`)
+    REFERENCES `gestion_res`.`equipe` (`ID_equipe`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_equipe_has_soustraiteure_soustraiteure1`
+    FOREIGN KEY (`soustraiteure_ID_soustraiteure`, `soustraiteure_MATRICULE_soustraiteure`)
+    REFERENCES `gestion_res`.`soustraiteure` (`ID_soustraiteure`, `MATRICULE_soustraiteure`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 
 

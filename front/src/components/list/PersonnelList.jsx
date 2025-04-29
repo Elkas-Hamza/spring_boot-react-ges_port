@@ -42,7 +42,7 @@ const PersonnelList = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = personnel.filter(p =>
-        `${p.nom_personnel} ${p.prenom_personnel} ${p.fonction_personnel}`
+        `${p.matricule_personnel} ${p.nom_personnel} ${p.prenom_personnel} ${p.fonction_personnel}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       );
@@ -79,9 +79,9 @@ const PersonnelList = () => {
 
   const handleDeletePersonnel = async () => {
     try {
-      await PersonnelService.deletePersonnel(personnelToDelete.ID_personnel);
-      setPersonnel(prev => prev.filter(p => p.ID_personnel !== personnelToDelete.ID_personnel));
-      setFilteredPersonnel(prev => prev.filter(p => p.ID_personnel !== personnelToDelete.ID_personnel));
+      await PersonnelService.deletePersonnel(personnelToDelete.matricule_personnel);
+      setPersonnel(prev => prev.filter(p => p.matricule_personnel !== personnelToDelete.matricule_personnel));
+      setFilteredPersonnel(prev => prev.filter(p => p.matricule_personnel !== personnelToDelete.matricule_personnel));
       handleCloseDeleteDialog();
       setNotification({ open: true, message: 'Personnel supprimé avec succès', severity: 'success' });
     } catch (err) {
@@ -112,7 +112,7 @@ const PersonnelList = () => {
       </Box>
 
       <TextField
-        label="Rechercher par nom, prénom ou fonction"
+        label="Rechercher par matricule, nom, prénom ou fonction"
         variant="outlined"
         fullWidth
         value={searchQuery}
@@ -131,7 +131,6 @@ const PersonnelList = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
                 <TableCell>Matricule</TableCell>
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
@@ -143,14 +142,14 @@ const PersonnelList = () => {
               {filteredPersonnel.length > 0 ? (
                 filteredPersonnel.map((person) => (
                   <PersonnelItem
-                    key={person.ID_personnel}
+                    key={person.matricule_personnel}
                     personnel={person}
                     onDelete={handleOpenDeleteDialog}
                   />
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={5} align="center">
                     Aucun personnel trouvé
                   </TableCell>
                 </TableRow>

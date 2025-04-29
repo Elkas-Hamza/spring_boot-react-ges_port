@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import com.hamzaelkasmi.stage.model.Escale;
 
 @Repository
-public interface EscaleRepository extends JpaRepository<Escale, Integer> {
+
+public interface EscaleRepository extends JpaRepository<Escale, String> {
 }

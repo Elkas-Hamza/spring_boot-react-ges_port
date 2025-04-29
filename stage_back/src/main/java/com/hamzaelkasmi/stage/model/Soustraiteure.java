@@ -1,16 +1,15 @@
 package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "Soustraiteure")
 public class Soustraiteure {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_soustraiteure")
-    private int ID_soustraiteure;
-
-    @Column(name = "MATRICULE_soustraiteure")
+    @Column(name = "MATRICULE_soustraiteure", nullable = false)
+    @GeneratedValue(generator = "system-uuid")
+    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
     private String MATRICULE_soustraiteure;
 
     @Column(name = "NOM_soustraiteure", nullable = false, length = 45)
@@ -32,15 +31,15 @@ public class Soustraiteure {
         this.FONCTION_soustraiteure = FONCTION_soustraiteure;
     }
 
+    // Constructor with matricule (for updates)
+    public Soustraiteure(String MATRICULE_soustraiteure, String NOM_soustraiteure, String PRENOM_soustraiteure, String FONCTION_soustraiteure) {
+        this.MATRICULE_soustraiteure = MATRICULE_soustraiteure;
+        this.NOM_soustraiteure = NOM_soustraiteure;
+        this.PRENOM_soustraiteure = PRENOM_soustraiteure;
+        this.FONCTION_soustraiteure = FONCTION_soustraiteure;
+    }
+
     // Getters and Setters
-    public int getID_soustraiteure() {
-        return ID_soustraiteure;
-    }
-
-    public void setID_soustraiteure(int ID_soustraiteure) {
-        this.ID_soustraiteure = ID_soustraiteure;
-    }
-
     public String getMATRICULE_soustraiteure() {
         return MATRICULE_soustraiteure;
     }
@@ -77,8 +76,7 @@ public class Soustraiteure {
     @Override
     public String toString() {
         return "Soustraiteure{" +
-                "ID_soustraiteure=" + ID_soustraiteure +
-                ", MATRICULE_soustraiteure='" + MATRICULE_soustraiteure + '\'' +
+                "MATRICULE_soustraiteure='" + MATRICULE_soustraiteure + '\'' +
                 ", NOM_soustraiteure='" + NOM_soustraiteure + '\'' +
                 ", PRENOM_soustraiteure='" + PRENOM_soustraiteure + '\'' +
                 ", FONCTION_soustraiteure='" + FONCTION_soustraiteure + '\'' +

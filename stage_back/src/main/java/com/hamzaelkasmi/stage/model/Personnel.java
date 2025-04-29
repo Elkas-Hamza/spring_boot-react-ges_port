@@ -1,17 +1,15 @@
 package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "personnel")
 public class Personnel {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_personnel")
-    private int ID_personnel;
-
-
-    @Column(name = "MATRICULE_personnel")
+    @Column(name = "MATRICULE_personnel", nullable = false)
+    @GeneratedValue(generator = "system-uuid")
+    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
     private String MATRICULE_personnel;
 
     @Column(name = "NOM_personnel", nullable = false, length = 45)
@@ -27,26 +25,28 @@ public class Personnel {
     public Personnel() {
     }
 
-    public Personnel( String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel) {
+    public Personnel(String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel) {
+        this.NOM_personnel = NOM_personnel;
+        this.PRENOM_personnel = PRENOM_personnel;
+        this.FONCTION_personnel = FONCTION_personnel;
+    }
+
+    // Constructor with matricule (for updates)
+    public Personnel(String MATRICULE_personnel, String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel) {
+        this.MATRICULE_personnel = MATRICULE_personnel;
         this.NOM_personnel = NOM_personnel;
         this.PRENOM_personnel = PRENOM_personnel;
         this.FONCTION_personnel = FONCTION_personnel;
     }
 
     // Getters and Setters
-    public int getID_personnel() {
-        return ID_personnel;
-    }
-
-    public void setID_personnel(int ID_personnel) {
-        this.ID_personnel = ID_personnel;
-    }
-
     public String getMATRICULE_personnel() {
         return MATRICULE_personnel;
     }
-
-
+    
+    public void setMATRICULE_personnel(String MATRICULE_personnel) {
+        this.MATRICULE_personnel = MATRICULE_personnel;
+    }
 
     public String getNOM_personnel() {
         return NOM_personnel;
@@ -72,13 +72,11 @@ public class Personnel {
         this.FONCTION_personnel = FONCTION_personnel;
     }
 
-
     // toString method
     @Override
     public String toString() {
         return "Personnel{" +
-                "ID_personnel=" + ID_personnel +
-                ", MATRICULE_personnel='" + MATRICULE_personnel  +
+                "MATRICULE_personnel='" + MATRICULE_personnel + '\'' +
                 ", NOM_personnel='" + NOM_personnel + '\'' +
                 ", PRENOM_personnel='" + PRENOM_personnel + '\'' +
                 ", FONCTION_personnel='" + FONCTION_personnel + '\'' +

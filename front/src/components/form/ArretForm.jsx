@@ -18,8 +18,8 @@ const ArretForm = () => {
   const [arret, setArret] = useState({
     num_escale: "",
     dure_arret: "",
-    date_DEBUT_arret: "",
-    date_FIN_arret: "",
+    DATE_DEBUT_arret: "",
+    DATE_FIN_arret: "",
     motif_arret: "",
   });
   const [escales, setEscales] = useState([]);
@@ -41,19 +41,18 @@ const ArretForm = () => {
       // Fetch arret data if editing
       ArretService.getArretById(id)
         .then((response) => {
-          // Map backend fields to frontend state
           setArret({
             num_escale: response.data.num_escale,
             dure_arret: response.data.dure_arret,
-            date_DEBUT_arret: response.data.date_DEBUT_arret,
-            date_FIN_arret: response.data.date_FIN_arret,
+            DATE_DEBUT_arret: response.data.DATE_DEBUT_arret,
+            DATE_FIN_arret: response.data.DATE_FIN_arret,
             motif_arret: response.data.motif_arret,
           });
-          
+
           // Find and set the selected escale details
           if (response.data.num_escale) {
-            const escaleDetail = escales.find(e => 
-              (e.num_escale || e.NUM_escale) === response.data.num_escale
+            const escaleDetail = escales.find(
+              (e) => (e.num_escale || e.NUM_escale) === response.data.num_escale
             );
             setSelectedEscaleDetails(escaleDetail);
           }
@@ -64,25 +63,23 @@ const ArretForm = () => {
     }
   }, [id, escales]);
 
-  // Calculate duration in days (as per your backend)
   useEffect(() => {
-    if (arret.date_DEBUT_arret && arret.date_FIN_arret) {
-      const startDate = new Date(arret.date_DEBUT_arret);
-      const endDate = new Date(arret.date_FIN_arret);
+    if (arret.DATE_DEBUT_arret && arret.DATE_FIN_arret) {
+      const startDate = new Date(arret.DATE_DEBUT_arret);
+      const endDate = new Date(arret.DATE_FIN_arret);
       const diffTime = Math.abs(endDate - startDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       setArret((prev) => ({ ...prev, dure_arret: diffDays }));
     }
-  }, [arret.date_DEBUT_arret, arret.date_FIN_arret]);
+  }, [arret.DATE_DEBUT_arret, arret.DATE_FIN_arret]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setArret((prev) => ({ ...prev, [name]: value }));
-    
-    // If escale number changes, update the selected escale details
+
     if (name === "num_escale") {
-      const escaleDetail = escales.find(e => 
-        (e.num_escale || e.NUM_escale) === value
+      const escaleDetail = escales.find(
+        (e) => (e.num_escale || e.NUM_escale) === value
       );
       setSelectedEscaleDetails(escaleDetail);
     }
@@ -93,27 +90,35 @@ const ArretForm = () => {
 
     if (
       !arret.num_escale ||
-      !arret.date_DEBUT_arret ||
-      !arret.date_FIN_arret ||
-      !arret.motif_arret
+      !arret.DATE_DEBUT_arret ||
+      !arret.DATE_FIN_arret ||
+      !arret.motif_arret.trim()
     ) {
-      console.error("All fields are required");
+      alert("All fields are required");
+      return;
+    }
+
+    const startDate = new Date(arret.DATE_DEBUT_arret);
+    const endDate = new Date(arret.DATE_FIN_arret);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      alert("Invalid date format");
+      return;
+    }
+
+    if (endDate <= startDate) {
+      alert("End date must be after start date");
       return;
     }
 
     const formattedData = {
-      num_escale: parseInt(arret.num_escale),
-      date_DEBUT_arret: arret.date_DEBUT_arret,
-      date_FIN_arret: arret.date_FIN_arret,
-      dure_arret: parseInt(arret.dure_arret),
-      motif_arret: arret.motif_arret,
+      DATE_DEBUT_arret: formatDateForBackend(arret.DATE_DEBUT_arret),
+      DATE_FIN_arret: formatDateForBackend(arret.DATE_FIN_arret),
+      motif_arret: arret.motif_arret.trim(),
+      dure_arret: parseInt(arret.dure_arret, 10),
+      num_escale: arret.num_escale.trim(),
     };
 
-    if (formattedData.dure_arret <= 0) {
-      formattedData.dure_arret = 1;
-    }
-
-    console.log("Original arret data:", arret);
     console.log("Formatted data being sent to backend:", formattedData);
 
     try {
@@ -130,12 +135,16 @@ const ArretForm = () => {
       if (error.response) {
         console.error("Status:", error.response.status);
         console.error("Data:", error.response.data);
+        alert(`Error: ${error.response.data.message || "Bad request"}`);
       }
-      return;
     }
   };
 
-  // Format date for display
+  const formatDateForBackend = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().replace("T", " ").substring(0, 19); // Format as "yyyy-MM-dd HH:mm:ss"
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -167,10 +176,9 @@ const ArretForm = () => {
             ))}
           </Select>
         </FormControl>
-        
-        {/* Display selected escale details */}
+
         {selectedEscaleDetails && (
-          <Box sx={{ mt: 2, mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+          <Box sx={{ mt: 2, mb: 2, p: 2, border: "1px solid #e0e0e0", borderRadius: 1 }}>
             <Typography variant="subtitle1" gutterBottom>
               Détails de l'escale sélectionnée:
             </Typography>
@@ -185,12 +193,12 @@ const ArretForm = () => {
             </Typography>
           </Box>
         )}
-        
+
         <TextField
           label="Date Début"
-          name="date_DEBUT_arret"
+          name="DATE_DEBUT_arret"
           type="datetime-local"
-          value={arret.date_DEBUT_arret}
+          value={arret.DATE_DEBUT_arret}
           onChange={handleChange}
           fullWidth
           margin="normal"
@@ -199,9 +207,9 @@ const ArretForm = () => {
         />
         <TextField
           label="Date Fin"
-          name="date_FIN_arret"
+          name="DATE_FIN_arret"
           type="datetime-local"
-          value={arret.date_FIN_arret}
+          value={arret.DATE_FIN_arret}
           onChange={handleChange}
           fullWidth
           margin="normal"
@@ -227,10 +235,10 @@ const ArretForm = () => {
           required
         />
         <Button type="submit" variant="contained" color="primary">
-          sauvegarder
+          Sauvegarder
         </Button>
         <Button component={Link} to="/arrets" sx={{ marginLeft: 2 }}>
-          annuler
+          Annuler
         </Button>
       </form>
     </Container>

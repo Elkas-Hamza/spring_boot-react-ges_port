@@ -7,20 +7,20 @@ class PersonnelService {
     return axios.get(API_URL);
   }
 
-  getPersonnelById(id) {
-    return axios.get(`${API_URL}/${id}`);
+  getPersonnelById(matricule) {
+    return axios.get(`${API_URL}/${matricule}`);
   }
 
   createPersonnel(data) {
     return axios.post(API_URL, data);
   }
 
-  updatePersonnel(id, data) {
-    return axios.put(`${API_URL}/${id}`, data);
+  updatePersonnel(matricule, data) {
+    return axios.put(`${API_URL}/${matricule}`, data);
   }
 
-  deletePersonnel(id) {
-    return axios.delete(`${API_URL}/${id}`);
+  deletePersonnel(matricule) {
+    return axios.delete(`${API_URL}/${matricule}`);
   }
 }
 

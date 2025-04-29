@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/escale";
+const API_URL = "http://localhost:8080/api/escales";
 
 class EscaleService {
   getAllEscales() {

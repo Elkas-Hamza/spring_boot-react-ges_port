@@ -2,19 +2,17 @@ import React from 'react';
 import { TableRow, TableCell, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 
-const SoustraiteureItem = ({ soustraiteure, onDelete, onEdit }) => {
+const SoustraiteureItem = ({ soustraiteure, onDelete }) => {
   return (
     <TableRow>
-      <TableCell>{soustraiteure.id_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.matricule_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.nom_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.prenom_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.fonction_soustraiteure}</TableCell>
       <TableCell align="right">
-        
         <Button
           component={Link}
-          to={`/soustraiteure/edit/${soustraiteure.id_soustraiteure}`}
+          to={`/soustraiteure/edit/${soustraiteure.matricule_soustraiteure}`}
           color="primary"
           sx={{ mr: 1 }}
         >

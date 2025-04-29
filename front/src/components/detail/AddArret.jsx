@@ -154,13 +154,23 @@ const ArretForm = () => {
     }
 
     try {
+      // Format dates for backend
+      const formatDateForBackend = (dateString) => {
+        const date = new Date(dateString);
+        return date.toISOString().replace('T', ' ').slice(0, 19);
+      };
+
       const formattedData = {
-        num_escale: parseInt(arret.num_escale),
-        date_DEBUT_arret: arret.date_DEBUT_arret,
-        date_FIN_arret: arret.date_FIN_arret,
+        num_escale: arret.num_escale, // Send as string, not parseInt
+        DATE_DEBUT_arret: formatDateForBackend(arret.date_DEBUT_arret),
+        DATE_FIN_arret: formatDateForBackend(arret.date_FIN_arret),
+        date_DEBUT_arret: arret.date_DEBUT_arret, // Keep original format too
+        date_FIN_arret: arret.date_FIN_arret, // Keep original format too
         dure_arret: parseInt(arret.dure_arret) || 1,
         motif_arret: arret.motif_arret,
       };
+
+      console.log("Formatted data being sent to backend:", formattedData);
 
       if (arretId) {
         await ArretService.updateArret(arretId, formattedData);
@@ -179,7 +189,7 @@ const ArretForm = () => {
       }
 
       // Redirect after a short delay to show notification
-      setTimeout(() => navigate("/arret"), 1000);
+      setTimeout(() => navigate(`/escale/${arret.num_escale}`), 1000);
     } catch (err) {
       console.error("Error saving arrêt:", err);
       setNotification({

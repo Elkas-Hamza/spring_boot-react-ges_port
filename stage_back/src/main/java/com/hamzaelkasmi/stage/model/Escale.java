@@ -1,33 +1,37 @@
 package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "escale")
 public class Escale {
+
     @Id
-    @Column(name = "num_escale")
-    private int num_escale;
+    @GeneratedValue(generator = "escale-id-generator")
+    @GenericGenerator(
+            name = "escale-id-generator",
+            strategy = "com.hamzaelkasmi.stage.generateure.EscaleIdGenerator"
+    )
+    @Column(name = "NUM_escale", nullable = false, unique = true)
+    private String num_escale;
 
     @Column(name = "NOM_navire", nullable = false, length = 256)
     private String NOM_navire;
 
     @Column(name = "DATE_accostage", nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime DATE_accostage;
 
     @Column(name = "DATE_sortie", nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime DATE_sortie;
 
     // Getters and Setters
-    public int getnum_escale() {
+    public String getNUM_escale() {
         return num_escale;
     }
 
-    public void setnum_escale(int num_escale) {
+    public void setNUM_escale(String num_escale) {
         this.num_escale = num_escale;
     }
 
@@ -54,4 +58,5 @@ public class Escale {
     public void setDATE_sortie(LocalDateTime DATE_sortie) {
         this.DATE_sortie = DATE_sortie;
     }
+
 }

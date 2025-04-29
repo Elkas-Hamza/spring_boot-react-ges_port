@@ -18,7 +18,7 @@ public class ArretService {
         return arretRepository.findAll();
     }
 
-    public Optional<Arret> getArretById(int id) {
+    public Optional<Arret> getArretById(String id) {
         return arretRepository.findById(id);
     }
 
@@ -26,7 +26,7 @@ public class ArretService {
         return arretRepository.save(arret);
     }
 
-    public void deleteArret(int id) {
+    public void deleteArret(String id) {
         arretRepository.deleteById(id);
     }
 }

@@ -1,26 +1,30 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/soustraiteure';
+// Create an axios instance with CORS credentials support
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:8080/api/soustraiteurs',
+  withCredentials: true
+});
 
 class SoustraiteureService {
   getAllSoustraiteure() {
-    return axios.get(API_URL);
+    return axiosInstance.get('');
   }
 
-  getSoustraiteureById(id) {
-    return axios.get(`${API_URL}/${id}`);
+  getSoustraiteureById(matricule) {
+    return axiosInstance.get(`/${matricule}`);
   }
 
   createSoustraiteure(data) {
-    return axios.post(API_URL, data);
+    return axiosInstance.post('', data);
   }
 
-  updateSoustraiteure(id, data) {
-    return axios.put(`${API_URL}/${id}`, data);
+  updateSoustraiteure(matricule, data) {
+    return axiosInstance.put(`/${matricule}`, data);
   }
 
-  deleteSoustraiteure(id) {
-    return axios.delete(`${API_URL}/${id}`);
+  deleteSoustraiteure(matricule) {
+    return axiosInstance.delete(`/${matricule}`);
   }
 }
 

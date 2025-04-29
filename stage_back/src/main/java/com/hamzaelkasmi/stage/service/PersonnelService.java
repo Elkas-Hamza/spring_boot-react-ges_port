@@ -17,19 +17,15 @@ public class PersonnelService {
         return personnelRepository.findAll();
     }
 
-    public Optional<Personnel> getPersonnelById(int id) {
-        return personnelRepository.findById(id);
-    }
-
-    public Personnel getPersonnelByMatricule(String matricule) {
-        return personnelRepository.findByMatriculePersonnel(matricule).orElse(null);
+    public Optional<Personnel> getPersonnelById(String matricule) {
+        return personnelRepository.findById(matricule);
     }
 
     public Personnel savePersonnel(Personnel personnel) {
         return personnelRepository.save(personnel);
     }
 
-    public void deletePersonnel(int id) {
-        personnelRepository.deleteById(id);
+    public void deletePersonnel(String matricule) {
+        personnelRepository.deleteById(matricule);
     }
 }
