@@ -187,7 +187,7 @@ const EscaleForm = () => {
         <Alert
           onClose={handleCloseNotification}
           severity={notification.severity}
-          sx={{ width: "100%" }}
+          variant="filled"
         >
           {notification.message}
         </Alert>

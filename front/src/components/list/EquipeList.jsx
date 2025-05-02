@@ -176,32 +176,32 @@ const EquipeList = () => {
                     <TableCell>
                       <Box sx={{ display: "flex" }}>
                         <Tooltip title="Voir détails">
-                          <IconButton
+                          <Button
                             color="info"
                             onClick={() =>
                               navigate(`/equipes/${equipe.id_equipe}`)
                             }
                           >
-                            <Visibility />
-                          </IconButton>
+                            detail
+                          </Button>
                         </Tooltip>
                         <Tooltip title="Modifier">
-                          <IconButton
+                          <Button
                             color="primary"
                             onClick={() =>
                               navigate(`/equipes/edit/${equipe.id_equipe}`)
                             }
                           >
-                            <Edit />
-                          </IconButton>
+                            Modifier
+                          </Button>
                         </Tooltip>
                         <Tooltip title="Supprimer">
-                          <IconButton
+                          <Button
                             color="error"
                             onClick={() => handleDelete(equipe.id_equipe)}
                           >
-                            <Delete />
-                          </IconButton>
+                            supprimer
+                          </Button>
                         </Tooltip>
                       </Box>
                     </TableCell>

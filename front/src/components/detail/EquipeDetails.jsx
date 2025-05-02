@@ -24,7 +24,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
 } from "@mui/material";
 import { ArrowBack, Delete, Add } from "@mui/icons-material";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -70,7 +70,8 @@ const EquipeDetails = () => {
           console.error("Error in retry fetch:", retryError);
           setNotification({
             open: true,
-            message: "Erreur lors du chargement de l'équipe après plusieurs tentatives",
+            message:
+              "Erreur lors du chargement de l'équipe après plusieurs tentatives",
             severity: "error",
           });
         }
@@ -112,24 +113,24 @@ const EquipeDetails = () => {
 
   useEffect(() => {
     setLoading(true);
-    
+
     Promise.all([
       fetchEquipe(),
       fetchOperations(),
       fetchPersonnel(),
-      fetchSoustraiteurs()
+      fetchSoustraiteurs(),
     ])
-    .catch(error => {
-      console.error("Error loading details:", error);
-      setNotification({
-        open: true,
-        message: "Erreur lors du chargement des données",
-        severity: "error",
+      .catch((error) => {
+        console.error("Error loading details:", error);
+        setNotification({
+          open: true,
+          message: "Erreur lors du chargement des données",
+          severity: "error",
+        });
+      })
+      .finally(() => {
+        setLoading(false);
       });
-    })
-    .finally(() => {
-      setLoading(false);
-    });
   }, [fetchEquipe, fetchOperations, fetchPersonnel, fetchSoustraiteurs]);
 
   const handleSelectPersonnel = (e) => {
@@ -141,30 +142,45 @@ const EquipeDetails = () => {
   };
 
   const isPersonnelAlreadySelected = (personnelId) => {
-    return equipe?.personnel && equipe.personnel.some(p => p.matricule_personnel === personnelId);
+    return (
+      equipe?.personnel &&
+      equipe.personnel.some((p) => p.matricule_personnel === personnelId)
+    );
   };
 
   const isSoustraiteurAlreadySelected = (soustraiteurId) => {
-    return equipe?.soustraiteurs && equipe.soustraiteurs.some(s => s.matricule_soustraiteure === soustraiteurId);
+    return (
+      equipe?.soustraiteurs &&
+      equipe.soustraiteurs.some(
+        (s) => s.matricule_soustraiteure === soustraiteurId
+      )
+    );
   };
 
   const addPersonnel = async () => {
     if (!selectedPersonnel) return;
-    
+
     try {
-      const selectedPersonnelData = availablePersonnel.find(p => p.matricule_personnel === selectedPersonnel);
+      const selectedPersonnelData = availablePersonnel.find(
+        (p) => p.matricule_personnel === selectedPersonnel
+      );
       if (!selectedPersonnelData) {
         throw new Error("Personnel not found in the available list");
       }
-      
-      console.log(`Attempting to add personnel with ID: ${selectedPersonnel} to equipe: ${id}`);
-      
-      const response = await EquipeService.addPersonnelToEquipe(id, selectedPersonnel);
+
+      console.log(
+        `Attempting to add personnel with ID: ${selectedPersonnel} to equipe: ${id}`
+      );
+
+      const response = await EquipeService.addPersonnelToEquipe(
+        id,
+        selectedPersonnel
+      );
       console.log("Successfully added personnel", response.data);
-      
+
       await fetchEquipe();
       setSelectedPersonnel("");
-      
+
       setNotification({
         open: true,
         message: "Personnel ajouté avec succès",
@@ -180,7 +196,7 @@ const EquipeDetails = () => {
       } else if (error.message) {
         errorMessage += `: ${error.message}`;
       }
-      
+
       setNotification({
         open: true,
         message: errorMessage,
@@ -193,7 +209,7 @@ const EquipeDetails = () => {
     try {
       await EquipeService.removePersonnelFromEquipe(id, personnelId);
       await fetchEquipe();
-      
+
       setNotification({
         open: true,
         message: "Personnel retiré avec succès",
@@ -211,21 +227,28 @@ const EquipeDetails = () => {
 
   const addSoustraiteur = async () => {
     if (!selectedSoustraiteur) return;
-    
+
     try {
-      const selectedSoustraiteurData = availableSoustraiteurs.find(s => s.matricule_soustraiteure === selectedSoustraiteur);
+      const selectedSoustraiteurData = availableSoustraiteurs.find(
+        (s) => s.matricule_soustraiteure === selectedSoustraiteur
+      );
       if (!selectedSoustraiteurData) {
         throw new Error("Soustraiteur not found in the available list");
       }
-      
-      console.log(`Attempting to add soustraiteur with ID: ${selectedSoustraiteur} to equipe: ${id}`);
-      
-      const response = await EquipeService.addSoustraiteurToEquipe(id, selectedSoustraiteur);
+
+      console.log(
+        `Attempting to add soustraiteur with ID: ${selectedSoustraiteur} to equipe: ${id}`
+      );
+
+      const response = await EquipeService.addSoustraiteurToEquipe(
+        id,
+        selectedSoustraiteur
+      );
       console.log("Successfully added soustraiteur", response.data);
-      
+
       await fetchEquipe();
       setSelectedSoustraiteur("");
-      
+
       setNotification({
         open: true,
         message: "Sous-traiteur ajouté avec succès",
@@ -241,7 +264,7 @@ const EquipeDetails = () => {
       } else if (error.message) {
         errorMessage += `: ${error.message}`;
       }
-      
+
       setNotification({
         open: true,
         message: errorMessage,
@@ -254,7 +277,7 @@ const EquipeDetails = () => {
     try {
       await EquipeService.removeSoustraiteurFromEquipe(id, soustraiteurId);
       await fetchEquipe();
-      
+
       setNotification({
         open: true,
         message: "Sous-traiteur retiré avec succès",
@@ -349,13 +372,20 @@ const EquipeDetails = () => {
         </Box>
         <Box sx={{ mb: 1 }}>
           <Typography variant="body1">
-            <strong>nombre de membres:</strong> {(equipe.personnel ? equipe.personnel.length : 0) + 
-                       (equipe.soustraiteurs ? equipe.soustraiteurs.length : 0)}
+            <strong>nombre de membres:</strong>{" "}
+            {(equipe.personnel ? equipe.personnel.length : 0) +
+              (equipe.soustraiteurs ? equipe.soustraiteurs.length : 0)}
           </Typography>
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <Button component={Link} to={`/equipes/edit/${id}`} variant="contained" color="primary" sx={{ mr: 1 }}>
+          <Button
+            component={Link}
+            to={`/equipes/edit/${id}`}
+            variant="contained"
+            color="primary"
+            sx={{ mr: 1 }}
+          >
             Modifier
           </Button>
           <Button component={Link} to="/equipes" variant="outlined">
@@ -374,7 +404,6 @@ const EquipeDetails = () => {
         }}
       >
         <Typography variant="h5">Opérations</Typography>
-
       </Box>
 
       <TableContainer component={Paper} elevation={3} sx={{ mb: 4 }}>
@@ -413,7 +442,9 @@ const EquipeDetails = () => {
                     </Button>
                     <Button
                       color="error"
-                      onClick={() => handleDeleteOperation(operation.id_operation)}
+                      onClick={() =>
+                        handleDeleteOperation(operation.id_operation)
+                      }
                     >
                       Supprimer
                     </Button>
@@ -433,12 +464,18 @@ const EquipeDetails = () => {
 
       {/* Membres Section */}
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        ></Box>
         <Typography variant="h5" gutterBottom>
           Personnel
         </Typography>
-        
+
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <FormControl sx={{ flexGrow: 1 }}>
             <InputLabel id="personnel-select-label">Personnel</InputLabel>
@@ -453,14 +490,18 @@ const EquipeDetails = () => {
                 <em>Sélectionner un membre du personnel</em>
               </MenuItem>
               {availablePersonnel.map((person) => (
-                <MenuItem 
-                  key={person.matricule_personnel} 
+                <MenuItem
+                  key={person.matricule_personnel}
                   value={person.matricule_personnel}
-                  disabled={isPersonnelAlreadySelected(person.matricule_personnel)}
+                  disabled={isPersonnelAlreadySelected(
+                    person.matricule_personnel
+                  )}
                   sx={{ py: 1.5 }}
                 >
-                  {person.prenom_personnel} {person.nom_personnel} ({person.matricule_personnel})
-                  {isPersonnelAlreadySelected(person.matricule_personnel) && " - Déjà ajouté"}
+                  {person.prenom_personnel} {person.nom_personnel} (
+                  {person.matricule_personnel})
+                  {isPersonnelAlreadySelected(person.matricule_personnel) &&
+                    " - Déjà ajouté"}
                 </MenuItem>
               ))}
             </Select>
@@ -470,13 +511,13 @@ const EquipeDetails = () => {
             color="primary"
             startIcon={<Add />}
             onClick={addPersonnel}
-            sx={{ height: '56px', minWidth: '150px' }}
+            sx={{ height: "56px", minWidth: "150px" }}
             disabled={!selectedPersonnel}
           >
             Ajouter
           </Button>
         </Box>
-        
+
         <TableContainer component={Paper} elevation={2} sx={{ mb: 3 }}>
           <Table>
             <TableHead>
@@ -497,11 +538,19 @@ const EquipeDetails = () => {
                     <TableCell>{person.nom_personnel}</TableCell>
                     <TableCell>{person.prenom_personnel}</TableCell>
                     <TableCell>{person.fonction_personnel}</TableCell>
-                    <TableCell>{person.CONTACT_personnel || "Non spécifié"}</TableCell>
                     <TableCell>
-                      <IconButton edge="end" color="error" onClick={() => removePersonnel(person.matricule_personnel)}>
-                        <Delete />
-                      </IconButton>
+                      {person.CONTACT_personnel || "Non spécifié"}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        edge="end"
+                        color="error"
+                        onClick={() =>
+                          removePersonnel(person.matricule_personnel)
+                        }
+                      >
+                        supprimer
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -515,16 +564,18 @@ const EquipeDetails = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <Divider sx={{ my: 3 }} />
-        
+
         <Typography variant="h5" gutterBottom>
           Sous-traiteurs
         </Typography>
-        
+
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <FormControl sx={{ flexGrow: 1 }}>
-            <InputLabel id="soustraiteur-select-label">Sous-traiteur</InputLabel>
+            <InputLabel id="soustraiteur-select-label">
+              Sous-traiteur
+            </InputLabel>
             <Select
               labelId="soustraiteur-select-label"
               value={selectedSoustraiteur}
@@ -536,14 +587,20 @@ const EquipeDetails = () => {
                 <em>Sélectionner un sous-traiteur</em>
               </MenuItem>
               {availableSoustraiteurs.map((soustraiteur) => (
-                <MenuItem 
-                  key={soustraiteur.matricule_soustraiteure} 
+                <MenuItem
+                  key={soustraiteur.matricule_soustraiteure}
                   value={soustraiteur.matricule_soustraiteure}
-                  disabled={isSoustraiteurAlreadySelected(soustraiteur.matricule_soustraiteure)}
+                  disabled={isSoustraiteurAlreadySelected(
+                    soustraiteur.matricule_soustraiteure
+                  )}
                   sx={{ py: 1.5 }}
                 >
-                  {soustraiteur.prenom_soustraiteure} {soustraiteur.nom_soustraiteure} ({soustraiteur.matricule_soustraiteure})
-                  {isSoustraiteurAlreadySelected(soustraiteur.matricule_soustraiteure) && " - Déjà ajouté"}
+                  {soustraiteur.prenom_soustraiteure}{" "}
+                  {soustraiteur.nom_soustraiteure} (
+                  {soustraiteur.matricule_soustraiteure})
+                  {isSoustraiteurAlreadySelected(
+                    soustraiteur.matricule_soustraiteure
+                  ) && " - Déjà ajouté"}
                 </MenuItem>
               ))}
             </Select>
@@ -553,13 +610,13 @@ const EquipeDetails = () => {
             color="primary"
             startIcon={<Add />}
             onClick={addSoustraiteur}
-            sx={{ height: '56px', minWidth: '150px' }}
+            sx={{ height: "56px", minWidth: "150px" }}
             disabled={!selectedSoustraiteur}
           >
             Ajouter
           </Button>
         </Box>
-        
+
         <TableContainer component={Paper} elevation={2} sx={{ mb: 3 }}>
           <Table>
             <TableHead>
@@ -577,16 +634,30 @@ const EquipeDetails = () => {
               {(equipe.soustraiteurs || []).length > 0 ? (
                 equipe.soustraiteurs.map((soustraiteur) => (
                   <TableRow key={soustraiteur.matricule_soustraiteure}>
-                    <TableCell>{soustraiteur.matricule_soustraiteure}</TableCell>
+                    <TableCell>
+                      {soustraiteur.matricule_soustraiteure}
+                    </TableCell>
                     <TableCell>{soustraiteur.nom_soustraiteure}</TableCell>
                     <TableCell>{soustraiteur.prenom_soustraiteure}</TableCell>
                     <TableCell>{soustraiteur.fonction_soustraiteure}</TableCell>
-                    <TableCell>{soustraiteur.ENTREPRISE_soustraiteure || "Non spécifiée"}</TableCell>
-                    <TableCell>{soustraiteur.CONTACT_soustraiteure || "Non spécifié"}</TableCell>
                     <TableCell>
-                      <IconButton edge="end" color="error" onClick={() => removeSoustraiteur(soustraiteur.matricule_soustraiteure)}>
-                        <Delete />
-                      </IconButton>
+                      {soustraiteur.ENTREPRISE_soustraiteure || "Non spécifiée"}
+                    </TableCell>
+                    <TableCell>
+                      {soustraiteur.CONTACT_soustraiteure || "Non spécifié"}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        edge="end"
+                        color="error"
+                        onClick={() =>
+                          removeSoustraiteur(
+                            soustraiteur.matricule_soustraiteure
+                          )
+                        }
+                      >
+                        supprimer
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -606,9 +677,13 @@ const EquipeDetails = () => {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          variant="filled"
+        >
           {notification.message}
         </Alert>
       </Snackbar>
@@ -616,4 +691,4 @@ const EquipeDetails = () => {
   );
 };
 
-export default EquipeDetails; 
+export default EquipeDetails;

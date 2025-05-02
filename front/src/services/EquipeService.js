@@ -1,12 +1,10 @@
 import axios from "axios";
 
-// Create axios instance with interceptors for debugging
 const axiosInstance = axios.create({
   baseURL: "http://localhost:8080/api/equipes",
   withCredentials: true,
 });
 
-// Add request/response interceptors for debugging
 axiosInstance.interceptors.request.use((request) => {
   console.log("Starting Request", request);
   return request;
@@ -67,7 +65,6 @@ class EquipeService {
   addPersonnelToEquipe(equipeId, personnelId) {
     console.log(`Adding personnel ${personnelId} to equipe ${equipeId}`);
 
-    // Use the direct API URL to ensure the path is correct
     return axios.post(
       `http://localhost:8080/api/equipes/${equipeId}/personnel`,
       {

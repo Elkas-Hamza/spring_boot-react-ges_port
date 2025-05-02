@@ -140,7 +140,6 @@ const OperationForm = () => {
       return [];
     }
   };
-
   const fetchEngins = async () => {
     try {
       const enginsResponse = await axios.get(
@@ -154,7 +153,6 @@ const OperationForm = () => {
       return [];
     }
   };
-
   const fetchEquipes = async () => {
     try {
       const equipesResponse = await axios.get(
@@ -168,15 +166,12 @@ const OperationForm = () => {
       return [];
     }
   };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setOperation((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (
       !operation.id_shift ||
       !operation.id_escale ||
@@ -194,7 +189,6 @@ const OperationForm = () => {
       });
       return;
     }
-
     // Check that end datetime is after start datetime
     if (new Date(operation.date_debut) >= new Date(operation.date_fin)) {
       console.error("End time must be after start time");
@@ -205,7 +199,6 @@ const OperationForm = () => {
       });
       return;
     }
-
     const formattedData = {
       id_shift: operation.id_shift,
       id_escale: operation.id_escale,
@@ -215,9 +208,7 @@ const OperationForm = () => {
       date_debut: operation.date_debut,
       date_fin: operation.date_fin,
     };
-
     console.log("Formatted data:", formattedData);
-
     try {
       if (id) {
         await OperationService.updateOperation(id, formattedData);
@@ -245,11 +236,9 @@ const OperationForm = () => {
       });
     }
   };
-
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
-
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
@@ -257,14 +246,12 @@ const OperationForm = () => {
       </Box>
     );
   }
-
   return (
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Typography variant="h5" component="h2" gutterBottom>
           {id ? "Modifier Opération" : "Créer Opération"}
         </Typography>
-
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
           <TextField
             select
@@ -283,7 +270,6 @@ const OperationForm = () => {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             label="Escale"
@@ -301,7 +287,6 @@ const OperationForm = () => {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             label="Conteneur"
@@ -322,7 +307,6 @@ const OperationForm = () => {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             label="Engin"
@@ -340,7 +324,6 @@ const OperationForm = () => {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             label="Équipe"
@@ -358,7 +341,6 @@ const OperationForm = () => {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             label="Date/Heure de début"
             name="date_debut"
@@ -372,7 +354,6 @@ const OperationForm = () => {
               shrink: true,
             }}
           />
-
           <TextField
             label="Date/Heure de fin"
             name="date_fin"
@@ -386,7 +367,6 @@ const OperationForm = () => {
               shrink: true,
             }}
           />
-
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
             <Button
               component={Link}
@@ -402,17 +382,16 @@ const OperationForm = () => {
           </Box>
         </Box>
       </Paper>
-
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={handleCloseNotification}
           severity={notification.severity}
-          sx={{ width: "100%" }}
+          variant="filled"
         >
           {notification.message}
         </Alert>

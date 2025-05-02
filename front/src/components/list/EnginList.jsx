@@ -131,17 +131,15 @@ const EnginList = () => {
                       component={Link}
                       to={`/engins/edit/${engin.id_engin}`}
                       color="primary"
-                      startIcon={<EditIcon />}
                       sx={{ mr: 1 }}
                     >
-                      Edit
+                      Modifier
                     </Button>
                     <Button
                       color="error"
-                      startIcon={<DeleteIcon />}
                       onClick={() => handleDelete(engin.id_engin)}
                     >
-                      Delete
+                      supprimer
                     </Button>
                   </TableCell>
                 </TableRow>

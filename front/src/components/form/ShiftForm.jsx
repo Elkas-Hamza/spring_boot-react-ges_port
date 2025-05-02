@@ -76,14 +76,14 @@ const ShiftForm = () => {
     }
 
     // Validate times
-    if (shift.heure_debut >= shift.heure_fin) {
-      setNotification({
-        open: true,
-        message: "L'heure de fin doit être après l'heure de début",
-        severity: "error",
-      });
-      return;
-    }
+    // if (shift.heure_debut >= shift.heure_fin) {
+    //   setNotification({
+    //     open: true,
+    //     message: "L'heure de fin doit être après l'heure de début",
+    //     severity: "error",
+    //   });
+    //   return;
+    // }
 
     try {
       setLoading(true);
@@ -187,7 +187,7 @@ const ShiftForm = () => {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={handleCloseNotification}
