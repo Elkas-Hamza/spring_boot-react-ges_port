@@ -20,6 +20,12 @@ public class Soustraiteure {
 
     @Column(name = "FONCTION_soustraiteure", nullable = false, length = 45)
     private String FONCTION_soustraiteure;
+    
+    @Column(name = "CONTACT_soustraiteure", length = 45)
+    private String CONTACT_soustraiteure;
+    
+    @Column(name = "ENTREPRISE_soustraiteure", length = 100)
+    private String ENTREPRISE_soustraiteure;
 
     // Constructors
     public Soustraiteure() {
@@ -30,6 +36,15 @@ public class Soustraiteure {
         this.PRENOM_soustraiteure = PRENOM_soustraiteure;
         this.FONCTION_soustraiteure = FONCTION_soustraiteure;
     }
+    
+    public Soustraiteure(String NOM_soustraiteure, String PRENOM_soustraiteure, String FONCTION_soustraiteure, 
+                        String CONTACT_soustraiteure, String ENTREPRISE_soustraiteure) {
+        this.NOM_soustraiteure = NOM_soustraiteure;
+        this.PRENOM_soustraiteure = PRENOM_soustraiteure;
+        this.FONCTION_soustraiteure = FONCTION_soustraiteure;
+        this.CONTACT_soustraiteure = CONTACT_soustraiteure;
+        this.ENTREPRISE_soustraiteure = ENTREPRISE_soustraiteure;
+    }
 
     // Constructor with matricule (for updates)
     public Soustraiteure(String MATRICULE_soustraiteure, String NOM_soustraiteure, String PRENOM_soustraiteure, String FONCTION_soustraiteure) {
@@ -37,6 +52,16 @@ public class Soustraiteure {
         this.NOM_soustraiteure = NOM_soustraiteure;
         this.PRENOM_soustraiteure = PRENOM_soustraiteure;
         this.FONCTION_soustraiteure = FONCTION_soustraiteure;
+    }
+    
+    public Soustraiteure(String MATRICULE_soustraiteure, String NOM_soustraiteure, String PRENOM_soustraiteure, 
+                        String FONCTION_soustraiteure, String CONTACT_soustraiteure, String ENTREPRISE_soustraiteure) {
+        this.MATRICULE_soustraiteure = MATRICULE_soustraiteure;
+        this.NOM_soustraiteure = NOM_soustraiteure;
+        this.PRENOM_soustraiteure = PRENOM_soustraiteure;
+        this.FONCTION_soustraiteure = FONCTION_soustraiteure;
+        this.CONTACT_soustraiteure = CONTACT_soustraiteure;
+        this.ENTREPRISE_soustraiteure = ENTREPRISE_soustraiteure;
     }
 
     // Getters and Setters
@@ -71,6 +96,22 @@ public class Soustraiteure {
     public void setFONCTION_soustraiteure(String FONCTION_soustraiteure) {
         this.FONCTION_soustraiteure = FONCTION_soustraiteure;
     }
+    
+    public String getCONTACT_soustraiteure() {
+        return CONTACT_soustraiteure;
+    }
+    
+    public void setCONTACT_soustraiteure(String CONTACT_soustraiteure) {
+        this.CONTACT_soustraiteure = CONTACT_soustraiteure;
+    }
+    
+    public String getENTREPRISE_soustraiteure() {
+        return ENTREPRISE_soustraiteure;
+    }
+    
+    public void setENTREPRISE_soustraiteure(String ENTREPRISE_soustraiteure) {
+        this.ENTREPRISE_soustraiteure = ENTREPRISE_soustraiteure;
+    }
 
     // toString method
     @Override
@@ -80,6 +121,8 @@ public class Soustraiteure {
                 ", NOM_soustraiteure='" + NOM_soustraiteure + '\'' +
                 ", PRENOM_soustraiteure='" + PRENOM_soustraiteure + '\'' +
                 ", FONCTION_soustraiteure='" + FONCTION_soustraiteure + '\'' +
+                ", CONTACT_soustraiteure='" + CONTACT_soustraiteure + '\'' +
+                ", ENTREPRISE_soustraiteure='" + ENTREPRISE_soustraiteure + '\'' +
                 '}';
     }
 }

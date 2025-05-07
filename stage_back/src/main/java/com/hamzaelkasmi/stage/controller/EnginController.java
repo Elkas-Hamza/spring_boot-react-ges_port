@@ -5,10 +5,14 @@ import com.hamzaelkasmi.stage.service.EnginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/engins")
@@ -19,13 +23,20 @@ public class EnginController {
     private EnginService enginService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<Engin>> getAllEngins() {
         List<Engin> engins = enginService.getAllEngins();
         return new ResponseEntity<>(engins, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Engin> getEnginById(@PathVariable("id") String id) {
+        // Check if this is a comma-separated list
+        if (id.contains(",")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
         Optional<Engin> enginData = enginService.getEnginById(id);
         if (enginData.isPresent()) {
             return new ResponseEntity<>(enginData.get(), HttpStatus.OK);
@@ -33,8 +44,27 @@ public class EnginController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    
+    @GetMapping("/multiple/{ids}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<Engin>> getEnginsByIds(@PathVariable("ids") String ids) {
+        List<String> idList = Arrays.asList(ids.split(","));
+        List<Engin> engins = new ArrayList<>();
+        
+        for (String id : idList) {
+            Optional<Engin> engin = enginService.getEnginById(id.trim());
+            engin.ifPresent(engins::add);
+        }
+        
+        if (engins.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        return new ResponseEntity<>(engins, HttpStatus.OK);
+    }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Engin> createEngin(@RequestBody Engin engin) {
         try {
             Engin _engin = enginService.saveEngin(engin);
@@ -45,6 +75,7 @@ public class EnginController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Engin> updateEngin(@PathVariable("id") String id, @RequestBody Engin engin) {
         Optional<Engin> enginData = enginService.getEnginById(id);
         if (enginData.isPresent()) {
@@ -57,6 +88,7 @@ public class EnginController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HttpStatus> deleteEngin(@PathVariable("id") String id) {
         try {
             enginService.deleteEngin(id);

@@ -1,5 +1,6 @@
 package com.hamzaelkasmi.stage.controller;
 
+import com.hamzaelkasmi.stage.dto.OperationWithDetailsDTO;
 import com.hamzaelkasmi.stage.model.Operation;
 import com.hamzaelkasmi.stage.service.OperationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,22 @@ public class OperationController {
     public List<Operation> getAllOperations() {
         return operationService.getAllOperations();
     }
+    
+    @GetMapping("/with-details")
+    public List<OperationWithDetailsDTO> getAllOperationsWithDetails() {
+        return operationService.getAllOperationsWithDetails();
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Operation> getOperationById(@PathVariable("id") String id) {
         return operationService.getOperationById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/{id}/with-details")
+    public ResponseEntity<OperationWithDetailsDTO> getOperationWithDetailsById(@PathVariable("id") String id) {
+        return operationService.getOperationWithDetailsById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -77,13 +90,13 @@ public class OperationController {
 
     private boolean isOperationValid(Operation operation) {
         return operation != null &&
+                operation.getNom_operation() != null &&
+                !operation.getNom_operation().trim().isEmpty() &&
                 operation.getId_shift() != null &&
                 operation.getId_escale() != null &&
                 !operation.getId_escale().trim().isEmpty() &&
-                operation.getId_conteneure() != null &&
-                !operation.getId_conteneure().trim().isEmpty() &&
-                operation.getId_engin() != null &&
-                !operation.getId_engin().trim().isEmpty() &&
+                operation.getId_equipe() != null &&
+                !operation.getId_equipe().trim().isEmpty() &&
                 operation.getDate_debut() != null &&
                 operation.getDate_fin() != null;
     }

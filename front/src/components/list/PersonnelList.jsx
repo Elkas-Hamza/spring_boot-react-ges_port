@@ -24,6 +24,8 @@ import { Add as AddIcon } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import PersonnelItem from "../item/PersonnelItem";
 import PersonnelService from "../../services/PersonnelService";
+import ErrorHandler from "../common/ErrorHandler";
+import AuthService from "../../services/AuthService";
 
 const PersonnelList = () => {
   const [personnel, setPersonnel] = useState([]);
@@ -46,7 +48,7 @@ const PersonnelList = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = personnel.filter((p) =>
-        `${p.matricule_personnel} ${p.nom_personnel} ${p.prenom_personnel} ${p.fonction_personnel}`
+        `${p.matricule_personnel} ${p.nom_personnel} ${p.prenom_personnel} ${p.fonction_personnel} ${p.contact_personnel || ''}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       );
@@ -59,13 +61,24 @@ const PersonnelList = () => {
   const fetchPersonnel = async () => {
     setLoading(true);
     try {
+      // Verify token validity before making request
+      const isValid = await AuthService.verifyToken();
+      if (!isValid) {
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        return;
+      }
+      
       const response = await PersonnelService.getAllPersonnel();
       setPersonnel(response.data);
       setFilteredPersonnel(response.data);
       setError(null);
     } catch (err) {
       console.error("Error fetching personnel:", err);
-      setError("Erreur lors du chargement des données. Veuillez réessayer.");
+      if (err.response && err.response.status === 403) {
+        setError("Vous n'avez pas l'autorisation d'accéder à ces données.");
+      } else {
+        setError("Erreur lors du chargement des données. Veuillez réessayer.");
+      }
     } finally {
       setLoading(false);
     }
@@ -103,7 +116,7 @@ const PersonnelList = () => {
         severity: "success",
       });
     } catch (err) {
-      console.error("Error deleting personnel:", err);
+      console.error("Erreur lors de la suppression:", err);
       setNotification({
         open: true,
         message: "Erreur lors de la suppression",
@@ -149,46 +162,48 @@ const PersonnelList = () => {
         sx={{ mb: 3 }}
       />
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      ) : (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Matricule</TableCell>
-                <TableCell>Nom</TableCell>
-                <TableCell>Prénom</TableCell>
-                <TableCell>Fonction</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPersonnel.length > 0 ? (
-                filteredPersonnel.map((person) => (
-                  <PersonnelItem
-                    key={person.matricule_personnel}
-                    personnel={person}
-                    onDelete={handleOpenDeleteDialog}
-                  />
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    Aucun personnel trouvé
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
       )}
+
+      {error && (
+        <ErrorHandler 
+          message={error} 
+          onRetry={fetchPersonnel} 
+        />
+      )}
+
+      {!loading && !error && filteredPersonnel.length === 0 && (
+        <Typography sx={{ textAlign: "center", my: 4 }} color="text.secondary">
+          Aucun personnel trouvé
+        </Typography>
+      )}
+
+      <TableContainer component={Paper} elevation={3}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Matricule</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Prénom</TableCell>
+              <TableCell>Fonction</TableCell>
+              <TableCell>Contact</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredPersonnel.map((person) => (
+              <PersonnelItem
+                key={person.matricule_personnel}
+                personnel={person}
+                onDelete={handleOpenDeleteDialog}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       <Dialog open={deleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirmer la suppression</DialogTitle>

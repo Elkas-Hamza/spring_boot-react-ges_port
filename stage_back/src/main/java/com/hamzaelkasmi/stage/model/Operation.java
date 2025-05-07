@@ -13,16 +13,19 @@ public class Operation {
     @Column(name = "ID_operation")
     private String id_operation;
 
+    @Column(name = "NOM_operation")
+    private String nom_operation;
+
     @Column(name = "ID_shift")
     private String id_shift;
 
     @Column(name = "ID_escale", nullable = false)
     private String id_escale;
 
-    @Column(name = "ID_conteneure", nullable = false)
+    @Column(name = "ID_conteneure", columnDefinition = "TEXT")
     private String id_conteneure;
 
-    @Column(name = "ID_engin", nullable = false)
+    @Column(name = "ID_engin", columnDefinition = "TEXT")
     private String id_engin;
     
     @Column(name = "ID_equipe", nullable = false)
@@ -34,13 +37,17 @@ public class Operation {
     @Column(name = "DATE_fin", nullable = false)
     private LocalDateTime date_fin;
 
+    @Column(name = "status")
+    private String status = "En cours";
+
     // Constructors
     public Operation() {
     }
 
-    public Operation(String id_shift, String id_escale, String id_conteneure, 
+    public Operation(String nom_operation, String id_shift, String id_escale, String id_conteneure, 
                     String id_engin, String id_equipe, 
-                    LocalDateTime date_debut, LocalDateTime date_fin) {
+                    LocalDateTime date_debut, LocalDateTime date_fin, String status) {
+        this.nom_operation = nom_operation;
         this.id_shift = id_shift;
         this.id_escale = id_escale;
         this.id_conteneure = id_conteneure;
@@ -48,6 +55,7 @@ public class Operation {
         this.id_equipe = id_equipe;
         this.date_debut = date_debut;
         this.date_fin = date_fin;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -57,6 +65,14 @@ public class Operation {
 
     public void setId_operation(String id_operation) {
         this.id_operation = id_operation;
+    }
+
+    public String getNom_operation() {
+        return nom_operation;
+    }
+
+    public void setNom_operation(String nom_operation) {
+        this.nom_operation = nom_operation;
     }
 
     public String getId_shift() {
@@ -115,10 +131,19 @@ public class Operation {
         this.date_fin = date_fin;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @Override
     public String toString() {
         return "Operation{" +
                 "id_operation='" + id_operation + '\'' +
+                ", nom_operation='" + nom_operation + '\'' +
                 ", id_shift='" + id_shift + '\'' +
                 ", id_escale='" + id_escale + '\'' +
                 ", id_conteneure='" + id_conteneure + '\'' +
@@ -126,6 +151,7 @@ public class Operation {
                 ", id_equipe='" + id_equipe + '\'' +
                 ", date_debut=" + date_debut +
                 ", date_fin=" + date_fin +
+                ", status='" + status + '\'' +
                 '}';
     }
 } 

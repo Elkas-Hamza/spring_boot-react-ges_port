@@ -1,38 +1,46 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-const API_URL = "http://localhost:8080/api/operations";
+const ENDPOINT = "/operations";
 
 class OperationService {
   getAllOperations() {
-    return axios.get(API_URL);
+    return axiosInstance.get(ENDPOINT);
+  }
+
+  getAllOperationsWithDetails() {
+    return axiosInstance.get(`${ENDPOINT}/with-details`);
   }
 
   getOperationById(id) {
-    return axios.get(`${API_URL}/${id}`);
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
 
-  getOperationsByEscale(escaleId) {
-    return axios.get(`${API_URL}/escales/${escaleId}`);
+  getOperationWithDetailsById(id) {
+    return axiosInstance.get(`${ENDPOINT}/${id}/with-details`);
+  }
+
+  getOperationsByEscaleId(escaleId) {
+    return axiosInstance.get(`${ENDPOINT}/escale/${escaleId}`);
   }
 
   getOperationsByShiftId(shiftId) {
-    return axios.get(`${API_URL}/shift/${shiftId}`);
+    return axiosInstance.get(`${ENDPOINT}/shift/${shiftId}`);
   }
 
   getOperationsByEquipeId(equipeId) {
-    return axios.get(`${API_URL}/equipe/${equipeId}`);
+    return axiosInstance.get(`${ENDPOINT}/equipe/${equipeId}`);
   }
 
   createOperation(data) {
-    return axios.post(API_URL, data);
+    return axiosInstance.post(ENDPOINT, data);
   }
 
   updateOperation(id, data) {
-    return axios.put(`${API_URL}/${id}`, data);
+    return axiosInstance.put(`${ENDPOINT}/${id}`, data);
   }
 
   deleteOperation(id) {
-    return axios.delete(`${API_URL}/${id}`);
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
   }
 }
 

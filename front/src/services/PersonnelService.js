@@ -1,29 +1,31 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-const API_URL = "http://localhost:8080/api/personnel";
+const ENDPOINT = "/personnel";
 
 class PersonnelService {
   getAllPersonnel() {
-    return axios.get(API_URL);
+    return axiosInstance.get(ENDPOINT);
   }
 
   getPersonnelById(matricule) {
-    return axios.get(`${API_URL}/${matricule}`);
+    return axiosInstance.get(`${ENDPOINT}/${matricule}`);
+  }
+
+  getPersonnelByEquipeId(equipeId) {
+    return axiosInstance.get(`${ENDPOINT}/equipe/${equipeId}`);
   }
 
   createPersonnel(data) {
-    return axios.post(API_URL, data);
+    return axiosInstance.post(ENDPOINT, data);
   }
 
   updatePersonnel(matricule, data) {
-    return axios.put(`${API_URL}/${matricule}`, data);
+    return axiosInstance.put(`${ENDPOINT}/${matricule}`, data);
   }
 
   deletePersonnel(matricule) {
-    return axios.delete(`${API_URL}/${matricule}`);
+    return axiosInstance.delete(`${ENDPOINT}/${matricule}`);
   }
 }
 
-const personnelServiceInstance = new PersonnelService();
-
-export default personnelServiceInstance;
+export default new PersonnelService();

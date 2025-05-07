@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   Container,
   Typography,
@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import EscaleService from "../../services/EscaleService";
 import ArretService from "../../services/ArretService";
+import { ArrowBack } from "@mui/icons-material";
 
 const EscaleDetail = () => {
   const { id } = useParams();
@@ -26,7 +27,6 @@ const EscaleDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" });
-  const navigate = useNavigate();
 
   // Fetch data on component mount
   useEffect(() => {
@@ -157,6 +157,12 @@ const EscaleDetail = () => {
             <strong>Date de sortie:</strong>{" "}
             {formatDate(escale.date_sortie || escale.DATE_sortie)}
           </Typography>
+        </Box>
+        
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Button component={Link} to="/escales" startIcon={<ArrowBack />}>
+            Retour à la liste
+          </Button>
         </Box>
       </Paper>
 

@@ -28,6 +28,12 @@ public class SoustraiteureController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/equipe/{equipeId}")
+    public ResponseEntity<List<Soustraiteure>> getSoustraiteureByEquipeId(@PathVariable("equipeId") String equipeId) {
+        List<Soustraiteure> soustraiteurs = soustraiteureService.getSoustraiteureByEquipeId(equipeId);
+        return ResponseEntity.ok(soustraiteurs);
+    }
+
     @PostMapping
     public ResponseEntity<Soustraiteure> createSoustraiteure(@RequestBody Soustraiteure soustraiteure) {
         if (!isSoustraiteureValidForCreation(soustraiteure)) {

@@ -6,12 +6,45 @@ DROP SCHEMA IF EXISTS `gestion_res`;
 CREATE SCHEMA IF NOT EXISTS `gestion_res` DEFAULT CHARACTER SET utf8;
 USE `gestion_res`;
 
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`users` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('ADMIN', 'USER') NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `reset_token` VARCHAR(255) NULL,
+  `reset_token_expiry` TIMESTAMP NULL,
+  `last_login` TIMESTAMP NULL,
+  `failed_login_attempts` INT DEFAULT 0,
+  `account_locked` BOOLEAN DEFAULT FALSE,
+  `account_locked_until` TIMESTAMP NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE,
+  INDEX `reset_token_idx` (`reset_token` ASC) VISIBLE
+) ENGINE = InnoDB;
+
+-- Insert default admin user (password: admin123)
+INSERT INTO `gestion_res`.`users` (`email`, `password`, `role`) 
+VALUES ('admin@marsamaroc.co.ma', '$2a$10$dCIu5sZmJQgBBB8LMjfCr.i8jGIiJW9c/ZdJIlYRJWJfLj1t0Fiz6', 'ADMIN');
+
+-- Insert default regular user (password: user123)
+INSERT INTO `gestion_res`.`users` (`email`, `password`, `role`) 
+VALUES ('user@marsamaroc.co.ma', '$2a$10$jH7LIAGpyfZkR9CcO9XCLukxcQQMsthRwDQZ/FKP/zW9Qpd.EMtDy  ', 'USER');
+
+
+
 -- -----------------------------------------------------
 -- Table `gestion_res`.`engin`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`engin` (
   `ID_engin` VARCHAR(45) NOT NULL,
   `NOM_engin` VARCHAR(45) NOT NULL,
+  `TYPE_engin` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`ID_engin`),
   UNIQUE INDEX `ID_engin_UNIQUE` (`ID_engin` ASC) VISIBLE,
   UNIQUE INDEX `NOM_engin_UNIQUE` (`NOM_engin` ASC) VISIBLE
@@ -45,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `gestion_res`.`personnel` (
   `NOM_personnel` VARCHAR(45) NOT NULL,
   `PRENOM_personnel` VARCHAR(45) NOT NULL,
   `FONCTION_personnel` VARCHAR(45) NOT NULL,
+  `CONTACT_personnel` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`ID_personnel`, `MATRICULE_personnel`),
   UNIQUE INDEX `ID_personnelle_UNIQUE` (`ID_personnel` ASC) VISIBLE,
   UNIQUE INDEX `MATRICULE_personnelle_UNIQUE` (`MATRICULE_personnel` ASC) VISIBLE
@@ -78,6 +112,8 @@ CREATE TABLE IF NOT EXISTS `gestion_res`.`soustraiteure` (
   `NOM_soustraiteure` VARCHAR(45) NOT NULL,
   `PRENOM_soustraiteure` VARCHAR(45) NOT NULL,
   `FONCTION_soustraiteure` VARCHAR(45) NOT NULL,
+  `CONTACT_soustraiteure` VARCHAR(45) NULL DEFAULT NULL,
+  `ENTREPRISE_soustraiteure` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`ID_soustraiteure`, `MATRICULE_soustraiteure`),
   UNIQUE INDEX `ID_soustraiteure_UNIQUE` (`ID_soustraiteure` ASC) VISIBLE,
   UNIQUE INDEX `MATRICULE_sous_raiteur_UNIQUE` (`MATRICULE_soustraiteure` ASC) VISIBLE
@@ -186,6 +222,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure` (
   `ID_conteneure` VARCHAR(45) NOT NULL,
   `NOM_conteneure` VARCHAR(45) NOT NULL,
+  `TYPE_conteneure` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`ID_conteneure`),
   UNIQUE INDEX `ID_conteneure_UNIQUE` (`ID_conteneure` ASC) VISIBLE
 ) ENGINE = InnoDB;
@@ -214,6 +251,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`shift` (
   `ID_shift` VARCHAR(45) NOT NULL,
+  `NOM_shift` VARCHAR(45) NOT NULL,
   `HEURE_debut` TIME NOT NULL,
   `HEURE_fin` TIME NOT NULL,
   PRIMARY KEY (`ID_shift`),
@@ -274,38 +312,28 @@ DELIMITER ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`operation` (
   `ID_operation` VARCHAR(45) NOT NULL,
-  `ID_shift` VARCHAR(45), -- Removed NOT NULL to allow SET NULL behavior
+  `NOM_operation` VARCHAR(45) NOT NULL,
+  `ID_shift` VARCHAR(45),
   `ID_escale` VARCHAR(45) NOT NULL,
-  `ID_conteneure` VARCHAR(45) NOT NULL,
-  `ID_engin` VARCHAR(45) NOT NULL,
+  `ID_conteneure` TEXT NULL,
+  `ID_engin` TEXT NULL,
   `ID_equipe` VARCHAR(45) NOT NULL,
   `DATE_debut` DATETIME NOT NULL,
   `DATE_fin` DATETIME NOT NULL,
+  `status` VARCHAR(45) NULL DEFAULT 'En cours',
   PRIMARY KEY (`ID_operation`),
   UNIQUE INDEX `ID_operation_UNIQUE` (`ID_operation` ASC) VISIBLE,
   INDEX `ID_shift_idx` (`ID_shift` ASC) VISIBLE,
-  INDEX `ID_conteneure_idx` (`ID_conteneure` ASC) VISIBLE,
   INDEX `ID_escale_idx` (`ID_escale` ASC) VISIBLE,
-  INDEX `ID_engin_idx` (`ID_engin` ASC) VISIBLE,
   INDEX `ID_equipe_idx` (`ID_equipe` ASC) VISIBLE,
   CONSTRAINT `ID_shift`
     FOREIGN KEY (`ID_shift`)
     REFERENCES `gestion_res`.`shift` (`ID_shift`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT `ID_conteneure`
-    FOREIGN KEY (`ID_conteneure`)
-    REFERENCES `gestion_res`.`conteneure` (`ID_conteneure`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
   CONSTRAINT `ID_escale`
     FOREIGN KEY (`ID_escale`)
     REFERENCES `gestion_res`.`escale` (`NUM_escale`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `ID_engin`
-    FOREIGN KEY (`ID_engin`)
-    REFERENCES `gestion_res`.`engin` (`ID_engin`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `ID_equipe`
@@ -407,7 +435,37 @@ CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe_has_soustraiteure` (
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `gestion_res`.`navire`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`navire` (
+  `ID_navire` VARCHAR(45) NOT NULL,
+  `NOM_navire` VARCHAR(256) NOT NULL,
+  `MATRICULE_navire` VARCHAR(45) NOT NULL,
+  `ID_conteneure` TEXT NULL,
+  PRIMARY KEY (`ID_navire`),
+  UNIQUE INDEX `ID_navire_UNIQUE` (`ID_navire` ASC) VISIBLE,
+  UNIQUE INDEX `MATRICULE_navire_UNIQUE` (`MATRICULE_navire` ASC) VISIBLE
+) ENGINE = InnoDB;
 
+CREATE TABLE IF NOT EXISTS `gestion_res`.`navire_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_navire`
+BEFORE INSERT ON `gestion_res`.`navire`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_navire VARCHAR(45);
+  INSERT INTO `gestion_res`.`navire_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_navire = CONCAT('NAV-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_navire = formatted_navire;
+END$$
+DELIMITER ;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

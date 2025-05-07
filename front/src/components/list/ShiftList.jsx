@@ -16,8 +16,6 @@ import {
 import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 import ShiftService from "../../services/ShiftService";
 
 const ShiftList = () => {
@@ -62,10 +60,11 @@ const ShiftList = () => {
   };
 
   const filteredShifts = shifts.filter((shift) =>
-    shift.id_shift.toLowerCase().includes(searchTerm.toLowerCase())
+    (shift.id_shift?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (shift.nom_shift?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
-  if (loading) return <Typography align="center">Loading...</Typography>;
+  if (loading) return <Typography align="center">Chargement...</Typography>;
   if (error)
     return (
       <Typography color="error" align="center">
@@ -76,7 +75,7 @@ const ShiftList = () => {
   return (
     <>
       <Typography variant="h4" gutterBottom>
-        Shift Management
+        Gestion des shifts
       </Typography>
 
       <Box
@@ -92,12 +91,12 @@ const ShiftList = () => {
           color="primary"
           startIcon={<AddIcon />}
         >
-          Add New Shift
+          Ajouter un nouveau shift
         </Button>
 
         <TextField
           variant="outlined"
-          placeholder="Search shift by ID..."
+          placeholder="Rechercher par ID ou nom du shift..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           size="small"
@@ -116,22 +115,24 @@ const ShiftList = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Start Time</TableCell>
-              <TableCell>End Time</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Date debut</TableCell>
+              <TableCell>Date fin</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredShifts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
-                  No shifts found
+                <TableCell colSpan={5} align="center">
+                  Aucun shift trouvé
                 </TableCell>
               </TableRow>
             ) : (
               filteredShifts.map((shift) => (
                 <TableRow key={shift.id_shift}>
                   <TableCell>{shift.id_shift}</TableCell>
+                  <TableCell>{shift.nom_shift || "Non spécifié"}</TableCell>
                   <TableCell>{formatTime(shift.heure_debut)}</TableCell>
                   <TableCell>{formatTime(shift.heure_fin)}</TableCell>
                   <TableCell>
@@ -139,17 +140,15 @@ const ShiftList = () => {
                       component={Link}
                       to={`/shifts/edit/${shift.id_shift}`}
                       color="primary"
-                      startIcon={<EditIcon />}
                       sx={{ mr: 1 }}
                     >
-                      Edit
+                      modifier
                     </Button>
                     <Button
                       color="error"
-                      startIcon={<DeleteIcon />}
                       onClick={() => handleDelete(shift.id_shift)}
                     >
-                      Delete
+                      supprimer
                     </Button>
                   </TableCell>
                 </TableRow>

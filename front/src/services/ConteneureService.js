@@ -1,47 +1,30 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-// Create an axios instance with CORS credentials support
-const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080/api/conteneurs",
-  withCredentials: true,
-});
-
-// Add request/response interceptors for debugging
-axiosInstance.interceptors.request.use((request) => {
-  console.log("Starting Request", request);
-  return request;
-});
-
-axiosInstance.interceptors.response.use(
-  (response) => {
-    console.log("Response:", response);
-    return response;
-  },
-  (error) => {
-    console.log("Response Error:", error.response);
-    return Promise.reject(error);
-  }
-);
+const ENDPOINT = "/conteneurs";
 
 class ConteneureService {
   getAllConteneures() {
-    return axiosInstance.get("");
+    return axiosInstance.get(ENDPOINT);
   }
 
   getConteneureById(id) {
-    return axiosInstance.get(`/${id}`);
+    // If id contains commas, it's a multiple request
+    if (typeof id === 'string' && id.includes(',')) {
+      return axiosInstance.get(`${ENDPOINT}/multiple/${id}`);
+    }
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
 
-  createConteneure(conteneure) {
-    return axiosInstance.post("", conteneure);
+  createConteneure(data) {
+    return axiosInstance.post(ENDPOINT, data);
   }
 
-  updateConteneure(id, conteneure) {
-    return axiosInstance.put(`/${id}`, conteneure);
+  updateConteneure(id, data) {
+    return axiosInstance.put(`${ENDPOINT}/${id}`, data);
   }
 
   deleteConteneure(id) {
-    return axiosInstance.delete(`/${id}`);
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
   }
 }
 

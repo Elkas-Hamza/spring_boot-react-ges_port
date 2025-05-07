@@ -11,7 +11,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,68 +20,68 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { Add, Edit, Delete } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import ConteneureService from "../../services/ConteneureService";
 
 const ConteneureList = () => {
-  const [conteneures, setConteneures] = useState([]);
+  const [conteneurs, setConteneurs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [conteneureToDelete, setConteneureToDelete] = useState(null);
+  const [conteneurToDelete, setConteneurToDelete] = useState(null);
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  const fetchConteneures = async () => {
+  const fetchConteneurs = async () => {
     try {
       setLoading(true);
       const response = await ConteneureService.getAllConteneures();
-      setConteneures(response.data);
+      setConteneurs(response.data);
       setError(null);
     } catch (error) {
-      console.error("Error fetching conteneures:", error);
-      setError("Erreur lors du chargement des conteneures");
+      console.error("Error fetching conteneurs:", error);
+      setError("Erreur lors du chargement des conteneurs");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchConteneures();
+    fetchConteneurs();
   }, []);
 
-  const handleDeleteClick = (conteneure) => {
-    setConteneureToDelete(conteneure);
+  const handleDeleteClick = (conteneur) => {
+    setConteneurToDelete(conteneur);
     setOpenDeleteDialog(true);
   };
 
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
-    setConteneureToDelete(null);
+    setConteneurToDelete(null);
   };
 
   const handleConfirmDelete = async () => {
-    if (!conteneureToDelete) return;
+    if (!conteneurToDelete) return;
 
     try {
       await ConteneureService.deleteConteneure(
-        conteneureToDelete.id_conteneure
+        conteneurToDelete.id_conteneure
       );
       setNotification({
         open: true,
-        message: "Conteneure supprimé avec succès",
+        message: "Conteneur supprimé avec succès",
         severity: "success",
       });
-      fetchConteneures();
+      fetchConteneurs();
     } catch (error) {
-      console.error("Error deleting conteneure:", error);
+      console.error("Error deleting conteneur:", error);
       setNotification({
         open: true,
-        message: "Erreur lors de la suppression du conteneure",
+        message: "Erreur lors de la suppression du conteneur",
         severity: "error",
       });
     } finally {
@@ -106,7 +105,7 @@ const ConteneureList = () => {
           }}
         >
           <Typography variant="h4" component="h1">
-            Liste des Conteneures
+            Liste des Conteneurs
           </Typography>
           <Button
             component={Link}
@@ -135,7 +134,10 @@ const ConteneureList = () => {
                   <TableRow>
                     <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
                     <TableCell sx={{ fontWeight: "bold" }}>
-                      Nom du Conteneure
+                      Nom du Conteneur
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>
+                      Type
                     </TableCell>
                     <TableCell sx={{ fontWeight: "bold" }} align="right">
                       Actions
@@ -143,34 +145,35 @@ const ConteneureList = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {conteneures.length > 0 ? (
-                    conteneures.map((conteneure) => (
-                      <TableRow hover key={conteneure.id_conteneure}>
-                        <TableCell>{conteneure.id_conteneure}</TableCell>
-                        <TableCell>{conteneure.nom_conteneure}</TableCell>
+                  {conteneurs.length > 0 ? (
+                    conteneurs.map((conteneur) => (
+                      <TableRow hover key={conteneur.id_conteneure}>
+                        <TableCell>{conteneur.id_conteneure}</TableCell>
+                        <TableCell>{conteneur.nom_conteneure}</TableCell>
+                        <TableCell>{conteneur.type_conteneure || "Non spécifié"}</TableCell>
                         <TableCell align="right">
-                          <IconButton
+                          <Button
                             component={Link}
-                            to={`/conteneures/edit/${conteneure.id_conteneure}`}
+                            to={`/conteneures/edit/${conteneur.id_conteneure}`}
                             color="primary"
                             size="small"
                           >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => handleDeleteClick(conteneure)}
+                            modifier
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteClick(conteneur)}
                             color="error"
                             size="small"
                           >
-                            <Delete />
-                          </IconButton>
+                            supprimer
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">
-                        Aucun conteneure trouvé
+                      <TableCell colSpan={4} align="center">
+                        Aucun conteneur trouvé
                       </TableCell>
                     </TableRow>
                   )}
@@ -186,8 +189,8 @@ const ConteneureList = () => {
         <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Êtes-vous sûr de vouloir supprimer le conteneure "
-            {conteneureToDelete?.nom_conteneure}" ? Cette action est
+            Êtes-vous sûr de vouloir supprimer le conteneur "
+            {conteneurToDelete?.nom_conteneure}" ? Cette action est
             irréversible.
           </DialogContentText>
         </DialogContent>

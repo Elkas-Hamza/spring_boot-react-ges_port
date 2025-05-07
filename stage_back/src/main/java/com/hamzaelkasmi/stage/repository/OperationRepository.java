@@ -19,4 +19,21 @@ public interface OperationRepository extends JpaRepository<Operation, String> {
     
     @Query("SELECT o FROM Operation o WHERE o.id_equipe = :equipeId")
     List<Operation> findByEquipeId(@Param("equipeId") String equipeId);
+    
+    @Query(value = "SELECT o.ID_operation, o.NOM_operation, o.ID_shift, o.ID_escale, " +
+                   "o.ID_conteneure, o.ID_engin, o.ID_equipe, o.DATE_debut, o.DATE_fin, " +
+                   "s.NOM_shift as nom_shift " +
+                   "FROM operation o " +
+                   "LEFT JOIN shift s ON o.ID_shift = s.ID_shift", 
+           nativeQuery = true)
+    List<Object[]> findAllWithShiftDetails();
+    
+    @Query(value = "SELECT o.ID_operation, o.NOM_operation, o.ID_shift, o.ID_escale, " +
+                   "o.ID_conteneure, o.ID_engin, o.ID_equipe, o.DATE_debut, o.DATE_fin, " +
+                   "s.NOM_shift as nom_shift " +
+                   "FROM operation o " +
+                   "LEFT JOIN shift s ON o.ID_shift = s.ID_shift " +
+                   "WHERE o.ID_operation = :operationId", 
+           nativeQuery = true)
+    Optional<Object[]> findByIdWithShiftDetails(@Param("operationId") String operationId);
 } 

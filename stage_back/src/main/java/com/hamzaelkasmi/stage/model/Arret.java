@@ -20,6 +20,9 @@ public class Arret {
     @Column(name = "NUM_escale", nullable = false)
     private String NUM_escale;
 
+    @Column(name = "ID_operation")
+    private String ID_operation;
+
     @Column(name = "MOTIF_arret", nullable = false, length = 256)
     private String MOTIF_arret;
 
@@ -33,6 +36,10 @@ public class Arret {
     @Column(name = "DATE_FIN_arret", nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime DATE_FIN_arret;
+
+    // Default constructor required by JPA/Hibernate
+    public Arret() {
+    }
 
     // Getters and Setters
     public String getID_arret() {
@@ -49,6 +56,14 @@ public class Arret {
 
     public void setNUM_escale(String NUM_escale) {
         this.NUM_escale = NUM_escale;
+    }
+
+    public String getID_operation() {
+        return ID_operation;
+    }
+
+    public void setID_operation(String ID_operation) {
+        this.ID_operation = ID_operation;
     }
 
     public String getMOTIF_arret() {

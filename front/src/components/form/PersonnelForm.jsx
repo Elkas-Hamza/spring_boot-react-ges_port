@@ -17,6 +17,7 @@ const PersonnelForm = () => {
     nom_personnel: "",
     prenom_personnel: "",
     fonction_personnel: "",
+    contact_personnel: "",
   });
   const [notification, setNotification] = useState({
     open: false,
@@ -37,6 +38,7 @@ const PersonnelForm = () => {
             nom_personnel: personnelData.nom_personnel || "",
             prenom_personnel: personnelData.prenom_personnel || "",
             fonction_personnel: personnelData.fonction_personnel || "",
+            contact_personnel: personnelData.contact_personnel || "",
           });
           setLoading(false);
         })
@@ -155,6 +157,16 @@ const PersonnelForm = () => {
             fullWidth
             margin="normal"
             required
+          />
+
+          <TextField
+            label="Contact"
+            name="contact_personnel"
+            value={personnel.contact_personnel}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Téléphone ou Email"
           />
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>

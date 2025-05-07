@@ -20,23 +20,21 @@ public class Personnel {
 
     @Column(name = "FONCTION_personnel", nullable = false, length = 45)
     private String FONCTION_personnel;
+    
+    @Column(name = "CONTACT_personnel", length = 45)
+    private String CONTACT_personnel;
 
     // Constructors
     public Personnel() {
+        // Default constructor required by JPA/Hibernate
     }
 
-    public Personnel(String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel) {
-        this.NOM_personnel = NOM_personnel;
-        this.PRENOM_personnel = PRENOM_personnel;
-        this.FONCTION_personnel = FONCTION_personnel;
-    }
-
-    // Constructor with matricule (for updates)
-    public Personnel(String MATRICULE_personnel, String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel) {
+    public Personnel(String MATRICULE_personnel, String NOM_personnel, String PRENOM_personnel, String FONCTION_personnel, String CONTACT_personnel) {
         this.MATRICULE_personnel = MATRICULE_personnel;
         this.NOM_personnel = NOM_personnel;
         this.PRENOM_personnel = PRENOM_personnel;
         this.FONCTION_personnel = FONCTION_personnel;
+        this.CONTACT_personnel = CONTACT_personnel;
     }
 
     // Getters and Setters
@@ -71,6 +69,14 @@ public class Personnel {
     public void setFONCTION_personnel(String FONCTION_personnel) {
         this.FONCTION_personnel = FONCTION_personnel;
     }
+    
+    public String getCONTACT_personnel() {
+        return CONTACT_personnel;
+    }
+    
+    public void setCONTACT_personnel(String CONTACT_personnel) {
+        this.CONTACT_personnel = CONTACT_personnel;
+    }
 
     // toString method
     @Override
@@ -80,6 +86,7 @@ public class Personnel {
                 ", NOM_personnel='" + NOM_personnel + '\'' +
                 ", PRENOM_personnel='" + PRENOM_personnel + '\'' +
                 ", FONCTION_personnel='" + FONCTION_personnel + '\'' +
+                ", CONTACT_personnel='" + CONTACT_personnel + '\'' +
                 '}';
     }
 }

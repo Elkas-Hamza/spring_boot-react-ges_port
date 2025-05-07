@@ -21,6 +21,10 @@ public class SoustraiteureService {
         return soustraiteureRepository.findById(matricule);
     }
 
+    public List<Soustraiteure> getSoustraiteureByEquipeId(String equipeId) {
+        return soustraiteureRepository.findByEquipeId(equipeId);
+    }
+
     public Soustraiteure saveSoustraiteure(Soustraiteure soustraiteure) {
         return soustraiteureRepository.save(soustraiteure);
     }

@@ -84,6 +84,7 @@ public class ArretController {
                         existingArret.setDURE_arret(updatedArret.getDURE_arret());
                         existingArret.setNUM_escale(updatedArret.getNUM_escale());
                         existingArret.setDATE_DEBUT_arret(updatedArret.getDATE_DEBUT_arret());
+                        existingArret.setID_operation(updatedArret.getID_operation());
 
                         // Calculate DATE_FIN_arret if not provided
                         if (updatedArret.getDATE_FIN_arret() == null) {

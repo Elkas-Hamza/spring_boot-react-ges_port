@@ -14,13 +14,17 @@ public class Engin {
 
     @Column(name = "NOM_engin", nullable = false, length = 45)
     private String nom_engin;
+    
+    @Column(name = "TYPE_engin", length = 100)
+    private String type_engin;
 
     // Constructors
     public Engin() {
     }
 
-    public Engin(String nom_engin) {
+    public Engin(String nom_engin, String type_engin) {
         this.nom_engin = nom_engin;
+        this.type_engin = type_engin;
     }
 
     // Getters and Setters
@@ -39,12 +43,21 @@ public class Engin {
     public void setNom_engin(String nom_engin) {
         this.nom_engin = nom_engin;
     }
+    
+    public String getType_engin() {
+        return type_engin;
+    }
+
+    public void setType_engin(String type_engin) {
+        this.type_engin = type_engin;
+    }
 
     @Override
     public String toString() {
         return "Engin{" +
                 "id_engin='" + id_engin + '\'' +
                 ", nom_engin='" + nom_engin + '\'' +
+                ", type_engin='" + type_engin + '\'' +
                 '}';
     }
 } 

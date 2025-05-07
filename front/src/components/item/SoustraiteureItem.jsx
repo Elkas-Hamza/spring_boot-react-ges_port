@@ -9,6 +9,8 @@ const SoustraiteureItem = ({ soustraiteure, onDelete }) => {
       <TableCell>{soustraiteure.nom_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.prenom_soustraiteure}</TableCell>
       <TableCell>{soustraiteure.fonction_soustraiteure}</TableCell>
+      <TableCell>{soustraiteure.contact_soustraiteure || "-"}</TableCell>
+      <TableCell>{soustraiteure.entreprise_soustraiteure || "-"}</TableCell>
       <TableCell align="right">
         <Button
           component={Link}

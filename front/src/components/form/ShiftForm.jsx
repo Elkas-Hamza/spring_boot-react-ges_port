@@ -16,6 +16,7 @@ const ShiftForm = () => {
   const [shift, setShift] = useState({
     heure_debut: "",
     heure_fin: "",
+    nom_shift: "",
   });
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,10 +67,10 @@ const ShiftForm = () => {
     e.preventDefault();
 
     // Validate form
-    if (!shift.heure_debut || !shift.heure_fin) {
+    if (!shift.heure_debut || !shift.heure_fin || !shift.nom_shift) {
       setNotification({
         open: true,
-        message: "Les heures de début et de fin sont requises",
+        message: "Le nom du shift, les heures de début et de fin sont requis",
         severity: "error",
       });
       return;
@@ -137,6 +138,16 @@ const ShiftForm = () => {
               disabled
             />
           )}
+
+          <TextField
+            label="Nom du Shift"
+            name="nom_shift"
+            value={shift.nom_shift}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
 
           <TextField
             label="Heure de début"

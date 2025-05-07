@@ -9,6 +9,7 @@ const PersonnelItem = ({ personnel, onDelete }) => {
       <TableCell>{personnel.nom_personnel}</TableCell>
       <TableCell>{personnel.prenom_personnel}</TableCell>
       <TableCell>{personnel.fonction_personnel}</TableCell>
+      <TableCell>{personnel.contact_personnel || "-"}</TableCell>
       <TableCell align="right">
         <Button
           component={Link}

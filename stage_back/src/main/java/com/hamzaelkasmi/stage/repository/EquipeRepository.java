@@ -1,15 +1,13 @@
 package com.hamzaelkasmi.stage.repository;
 
 import com.hamzaelkasmi.stage.model.Equipe;
-import com.hamzaelkasmi.stage.model.Personnel;
-import com.hamzaelkasmi.stage.model.Soustraiteure;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,8 +25,5 @@ public interface EquipeRepository extends JpaRepository<Equipe, String>, CustomE
     
     @Query("SELECT e FROM Equipe e JOIN e.soustraiteurs s WHERE s.MATRICULE_soustraiteure = :soustraiteurId")
     List<Equipe> findBySoustraiteurId(@Param("soustraiteurId") String soustraiteurId);
-}
 
-interface CustomEquipeRepository {
-    EntityManager getEntityManager();
-} 
+}

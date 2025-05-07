@@ -24,6 +24,8 @@ import { Add as AddIcon } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import OperationItem from "../item/OperationItem";
 import OperationService from "../../services/OperationService";
+import ErrorHandler from '../common/ErrorHandler';
+import AuthService from '../../services/AuthService';
 
 const OperationList = () => {
   const [operations, setOperations] = useState([]);
@@ -46,7 +48,7 @@ const OperationList = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = operations.filter((op) =>
-        `${op.id_operation} ${op.NUM_escale} ${op.id_shift} ${op.id_conteneure} ${op.id_engin}`
+        `${op.id_operation} ${op.nom_operation || ""} ${op.NUM_escale} ${op.id_shift} ${op.id_conteneure} ${op.id_engin} ${op.status || ""}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       );
@@ -59,13 +61,23 @@ const OperationList = () => {
   const fetchOperations = async () => {
     setLoading(true);
     try {
-      const response = await OperationService.getAllOperations();
+      const isValid = await AuthService.verifyToken();
+      if (!isValid) {
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        return;
+      }
+      
+      const response = await OperationService.getAllOperationsWithDetails();
       setOperations(response.data);
       setFilteredOperations(response.data);
       setError(null);
     } catch (err) {
       console.error("Error fetching operations:", err);
-      setError("Erreur lors du chargement des données. Veuillez réessayer.");
+      if (err.response && err.response.status === 403) {
+        setError("Vous n'avez pas l'autorisation d'accéder à ces données.");
+      } else {
+        setError("Erreur lors du chargement des données. Veuillez réessayer.");
+      }
     } finally {
       setLoading(false);
     }
@@ -135,7 +147,7 @@ const OperationList = () => {
       </Box>
 
       <TextField
-        label="Rechercher par escale, shift, conteneur ou engin"
+        label="Rechercher par nom, escale, shift, conteneur ou engin"
         variant="outlined"
         fullWidth
         value={searchQuery}
@@ -143,50 +155,56 @@ const OperationList = () => {
         sx={{ mb: 3 }}
       />
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      ) : (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Shift</TableCell>
-                <TableCell>Escale</TableCell>
-                <TableCell>Conteneur</TableCell>
-                <TableCell>Engin</TableCell>
-                <TableCell>Date/Heure Début</TableCell>
-                <TableCell>Date/Heure Fin</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredOperations.length > 0 ? (
-                filteredOperations.map((operation) => (
-                  <OperationItem
-                    key={operation.id_operation}
-                    operation={operation}
-                    onDelete={handleOpenDeleteDialog}
-                  />
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    Aucune opération trouvée
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
       )}
 
+      {error && (
+        <ErrorHandler 
+          message={error} 
+          onRetry={fetchOperations} 
+        />
+      )}
+
+      {!loading && !error && filteredOperations.length === 0 && (
+
+
+      <TableContainer component={Paper} elevation={3}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Shift</TableCell>
+              <TableCell>Escale</TableCell>
+              <TableCell>Date/Heure Début</TableCell>
+              <TableCell>Date/Heure Fin</TableCell>
+              <TableCell>Statut</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredOperations.length > 0 ? (
+              filteredOperations.map((operation) => (
+                <OperationItem
+                  key={operation.id_operation}
+                  operation={operation}
+                  onDelete={handleOpenDeleteDialog}
+                />
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} align="center">
+                  Aucune opération trouvée
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      )}
       <Dialog open={deleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>

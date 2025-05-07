@@ -62,6 +62,7 @@ const ArretList = () => {
               <TableCell>Date Fin</TableCell>
               <TableCell>Durée (jour)</TableCell>
               <TableCell>Motif</TableCell>
+              <TableCell>Opération</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>

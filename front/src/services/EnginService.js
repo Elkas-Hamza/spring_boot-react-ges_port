@@ -1,29 +1,31 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-const API_URL = "http://localhost:8080/api/engins";
+const ENDPOINT = "/engins";
 
 class EnginService {
   getAllEngins() {
-    return axios.get(API_URL);
+    return axiosInstance.get(ENDPOINT);
   }
 
   getEnginById(id) {
-    return axios.get(`${API_URL}/${id}`);
+    // If id contains commas, it's a multiple request
+    if (typeof id === 'string' && id.includes(',')) {
+      return axiosInstance.get(`${ENDPOINT}/multiple/${id}`);
+    }
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
 
   createEngin(data) {
-    return axios.post(API_URL, data);
+    return axiosInstance.post(ENDPOINT, data);
   }
 
   updateEngin(id, data) {
-    return axios.put(`${API_URL}/${id}`, data);
+    return axiosInstance.put(`${ENDPOINT}/${id}`, data);
   }
 
   deleteEngin(id) {
-    return axios.delete(`${API_URL}/${id}`);
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
   }
 }
 
-const enginServiceInstance = new EnginService();
-
-export default enginServiceInstance;
+export default new EnginService();

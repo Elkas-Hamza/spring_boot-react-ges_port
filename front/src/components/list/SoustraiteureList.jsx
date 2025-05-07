@@ -24,6 +24,8 @@ import { Add as AddIcon } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import SoustraiteureItem from "../item/SoustraiteureItem";
 import SoustraiteureService from "../../services/SoustraiteureService";
+import ErrorHandler from "../common/ErrorHandler";
+import AuthService from "../../services/AuthService";
 
 const SoustraiteureList = () => {
   const [soustraiteures, setSoustraiteures] = useState([]);
@@ -46,7 +48,7 @@ const SoustraiteureList = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = soustraiteures.filter((s) =>
-        `${s.matricule_soustraiteure} ${s.nom_soustraiteure} ${s.prenom_soustraiteure} ${s.fonction_soustraiteure}`
+        `${s.matricule_soustraiteure} ${s.nom_soustraiteure} ${s.prenom_soustraiteure} ${s.fonction_soustraiteure} ${s.contact_soustraiteure || ''} ${s.entreprise_soustraiteure || ''}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       );
@@ -59,29 +61,31 @@ const SoustraiteureList = () => {
   const fetchSoustraiteures = async () => {
     setLoading(true);
     try {
+      // Verify token validity before making request
+      const isValid = await AuthService.verifyToken();
+      if (!isValid) {
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        return;
+      }
+      
       const response = await SoustraiteureService.getAllSoustraiteure();
       setSoustraiteures(response.data);
       setFilteredSoustraiteures(response.data);
       setError(null);
     } catch (err) {
       console.error("Error fetching soustraiteures:", err);
-      let errorMessage =
-        "Erreur lors du chargement des données. Veuillez réessayer.";
-
-      if (err.response) {
-        // Handle specific HTTP error codes
-        if (err.response.status === 404) {
-          errorMessage = "Aucun soustraiteure trouvé.";
-        } else if (err.response.status === 500) {
-          errorMessage = "Erreur serveur. Veuillez contacter l'administrateur.";
-        }
+      
+      if (err.response && err.response.status === 403) {
+        setError("Vous n'avez pas l'autorisation d'accéder à ces données.");
+      } else if (err.response && err.response.status === 404) {
+        setError("Aucun soustraiteure trouvé.");
+      } else if (err.response && err.response.status === 500) {
+        setError("Erreur serveur. Veuillez contacter l'administrateur.");
       } else if (err.request) {
-        // The request was made but no response was received
-        errorMessage =
-          "Impossible de se connecter au serveur. Vérifiez votre connexion internet.";
+        setError("Impossible de se connecter au serveur. Vérifiez votre connexion internet.");
+      } else {
+        setError("Erreur lors du chargement des données. Veuillez réessayer.");
       }
-
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -169,7 +173,7 @@ const SoustraiteureList = () => {
       </Box>
 
       <TextField
-        label="Rechercher par matricule, nom, prénom ou fonction"
+        label="Rechercher par matricule, nom, prénom, fonction, contact ou entreprise"
         variant="outlined"
         fullWidth
         value={searchQuery}
@@ -177,15 +181,26 @@ const SoustraiteureList = () => {
         sx={{ mb: 3 }}
       />
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      ) : (
+      )}
+
+      {error && (
+        <ErrorHandler 
+          message={error} 
+          onRetry={fetchSoustraiteures} 
+        />
+      )}
+
+      {!loading && !error && filteredSoustraiteures.length === 0 && (
+        <Typography sx={{ textAlign: "center", my: 4 }} color="text.secondary">
+          Aucun soustraiteure trouvé
+        </Typography>
+      )}
+
+      {!loading && !error && filteredSoustraiteures.length > 0 && (
         <TableContainer component={Paper} elevation={3}>
           <Table>
             <TableHead>
@@ -194,26 +209,20 @@ const SoustraiteureList = () => {
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
                 <TableCell>Fonction</TableCell>
+                <TableCell>Contact</TableCell>
+                <TableCell>Entreprise</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredSoustraiteures.length > 0 ? (
-                filteredSoustraiteures.map((soustraiteure) => (
-                  <SoustraiteureItem
-                    key={soustraiteure.matricule_soustraiteure}
-                    soustraiteure={soustraiteure}
-                    onDelete={handleOpenDeleteDialog}
-                    onEdit={handleEditSoustraiteure}
-                  />
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    Aucun soustraiteure trouvé
-                  </TableCell>
-                </TableRow>
-              )}
+              {filteredSoustraiteures.map((soustraiteure) => (
+                <SoustraiteureItem
+                  key={soustraiteure.matricule_soustraiteure}
+                  soustraiteure={soustraiteure}
+                  onDelete={handleOpenDeleteDialog}
+                  onEdit={handleEditSoustraiteure}
+                />
+              ))}
             </TableBody>
           </Table>
         </TableContainer>

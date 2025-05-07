@@ -1,30 +1,28 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-const API_URL = "http://localhost:8080/api/escales";
+const ENDPOINT = "/escales";
 
 class EscaleService {
   getAllEscales() {
-    return axios.get(API_URL);
+    return axiosInstance.get(ENDPOINT);
   }
 
   getEscaleById(id) {
-    return axios.get(`${API_URL}/${id}`);
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
 
   createEscale(escale) {
-    return axios.post(API_URL, escale);
+    return axiosInstance.post(ENDPOINT, escale);
   }
 
   updateEscale(id, escale) {
-    return axios.put(`${API_URL}/${id}`, escale);
+    return axiosInstance.put(`${ENDPOINT}/${id}`, escale);
   }
 
   deleteEscale(id) {
     console.log(`Attempting to delete escale with ID: ${id}`);
-    return axios.delete(`${API_URL}/${id}`);
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
   }
 }
 
-const escaleServiceInstance = new EscaleService();
-
-export default escaleServiceInstance;
+export default new EscaleService();

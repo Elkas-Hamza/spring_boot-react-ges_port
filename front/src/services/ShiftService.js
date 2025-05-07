@@ -1,29 +1,27 @@
-import axios from "axios";
+import axiosInstance from './AxiosConfig';
 
-const API_URL = "http://localhost:8080/api/shifts";
+const ENDPOINT = "/shifts";
 
 class ShiftService {
   getAllShifts() {
-    return axios.get(API_URL);
+    return axiosInstance.get(ENDPOINT);
   }
 
   getShiftById(id) {
-    return axios.get(`${API_URL}/${id}`);
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
 
   createShift(data) {
-    return axios.post(API_URL, data);
+    return axiosInstance.post(ENDPOINT, data);
   }
 
   updateShift(id, data) {
-    return axios.put(`${API_URL}/${id}`, data);
+    return axiosInstance.put(`${ENDPOINT}/${id}`, data);
   }
 
   deleteShift(id) {
-    return axios.delete(`${API_URL}/${id}`);
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
   }
 }
 
-const shiftServiceInstance = new ShiftService();
-
-export default shiftServiceInstance;
+export default new ShiftService();

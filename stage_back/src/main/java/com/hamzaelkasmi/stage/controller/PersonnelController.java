@@ -28,6 +28,12 @@ public class PersonnelController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/equipe/{equipeId}")
+    public ResponseEntity<List<Personnel>> getPersonnelByEquipeId(@PathVariable("equipeId") String equipeId) {
+        List<Personnel> personnel = personnelService.getPersonnelByEquipeId(equipeId);
+        return ResponseEntity.ok(personnel);
+    }
+
     @PostMapping
     public ResponseEntity<Personnel> createPersonnel(@RequestBody Personnel personnel) {
         if (!isPersonnelValidForCreation(personnel)) {

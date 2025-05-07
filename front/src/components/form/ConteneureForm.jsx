@@ -8,6 +8,11 @@ import {
   Alert,
   Snackbar,
   Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Divider,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ConteneureService from "../../services/ConteneureService";
@@ -15,7 +20,23 @@ import ConteneureService from "../../services/ConteneureService";
 const ConteneureForm = () => {
   const [conteneure, setConteneure] = useState({
     nom_conteneure: "",
+    type_conteneure: "",
   });
+  
+  // Predefined container types
+  const conteneureTypes = [
+    "20 pieds standard",
+    "40 pieds standard",
+    "40 pieds high cube",
+    "Réfrigéré",
+    "Open top",
+    "Flat rack",
+    "Tank",
+    "Citerne",
+    "Flexitank",
+    "Autre"
+  ];
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -58,7 +79,7 @@ const ConteneureForm = () => {
     if (!conteneure.nom_conteneure.trim()) {
       setNotification({
         open: true,
-        message: "Le nom du conteneure est requis",
+        message: "Le nom du conteneur est requis",
         severity: "error",
       });
       return;
@@ -70,14 +91,14 @@ const ConteneureForm = () => {
         await ConteneureService.updateConteneure(id, conteneure);
         setNotification({
           open: true,
-          message: "Conteneure modifié avec succès",
+          message: "Conteneur modifié avec succès",
           severity: "success",
         });
       } else {
         await ConteneureService.createConteneure(conteneure);
         setNotification({
           open: true,
-          message: "Conteneure ajouté avec succès",
+          message: "Conteneur ajouté avec succès",
           severity: "success",
         });
       }
@@ -103,13 +124,15 @@ const ConteneureForm = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Typography variant="h5" component="h2" gutterBottom>
-          {id ? "Modifier le Conteneure" : "Ajouter un Conteneure"}
+          {id ? "Modifier le Conteneur" : "Ajouter un Conteneur"}
         </Typography>
+        
+        <Divider sx={{ mb: 3 }} />
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
           {id && (
             <TextField
-              label="ID Conteneure"
+              label="ID Conteneur"
               value={id}
               fullWidth
               margin="normal"
@@ -119,13 +142,33 @@ const ConteneureForm = () => {
 
           <TextField
             name="nom_conteneure"
-            label="Nom du Conteneure"
+            label="Nom du Conteneur"
             value={conteneure.nom_conteneure}
             onChange={handleChange}
             fullWidth
             margin="normal"
             required
           />
+          
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="type-conteneure-label">Type de Conteneur</InputLabel>
+            <Select
+              labelId="type-conteneure-label"
+              name="type_conteneure"
+              value={conteneure.type_conteneure || ""}
+              onChange={handleChange}
+              label="Type de Conteneur"
+            >
+              <MenuItem value="">
+                <em>Aucun type sélectionné</em>
+              </MenuItem>
+              {conteneureTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
             <Button

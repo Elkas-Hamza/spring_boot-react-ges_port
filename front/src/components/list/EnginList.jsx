@@ -56,7 +56,8 @@ const EnginList = () => {
   };
 
   const filteredEngins = engins.filter((engin) =>
-    engin.nom_engin.toLowerCase().includes(searchTerm.toLowerCase())
+    engin.nom_engin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (engin.type_engin && engin.type_engin.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (loading) return <Typography align="center">Loading...</Typography>;
@@ -110,14 +111,15 @@ const EnginList = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredEngins.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} align="center">
+                <TableCell colSpan={4} align="center">
                   No equipment found
                 </TableCell>
               </TableRow>
@@ -126,6 +128,7 @@ const EnginList = () => {
                 <TableRow key={engin.id_engin}>
                   <TableCell>{engin.id_engin}</TableCell>
                   <TableCell>{engin.nom_engin}</TableCell>
+                  <TableCell>{engin.type_engin || "Non spécifié"}</TableCell>
                   <TableCell>
                     <Button
                       component={Link}

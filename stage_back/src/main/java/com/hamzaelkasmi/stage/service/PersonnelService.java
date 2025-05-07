@@ -21,6 +21,10 @@ public class PersonnelService {
         return personnelRepository.findById(matricule);
     }
 
+    public List<Personnel> getPersonnelByEquipeId(String equipeId) {
+        return personnelRepository.findByEquipeId(equipeId);
+    }
+
     public Personnel savePersonnel(Personnel personnel) {
         return personnelRepository.save(personnel);
     }

@@ -19,6 +19,10 @@ public class Escale {
 
     @Column(name = "NOM_navire", nullable = false, length = 256)
     private String NOM_navire;
+    
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "MATRICULE_navire", nullable = false)
+    private Navire navire;
 
     @Column(name = "DATE_accostage", nullable = false)
     private LocalDateTime DATE_accostage;
@@ -26,12 +30,24 @@ public class Escale {
     @Column(name = "DATE_sortie", nullable = false)
     private LocalDateTime DATE_sortie;
 
+    // Default constructor required by JPA/Hibernate
+    public Escale() {
+    }
+    
+    // Constructor with navire
+    public Escale(String NOM_navire, Navire navire, LocalDateTime DATE_accostage, LocalDateTime DATE_sortie) {
+        this.NOM_navire = NOM_navire;
+        this.navire = navire;
+        this.DATE_accostage = DATE_accostage;
+        this.DATE_sortie = DATE_sortie;
+    }
+
     // Getters and Setters
-    public String getNUM_escale() {
+    public String getNum_escale() {
         return num_escale;
     }
 
-    public void setNUM_escale(String num_escale) {
+    public void setNum_escale(String num_escale) {
         this.num_escale = num_escale;
     }
 
@@ -41,6 +57,14 @@ public class Escale {
 
     public void setNOM_navire(String NOM_navire) {
         this.NOM_navire = NOM_navire;
+    }
+    
+    public Navire getNavire() {
+        return navire;
+    }
+
+    public void setNavire(Navire navire) {
+        this.navire = navire;
     }
 
     public LocalDateTime getDATE_accostage() {
@@ -58,5 +82,15 @@ public class Escale {
     public void setDATE_sortie(LocalDateTime DATE_sortie) {
         this.DATE_sortie = DATE_sortie;
     }
-
+    
+    @Override
+    public String toString() {
+        return "Escale{" +
+                "num_escale='" + num_escale + '\'' +
+                ", NOM_navire='" + NOM_navire + '\'' +
+                ", navire=" + (navire != null ? navire.getMatriculeNavire() : "null") +
+                ", DATE_accostage=" + DATE_accostage +
+                ", DATE_sortie=" + DATE_sortie +
+                '}';
+    }
 }

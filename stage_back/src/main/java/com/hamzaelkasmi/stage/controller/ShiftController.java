@@ -49,6 +49,7 @@ public class ShiftController {
         Optional<Shift> shiftData = shiftService.getShiftById(id);
         if (shiftData.isPresent()) {
             Shift _shift = shiftData.get();
+            _shift.setNom_shift(shift.getNom_shift());
             _shift.setHeure_debut(shift.getHeure_debut());
             _shift.setHeure_fin(shift.getHeure_fin());
             return new ResponseEntity<>(shiftService.saveShift(_shift), HttpStatus.OK);

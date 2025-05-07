@@ -8,6 +8,11 @@ import {
   Alert,
   Snackbar,
   Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Divider,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import EnginService from "../../services/EnginService";
@@ -15,7 +20,22 @@ import EnginService from "../../services/EnginService";
 const EnginForm = () => {
   const [engin, setEngin] = useState({
     nom_engin: "",
+    type_engin: "",
   });
+  
+  // Predefined equipment types
+  const enginTypes = [
+    "Chariot élévateur",
+    "Grue mobile",
+    "Portique",
+    "Remorque",
+    "Tracteur",
+    "Chargeuse",
+    "Excavatrice",
+    "Camion",
+    "Autre"
+  ];
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -105,6 +125,8 @@ const EnginForm = () => {
         <Typography variant="h5" component="h2" gutterBottom>
           {id ? "Modifier l'Engin" : "Ajouter un Engin"}
         </Typography>
+        
+        <Divider sx={{ mb: 3 }} />
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
           {id && (
@@ -126,6 +148,26 @@ const EnginForm = () => {
             margin="normal"
             required
           />
+          
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="type-engin-label">Type d'Engin</InputLabel>
+            <Select
+              labelId="type-engin-label"
+              name="type_engin"
+              value={engin.type_engin || ""}
+              onChange={handleChange}
+              label="Type d'Engin"
+            >
+              <MenuItem value="">
+                <em>Aucun type sélectionné</em>
+              </MenuItem>
+              {enginTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
             <Button

@@ -17,6 +17,8 @@ const SoustraiteureForm = () => {
     nom_soustraiteure: "",
     prenom_soustraiteure: "",
     fonction_soustraiteure: "",
+    contact_soustraiteure: "",
+    entreprise_soustraiteure: "",
   });
   const [notification, setNotification] = useState({
     open: false,
@@ -38,6 +40,8 @@ const SoustraiteureForm = () => {
             prenom_soustraiteure: soustraiteureData.prenom_soustraiteure || "",
             fonction_soustraiteure:
               soustraiteureData.fonction_soustraiteure || "",
+            contact_soustraiteure: soustraiteureData.contact_soustraiteure || "",
+            entreprise_soustraiteure: soustraiteureData.entreprise_soustraiteure || "",
           });
           setLoading(false);
         })
@@ -159,6 +163,26 @@ const SoustraiteureForm = () => {
             fullWidth
             margin="normal"
             required
+          />
+
+          <TextField
+            label="Contact"
+            name="contact_soustraiteure"
+            value={soustraiteure.contact_soustraiteure}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Téléphone ou Email"
+          />
+
+          <TextField
+            label="Entreprise"
+            name="entreprise_soustraiteure"
+            value={soustraiteure.entreprise_soustraiteure}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            placeholder="Nom de l'entreprise"
           />
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
