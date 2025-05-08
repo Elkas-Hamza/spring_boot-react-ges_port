@@ -13,9 +13,6 @@ public class Operation {
     @Column(name = "ID_operation")
     private String id_operation;
 
-    @Column(name = "NOM_operation")
-    private String nom_operation;
-
     @Column(name = "ID_shift")
     private String id_shift;
 
@@ -39,15 +36,18 @@ public class Operation {
 
     @Column(name = "status")
     private String status = "En cours";
+    
+    @Column(name = "TYPE_operation")
+    private String type_operation = "AUTRE";
 
     // Constructors
     public Operation() {
     }
 
-    public Operation(String nom_operation, String id_shift, String id_escale, String id_conteneure, 
+    public Operation(String id_shift, String id_escale, String id_conteneure, 
                     String id_engin, String id_equipe, 
-                    LocalDateTime date_debut, LocalDateTime date_fin, String status) {
-        this.nom_operation = nom_operation;
+                    LocalDateTime date_debut, LocalDateTime date_fin, String status,
+                    String type_operation) {
         this.id_shift = id_shift;
         this.id_escale = id_escale;
         this.id_conteneure = id_conteneure;
@@ -56,6 +56,7 @@ public class Operation {
         this.date_debut = date_debut;
         this.date_fin = date_fin;
         this.status = status;
+        this.type_operation = type_operation;
     }
 
     // Getters and Setters
@@ -65,14 +66,6 @@ public class Operation {
 
     public void setId_operation(String id_operation) {
         this.id_operation = id_operation;
-    }
-
-    public String getNom_operation() {
-        return nom_operation;
-    }
-
-    public void setNom_operation(String nom_operation) {
-        this.nom_operation = nom_operation;
     }
 
     public String getId_shift() {
@@ -138,12 +131,19 @@ public class Operation {
     public void setStatus(String status) {
         this.status = status;
     }
+    
+    public String getType_operation() {
+        return type_operation;
+    }
+
+    public void setType_operation(String type_operation) {
+        this.type_operation = type_operation;
+    }
 
     @Override
     public String toString() {
         return "Operation{" +
                 "id_operation='" + id_operation + '\'' +
-                ", nom_operation='" + nom_operation + '\'' +
                 ", id_shift='" + id_shift + '\'' +
                 ", id_escale='" + id_escale + '\'' +
                 ", id_conteneure='" + id_conteneure + '\'' +
@@ -152,6 +152,7 @@ public class Operation {
                 ", date_debut=" + date_debut +
                 ", date_fin=" + date_fin +
                 ", status='" + status + '\'' +
+                ", type_operation='" + type_operation + '\'' +
                 '}';
     }
 } 

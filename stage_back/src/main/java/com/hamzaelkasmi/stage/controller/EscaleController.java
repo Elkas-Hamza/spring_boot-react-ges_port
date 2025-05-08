@@ -25,6 +25,7 @@ public class EscaleController {
             return new ResponseEntity<>(escales, HttpStatus.OK);
         } catch (Exception e) {
             System.err.println("Error retrieving all escales: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -37,6 +38,7 @@ public class EscaleController {
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             System.err.println("Error retrieving escale by ID: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -47,10 +49,14 @@ public class EscaleController {
             if (!isEscaleValid(escale)) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
+            
+            System.out.println("Creating escale: " + escale); // Log escale data for debugging
+            
             Escale savedEscale = escaleService.saveEscale(escale);
             return new ResponseEntity<>(savedEscale, HttpStatus.CREATED);
         } catch (Exception e) {
             System.err.println("Error creating escale: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -58,9 +64,13 @@ public class EscaleController {
     @PutMapping("/{id}")
     public ResponseEntity<Escale> updateEscale(@PathVariable("id") String id, @RequestBody Escale updatedEscale) {
         try {
+            System.out.println("Updating escale with ID: " + id); // Log ID for debugging
+            System.out.println("Updated escale data: " + updatedEscale); // Log escale data for debugging
+            
             return escaleService.getEscaleById(id)
                     .map(existingEscale -> {
                         existingEscale.setNOM_navire(updatedEscale.getNOM_navire());
+                        existingEscale.setNavire(updatedEscale.getNavire());
                         existingEscale.setDATE_accostage(updatedEscale.getDATE_accostage());
                         existingEscale.setDATE_sortie(updatedEscale.getDATE_sortie());
 
@@ -70,6 +80,7 @@ public class EscaleController {
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             System.err.println("Error updating escale: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -84,6 +95,7 @@ public class EscaleController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             System.err.println("Error deleting escale: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

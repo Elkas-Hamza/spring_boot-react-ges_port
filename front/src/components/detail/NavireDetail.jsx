@@ -2,22 +2,45 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Container,
-  Typography,
   Paper,
-  Button,
+  Typography,
   Box,
+  Button,
   CircularProgress,
   Alert,
   Snackbar,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
   Divider,
-  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import { NavireService } from "../../services/NavireService";
-import { ArrowBack, Edit } from "@mui/icons-material";
+import ConteneureService from "../../services/ConteneureService";
+import {
+  ArrowBack,
+  Edit,
+  Refresh,
+  Add,
+  Delete,
+  Info,
+  Link as LinkIcon,
+} from "@mui/icons-material";
 
 const NavireDetail = () => {
   const { id } = useParams();
@@ -25,69 +48,460 @@ const NavireDetail = () => {
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [notification, setNotification] = useState({ 
-    open: false, 
-    message: "", 
-    severity: "success" 
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  // Predefined container types - same as in ConteneureForm.jsx
+  const conteneureTypes = [
+    "20 pieds standard",
+    "40 pieds standard",
+    "40 pieds high cube",
+    "Réfrigéré",
+    "Open top",
+    "Flat rack",
+    "Tank",
+    "Citerne",
+    "Flexitank",
+    "Autre",
+  ];
+
+  // Add container dialog state
+  const [containerDialogOpen, setContainerDialogOpen] = useState(false);
+  const [newContainer, setNewContainer] = useState({
+    nom_conteneure: "",
+    type_conteneur: "", // Changed from type_conteneure to match database
+    id_type: 2, // Always 2 for NAVIRE containers
+  });
+  const [containerDialogLoading, setContainerDialogLoading] = useState(false);
+
+  // Add container deletion state
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    container: null,
+    loading: false,
+  });
+
+  // Add container details dialog state
+  const [detailsDialog, setDetailsDialog] = useState({
+    open: false,
+    container: null,
   });
 
   // Fetch data on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await NavireService.getNavireById(id);
-        
-        if (response.success) {
-          setNavire(response.data);
-          
-          // Parse container IDs from comma-separated string
-          if (response.data.idConteneure) {
-            setContainers(
-              response.data.idConteneure
-                .split(',')
-                .map(c => c.trim())
-                .filter(c => c)
-            );
-          }
-        } else {
-          setError("Erreur lors du chargement des données du navire");
-        }
-      } catch (err) {
-        console.error("Error fetching navire:", err);
-        setError("Erreur lors du chargement des données du navire. Veuillez réessayer.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchNavireData();
+  }, [id]);
 
-    if (id) {
-      fetchData();
-    } else {
+  const fetchNavireData = async () => {
+    if (!id) {
       setError("ID de navire non valide");
       setLoading(false);
+      return;
     }
-  }, [id]);
+
+    try {
+      setLoading(true);
+      console.log("Fetching navire details for ID:", id);
+
+      // Try to fetch from the enhanced endpoint first
+      try {
+        console.log("Trying to get navire with accurate container info...");
+        const detailResponse = await NavireService.getNavireWithContainers(id);
+        if (detailResponse.success && detailResponse.data) {
+          console.log(
+            "Successfully fetched navire with containers:",
+            detailResponse.data
+          );
+          setNavire(detailResponse.data);
+
+          // Make sure we're getting the latest container data with proper type_conteneure values
+          if (
+            detailResponse.data.containers &&
+            Array.isArray(detailResponse.data.containers)
+          ) {
+            // Log the container data to help debug
+            console.log(
+              "Container data received:",
+              detailResponse.data.containers
+            );
+            setContainers(detailResponse.data.containers);
+          }
+          setLoading(false);
+          return;
+        }
+      } catch (enhancedError) {
+        console.error("Enhanced navire fetch failed:", enhancedError);
+      }
+
+      // Try direct container endpoint
+      try {
+        console.log("Trying direct container endpoint...");
+        const navireResponse = await NavireService.getNavireById(id);
+        if (navireResponse.success && navireResponse.data) {
+          setNavire(navireResponse.data);
+
+          // Get containers using the direct endpoint
+          const containersResponse = await NavireService.getNavireContainers(
+            id
+          );
+          if (
+            containersResponse.success &&
+            Array.isArray(containersResponse.data)
+          ) {
+            console.log(
+              `Loaded ${containersResponse.data.length} containers from direct endpoint`
+            );
+            setContainers(containersResponse.data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (directEndpointError) {
+        console.error("Direct container endpoint failed:", directEndpointError);
+      }
+
+      // Standard fetch as fallback
+      const response = await NavireService.getNavireById(id);
+      console.log("Standard navire fetch response:", response);
+
+      if (response.success) {
+        setNavire(response.data);
+
+        // Get containers for this ship
+        try {
+          console.log("Fetching containers for ship:", id);
+          const containersResponse = await ConteneureService.getShipContainers(
+            id
+          );
+          console.log("Ship containers response:", containersResponse);
+
+          if (
+            containersResponse.data &&
+            Array.isArray(containersResponse.data)
+          ) {
+            setContainers(containersResponse.data);
+          } else {
+            console.warn("No containers found or invalid container data");
+            setContainers([]);
+          }
+        } catch (containerError) {
+          console.error("Error fetching containers:", containerError);
+          setContainers([]);
+        }
+      } else {
+        setError("Erreur lors du chargement des données du navire");
+      }
+    } catch (err) {
+      console.error("Error fetching navire:", err);
+      setError(
+        "Erreur lors du chargement des données du navire. Veuillez réessayer."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle container dialog open
+  const handleOpenContainerDialog = () => {
+    setNewContainer({
+      nom_conteneure: "",
+      type_conteneur: "", // Changed from type_conteneure to match database
+      id_type: 2, // Always 2 for NAVIRE containers
+    });
+    setContainerDialogOpen(true);
+  };
+
+  // Handle container dialog close
+  const handleCloseContainerDialog = () => {
+    setContainerDialogOpen(false);
+  };
+
+  // Handle container input change
+  const handleContainerInputChange = (e) => {
+    const { name, value } = e.target;
+
+    // Special handling for type_conteneur dropdown
+    if (name === "type_conteneur") {
+      // Changed from type_conteneure
+      // For index-based selection
+      const selectedType = conteneureTypes[value - 1] || value;
+
+      setNewContainer((prev) => ({
+        ...prev,
+        type_conteneur: selectedType, // Changed from type_conteneure
+        id_type: 2, // Always set to 2 for NAVIRE
+      }));
+    } else {
+      setNewContainer((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  // Create container function with corrected field names
+  const handleCreateContainer = async () => {
+    if (!newContainer.nom_conteneure) {
+      setNotification({
+        open: true,
+        message: "Le nom du conteneur est requis",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (!newContainer.type_conteneur) {
+      // Changed from type_conteneure
+      setNotification({
+        open: true,
+        message: "Le type de conteneur est requis",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      setContainerDialogLoading(true);
+
+      // Create container data with the correct structure matching database schema
+      const containerData = {
+        nom_conteneure: newContainer.nom_conteneure,
+        type_conteneur: newContainer.type_conteneur, // Correct field name for database
+        id_type: 2, // Always set to 2 for NAVIRE type
+        idNavire: navire.idNavire, // Include the current navire ID
+        location: "NAVIRE", // Explicitly set location to NAVIRE
+      };
+
+      console.log("Creating container with data:", containerData);
+
+      const result = await ConteneureService.createConteneure(containerData);
+
+      if (result) {
+        console.log("Container created successfully:", result);
+        const containerId = result.id || result.idConteneure;
+
+        // Explicitly assign the container to this navire
+        if (containerId) {
+          try {
+            console.log(
+              `Assigning container ${containerId} to ship ${navire.idNavire}`
+            );
+            await ConteneureService.assignContainerToShip(
+              containerId,
+              navire.idNavire
+            );
+            console.log("Container successfully assigned to ship");
+          } catch (assignError) {
+            console.error("Error assigning container to ship:", assignError);
+            // Still show success for container creation
+          }
+        }
+
+        setNotification({
+          open: true,
+          message: "Conteneur ajouté avec succès au navire",
+          severity: "success",
+        });
+
+        // Close dialog and refresh data
+        handleCloseContainerDialog();
+        fetchNavireData();
+      } else {
+        setNotification({
+          open: true,
+          message: "Erreur lors de la création du conteneur",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating container:", error);
+      setNotification({
+        open: true,
+        message: `Erreur: ${
+          error.message || "Erreur lors de la création du conteneur"
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setContainerDialogLoading(false);
+    }
+  };
 
   // Close notification
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
 
+  const handleRefresh = () => {
+    fetchNavireData();
+    setNotification({
+      open: true,
+      message: "Données rafraîchies",
+      severity: "info",
+    });
+  };
+
+  // Handle delete dialog open
+  const handleOpenDeleteDialog = (container) => {
+    setDeleteDialog({
+      open: true,
+      container,
+      loading: false,
+    });
+  };
+
+  // Handle delete dialog close
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({
+      ...deleteDialog,
+      open: false,
+    });
+  };
+
+  // Handle container deletion
+  const handleDeleteContainer = async () => {
+    if (!deleteDialog.container) return;
+
+    try {
+      setDeleteDialog((prev) => ({ ...prev, loading: true }));
+
+      const containerId = deleteDialog.container.id_conteneure;
+      console.log("Deleting container:", containerId);
+
+      const response = await ConteneureService.deleteConteneure(containerId);
+
+      if (response && response.status === 204) {
+        console.log("Container deleted successfully");
+
+        // Remove the container from the list
+        setContainers((prev) =>
+          prev.filter((c) => c.id_conteneure !== containerId)
+        );
+
+        // Show success notification
+        setNotification({
+          open: true,
+          message: "Conteneur supprimé avec succès",
+          severity: "success",
+        });
+
+        // Close the dialog
+        handleCloseDeleteDialog();
+
+        // Refresh the data to ensure everything is up to date
+        fetchNavireData();
+      } else {
+        setNotification({
+          open: true,
+          message: "Erreur lors de la suppression du conteneur",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting container:", error);
+      setNotification({
+        open: true,
+        message: "Erreur lors de la suppression du conteneur",
+        severity: "error",
+      });
+    } finally {
+      setDeleteDialog((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  // Handle details dialog open
+  const handleOpenDetailsDialog = (container) => {
+    setDetailsDialog({
+      open: true,
+      container,
+    });
+  };
+
+  // Handle details dialog close
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialog({
+      ...detailsDialog,
+      open: false,
+    });
+  };
+
+  // Add function to reassociate a container with this ship
+  const handleReassociateContainer = async (containerId) => {
+    if (!containerId || !navire) return;
+
+    try {
+      setNotification({
+        open: true,
+        message: "Réassociation en cours...",
+        severity: "info",
+      });
+
+      console.log(
+        `Attempting to reassociate container ${containerId} with ship ${navire.idNavire}`
+      );
+      const response = await ConteneureService.assignContainerToShip(
+        containerId,
+        navire.idNavire
+      );
+
+      if (response && response.data) {
+        console.log("Container successfully reassociated:", response.data);
+
+        setNotification({
+          open: true,
+          message: "Conteneur réassocié avec succès",
+          severity: "success",
+        });
+
+        // Refresh the data
+        fetchNavireData();
+      } else {
+        setNotification({
+          open: true,
+          message: "Erreur lors de la réassociation",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error reassociating container:", error);
+      setNotification({
+        open: true,
+        message: "Erreur lors de la réassociation",
+        severity: "error",
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <Container sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
   if (error) {
     return (
       <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            Erreur
+          </Typography>
+          <Typography>{error}</Typography>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <Button
+              onClick={handleRefresh}
+              startIcon={<Refresh />}
+              variant="contained"
+              color="primary"
+            >
+              Réessayer
+            </Button>
+          </Box>
+        </Paper>
       </Container>
     );
   }
@@ -95,66 +509,63 @@ const NavireDetail = () => {
   if (!navire) {
     return (
       <Container>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Navire non trouvé
-        </Alert>
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Typography>Navire non trouvé</Typography>
+          <Button component={Link} to="/navires" startIcon={<ArrowBack />}>
+            Retour à la liste
+          </Button>
+        </Paper>
       </Container>
     );
   }
 
   return (
-    <Container>
-      {/* Page Title */}
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
         Détails du Navire
       </Typography>
 
       {/* Navire Information Section */}
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom>
-              Informations du Navire
-            </Typography>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="body1">
-                <strong>ID:</strong> {navire.idNavire}
-              </Typography>
-            </Box>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="body1">
-                <strong>Nom du navire:</strong> {navire.nomNavire}
-              </Typography>
-            </Box>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="body1">
-                <strong>Numéro d'immatriculation:</strong> {navire.matriculeNavire}
-              </Typography>
-            </Box>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button 
-                component={Link} 
-                to={`/navires/edit/${navire.idNavire}`}
-                variant="contained" 
-                color="primary"
-                startIcon={<Edit />}
-                sx={{ mr: 1 }}
-              >
-                Modifier
-              </Button>
-              <Button 
-                component={Link} 
-                to="/navires" 
-                startIcon={<ArrowBack />}
-              >
-                Retour à la liste
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
+        <Typography variant="h6" gutterBottom>
+          Informations du Navire
+        </Typography>
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="body1">
+            <strong>ID:</strong> {navire.idNavire}
+          </Typography>
+        </Box>
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="body1">
+            <strong>Nom du navire:</strong> {navire.nomNavire}
+          </Typography>
+        </Box>
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="body1">
+            <strong>Numéro d'immatriculation:</strong> {navire.matriculeNavire}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Button
+            component={Link}
+            to={`/navires/edit/${navire.idNavire}`}
+            variant="contained"
+            color="primary"
+            startIcon={<Edit />}
+            sx={{ mr: 1 }}
+          >
+            Modifier
+          </Button>
+          <Button
+            component={Link}
+            to="/navires"
+            startIcon={<ArrowBack />}
+            variant="outlined"
+          >
+            Retour à la liste
+          </Button>
+        </Box>
       </Paper>
 
       {/* Containers Section */}
@@ -167,46 +578,438 @@ const NavireDetail = () => {
             mb: 2,
           }}
         >
-          <Typography variant="h6">
-            Conteneurs 
-            <Chip 
-              label={`${containers.length}`} 
-              color="primary" 
-              size="small" 
-              sx={{ ml: 1 }} 
+          <Typography variant="h5">
+            Conteneurs
+            <Chip
+              label={containers.length}
+              color="primary"
+              size="small"
+              sx={{ ml: 1 }}
             />
           </Typography>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Add />}
+            onClick={handleOpenContainerDialog}
+          >
+            Ajouter un conteneur
+          </Button>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
 
-        {containers.length > 0 ? (
-          <List>
-            {containers.map((container, index) => (
-              <React.Fragment key={index}>
-                <ListItem>
-                  <ListItemText 
-                    primary={container}
-                    secondary={`Conteneur ${index + 1}`}
-                  />
-                </ListItem>
-                {index < containers.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Typography variant="body1" sx={{ textAlign: "center", py: 2 }}>
-            Aucun conteneur associé à ce navire
-          </Typography>
-        )}
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Type ID</TableCell>
+                <TableCell>Navire</TableCell>
+                <TableCell>Date d'ajout</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {containers.length > 0 ? (
+                containers.map((container) => (
+                  <TableRow key={container.id_conteneure}>
+                    <TableCell>{container.id_conteneure}</TableCell>
+                    <TableCell>
+                      {container.nom_conteneure || "Non spécifié"}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        size="small"
+                        label={
+                          container.typeConteneur?.nomType || "Non spécifié"
+                        }
+                        color="primary"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {container.typeConteneur ? (
+                        <Chip
+                          size="small"
+                          label={`ID: ${
+                            container.typeConteneur.idType || "N/A"
+                          }`}
+                          color={
+                            container.typeConteneur.idType === 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      ) : (
+                        <Chip size="small" label="Manquant" color="error" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {container.navire ? (
+                        <Chip
+                          size="small"
+                          label={`ID: ${container.navire.idNavire}`}
+                          color="success"
+                        />
+                      ) : (
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Chip
+                            size="small"
+                            label="Non associé"
+                            color="error"
+                          />
+                          <Tooltip title="Réassocier au navire">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() =>
+                                handleReassociateContainer(
+                                  container.id_conteneure
+                                )
+                              }
+                            >
+                              <LinkIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {container.dateAjout
+                        ? new Date(container.dateAjout).toLocaleDateString()
+                        : "Non spécifiée"}
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="Voir détails">
+                        <IconButton
+                          onClick={() => handleOpenDetailsDialog(container)}
+                          color="primary"
+                          size="small"
+                          sx={{ mr: 1 }}
+                        >
+                          <Info />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          onClick={() => handleOpenDeleteDialog(container)}
+                          color="error"
+                          size="small"
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    Aucun conteneur associé à ce navire
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
+
+      {/* Add Container Dialog */}
+      <Dialog
+        open={containerDialogOpen}
+        onClose={handleCloseContainerDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Ajouter un conteneur</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="nom_conteneure"
+            label="Nom du conteneur"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={newContainer.nom_conteneure}
+            onChange={handleContainerInputChange}
+            sx={{ mb: 2, mt: 1 }}
+            required
+          />
+
+          {/* Container type selection - same as in ConteneureForm.jsx */}
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel id="type-conteneure-label">
+              Type de Conteneur
+            </InputLabel>
+            <Select
+              labelId="type-conteneure-label"
+              id="type_conteneur"
+              name="type_conteneur"
+              value={
+                newContainer.type_conteneur
+                  ? conteneureTypes.indexOf(newContainer.type_conteneur) + 1 ||
+                    ""
+                  : ""
+              }
+              onChange={handleContainerInputChange}
+              label="Type de Conteneur"
+            >
+              <MenuItem value="">
+                <em>Sélectionnez un type</em>
+              </MenuItem>
+              {conteneureTypes.map((type, index) => (
+                <MenuItem key={index} value={index + 1}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>
+              Sélectionnez le type physique du conteneur
+            </FormHelperText>
+          </FormControl>
+
+          <Box sx={{ mt: 2, p: 1, bgcolor: "grey.100", borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+              Configuration du conteneur:
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block" }}>
+              • Type ID: 2
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block" }}>
+              • Location: NAVIRE
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block" }}>
+              • Navire: {navire?.nomNavire} ({navire?.idNavire})
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseContainerDialog}
+            disabled={containerDialogLoading}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleCreateContainer}
+            variant="contained"
+            color="primary"
+            disabled={
+              containerDialogLoading ||
+              !newContainer.nom_conteneure ||
+              !newContainer.type_conteneur
+            }
+          >
+            {containerDialogLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Ajouter"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Container Dialog */}
+      <Dialog open={deleteDialog.open} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Êtes-vous sûr de vouloir supprimer le conteneur{" "}
+            <strong>
+              {deleteDialog.container?.nom_conteneure ||
+                deleteDialog.container?.id_conteneure}
+            </strong>
+            ?
+          </Typography>
+          <Typography color="error" sx={{ mt: 2 }}>
+            Cette action est irréversible.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            disabled={deleteDialog.loading}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleDeleteContainer}
+            variant="contained"
+            color="error"
+            disabled={deleteDialog.loading}
+          >
+            {deleteDialog.loading ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Supprimer"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Container Details Dialog */}
+      <Dialog
+        open={detailsDialog.open}
+        onClose={handleCloseDetailsDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Détails du conteneur</DialogTitle>
+        <DialogContent>
+          {detailsDialog.container && (
+            <Box sx={{ pt: 1 }}>
+              <Typography variant="h6">Informations générales</Typography>
+              <Divider sx={{ my: 1 }} />
+
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    ID
+                  </Typography>
+                  <Typography>
+                    {detailsDialog.container.id_conteneure}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Nom
+                  </Typography>
+                  <Typography>
+                    {detailsDialog.container.nom_conteneure || "Non spécifié"}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Type
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={detailsDialog.container.type_conteneur || "NAVIRE"}
+                    color="primary"
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Date d'ajout
+                  </Typography>
+                  <Typography>
+                    {detailsDialog.container.dateAjout
+                      ? new Date(
+                          detailsDialog.container.dateAjout
+                        ).toLocaleString()
+                      : "Non spécifiée"}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {detailsDialog.container.typeConteneur && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 3 }}>
+                    Type de conteneur
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+
+                  <Box
+                    sx={{
+                      mt: 2,
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        ID Type
+                      </Typography>
+                      <Typography>
+                        {detailsDialog.container.typeConteneur.idType ||
+                          "Non spécifié"}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Nom du type
+                      </Typography>
+                      <Typography>
+                        {detailsDialog.container.typeConteneur.nomType ||
+                          "Non spécifié"}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Description
+                      </Typography>
+                      <Typography>
+                        {detailsDialog.container.typeConteneur.description ||
+                          "Non spécifiée"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </>
+              )}
+
+              <Typography variant="h6" sx={{ mt: 3 }}>
+                Navire associé
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+
+              <Box sx={{ mt: 2 }}>
+                {detailsDialog.container.navire ? (
+                  <Typography>
+                    {detailsDialog.container.navire.nomNavire ||
+                      navire?.nomNavire}
+                    (
+                    {detailsDialog.container.navire.matriculeNavire ||
+                      navire?.matriculeNavire}
+                    )
+                    <Typography
+                      variant="caption"
+                      display="block"
+                      color="text.secondary"
+                    >
+                      ID:{" "}
+                      {detailsDialog.container.navire.idNavire ||
+                        navire?.idNavire}
+                    </Typography>
+                  </Typography>
+                ) : (
+                  <Typography color="error">
+                    Non associé à un navire! Le conteneur est orphelin.
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetailsDialog}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar Notification */}
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={handleCloseNotification}
@@ -220,4 +1023,4 @@ const NavireDetail = () => {
   );
 };
 
-export default NavireDetail; 
+export default NavireDetail;

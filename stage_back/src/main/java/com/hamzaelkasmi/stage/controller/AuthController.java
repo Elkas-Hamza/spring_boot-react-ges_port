@@ -105,7 +105,7 @@ public class AuthController {
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
-        Long userId = Long.parseLong(request.get("userId"));
+        String userId = request.get("userId");
 
         if (currentPassword == null || newPassword == null || userId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Current password, new password, and user ID are required"));

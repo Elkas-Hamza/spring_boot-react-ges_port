@@ -380,15 +380,14 @@ const EquipeDetails = () => {
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
           <Button
-            component={Link}
-            to={`/equipes/edit/${id}`}
+            onClick={() => window.location.href = `/equipes/edit/${id}`}
             variant="contained"
             color="primary"
             sx={{ mr: 1 }}
           >
             Modifier
           </Button>
-          <Button component={Link} to="/equipes" variant="outlined">
+          <Button onClick={() => window.location.href = "/equipes"} variant="outlined">
             Retour à la liste
           </Button>
         </Box>

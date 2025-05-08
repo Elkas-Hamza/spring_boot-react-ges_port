@@ -21,7 +21,7 @@ public class Escale {
     private String NOM_navire;
     
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "MATRICULE_navire", nullable = false)
+    @JoinColumn(name = "MATRICULE_navire", nullable = true)
     private Navire navire;
 
     @Column(name = "DATE_accostage", nullable = false)

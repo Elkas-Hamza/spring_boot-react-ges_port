@@ -96,16 +96,16 @@ public class OperationService {
         
         try {
             // Map based on expected column names from the query
-            // ID_operation, NOM_operation, ID_shift, ID_escale, ID_conteneure, ID_engin, ID_equipe, DATE_debut, DATE_fin, nom_shift
+            // ID_operation, TYPE_operation, ID_shift, ID_escale, ID_conteneure, ID_engin, ID_equipe, DATE_debut, DATE_fin, nom_shift
             
             // Always get ID_operation (should be first column at index 0)
             dto.setId_operation((String) result[0]);
             
             int currentIndex = 1;
             
-            // Check for NOM_operation (this could be at index 1 if it exists)
-            if (result.length > 9) { // Total expected is at least 10 columns with NOM_operation
-                dto.setNom_operation((String) result[currentIndex++]);
+            // Check for TYPE_operation (this could be at index 1 if it exists)
+            if (result.length > 9) { // Total expected is at least 10 columns with TYPE_operation
+                dto.setType_operation((String) result[currentIndex++]);
             }
             
             // Get the rest of the columns in order

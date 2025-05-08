@@ -175,12 +175,6 @@ const PersonnelList = () => {
         />
       )}
 
-      {!loading && !error && filteredPersonnel.length === 0 && (
-        <Typography sx={{ textAlign: "center", my: 4 }} color="text.secondary">
-          Aucun personnel trouvé
-        </Typography>
-      )}
-
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
@@ -194,13 +188,23 @@ const PersonnelList = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredPersonnel.map((person) => (
-              <PersonnelItem
-                key={person.matricule_personnel}
-                personnel={person}
-                onDelete={handleOpenDeleteDialog}
-              />
-            ))}
+            {!loading && !error && filteredPersonnel.length > 0 ? (
+              filteredPersonnel.map((person) => (
+                <PersonnelItem
+                  key={person.matricule_personnel}
+                  personnel={person}
+                  onDelete={handleOpenDeleteDialog}
+                />
+              ))
+            ) : !loading && !error && filteredPersonnel.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <Typography color="text.secondary">
+                    Aucun personnel trouvé
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

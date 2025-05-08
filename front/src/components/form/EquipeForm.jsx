@@ -19,6 +19,7 @@ const EquipeForm = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("No actions taken yet");
 
   const [notification, setNotification] = useState({
     open: false,
@@ -30,7 +31,24 @@ const EquipeForm = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
+  // Add logging on component mount
   useEffect(() => {
+    console.log("EquipeForm mounted with params:", { id });
+    console.log("Current auth:", {
+      token: localStorage.getItem('token') ? "Present" : "Missing",
+      role: localStorage.getItem('userRole')
+    });
+    
+    // Check and clear the redirect flag
+    const isRedirectingFromList = localStorage.getItem('redirecting_to_create_equipe') === 'true';
+    if (isRedirectingFromList) {
+      console.log("Detected redirect from list - clearing flag");
+      localStorage.removeItem('redirecting_to_create_equipe');
+      setDebugInfo(`Form loaded via direct navigation. Mode: ${isEdit ? 'Edit' : 'Create'}`);
+    } else {
+      setDebugInfo(`Form loaded. Mode: ${isEdit ? 'Edit' : 'Create'}`);
+    }
+    
     if (isEdit) {
       setLoading(true);
       EquipeService.getEquipeById(id)
@@ -38,9 +56,11 @@ const EquipeForm = () => {
           setEquipe({
             nom_equipe: response.data.nom_equipe,
           });
+          setDebugInfo(prev => `${prev}\nLoaded equipe data: ${JSON.stringify(response.data)}`);
         })
         .catch((error) => {
           console.error("Error fetching equipe:", error);
+          setDebugInfo(prev => `${prev}\nFetch error: ${error.message}`);
           setNotification({
             open: true,
             message: "Erreur lors du chargement de l'équipe",
@@ -60,6 +80,7 @@ const EquipeForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setDebugInfo(prev => `${prev}\nSubmit initiated - payload: ${JSON.stringify(equipe)}`);
 
     if (!equipe.nom_equipe.trim()) {
       setNotification({
@@ -67,13 +88,16 @@ const EquipeForm = () => {
         message: "Le nom de l'équipe est requis",
         severity: "error",
       });
+      setDebugInfo(prev => `${prev}\nValidation error: Empty equipe name`);
       return;
     }
 
     try {
       if (isEdit) {
         // In edit mode, update the equipe name
+        setDebugInfo(prev => `${prev}\nAttempting to update equipe ${id}`);
         await EquipeService.updateEquipe(id, { nom_equipe: equipe.nom_equipe });
+        setDebugInfo(prev => `${prev}\nUpdate successful`);
 
         setNotification({
           open: true,
@@ -82,16 +106,25 @@ const EquipeForm = () => {
         });
 
         // Navigate back to details page after editing
-        setTimeout(() => navigate(`/equipes/${id}`), 1000);
+        setDebugInfo(prev => `${prev}\nPreparing navigation to /equipes/${id}`);
+        setTimeout(() => {
+          console.log(`Navigating to equipe details: /equipes/${id}`);
+          // Use direct location change to avoid React Router issues
+          window.location.href = `/equipe/${id}`;
+        }, 1500);
       } else {
         // In create mode, create a new equipe with just the name
         console.log("Creating equipe with name:", equipe.nom_equipe);
+        setDebugInfo(prev => `${prev}\nAttempting to create equipe with name: ${equipe.nom_equipe}`);
+        
         const response = await EquipeService.createEquipe({
           nom_equipe: equipe.nom_equipe,
         });
+        
         console.log("Equipe created:", response.data);
         const createdId = response.data.id_equipe;
         console.log("Created equipe ID:", createdId);
+        setDebugInfo(prev => `${prev}\nCreation successful - New ID: ${createdId}`);
 
         setNotification({
           open: true,
@@ -100,18 +133,23 @@ const EquipeForm = () => {
         });
 
         // Navigate to the equipe list instead of directly to details
+        setDebugInfo(prev => `${prev}\nPreparing navigation to /equipes`);
         setTimeout(() => {
           console.log("Navigating to equipe list after creation");
-          navigate("/equipes");
-        }, 2000);
+          // Force direct location change instead of navigate
+          window.location.href = '/equipes';
+        }, 1500);
       }
     } catch (error) {
       console.error("Error saving equipe:", error);
+      setDebugInfo(prev => `${prev}\nError saving: ${error.message}`);
+      
       let errorMessage = "Erreur lors de l'enregistrement";
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
         errorMessage += ` (${error.response.status})`;
+        setDebugInfo(prev => `${prev}\nResponse status: ${error.response.status}`);
       }
       setNotification({
         open: true,
@@ -153,8 +191,7 @@ const EquipeForm = () => {
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
             <Button
-              component={Link}
-              to="/equipes"
+              onClick={() => window.location.href = "/equipes"}
               variant="outlined"
               color="secondary"
             >
@@ -165,6 +202,16 @@ const EquipeForm = () => {
             </Button>
           </Box>
         </Box>
+
+        {/* Debug information - only in development */}
+        {process.env.NODE_ENV !== 'production' && (
+          <Paper elevation={1} sx={{ p: 2, mt: 3, backgroundColor: '#f5f5f5' }}>
+            <Typography variant="subtitle2" gutterBottom>Debug Info:</Typography>
+            <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>
+              {debugInfo}
+            </Box>
+          </Paper>
+        )}
       </Paper>
 
       <Snackbar

@@ -1,12 +1,10 @@
 package com.hamzaelkasmi.stage.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -25,18 +23,18 @@ public class Navire {
     @Column(name = "MATRICULE_navire", nullable = false, unique = true)
     private String matriculeNavire;
     
-    @Column(name = "ID_conteneure")
-    private String idConteneure;
+    @OneToMany(mappedBy = "navire", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List<Conteneure> conteneurs;
     
     // Default constructor
     public Navire() {
     }
     
     // Constructor with fields (removing idNavire since it will be generated)
-    public Navire(String nomNavire, String matriculeNavire, String idConteneure) {
+    public Navire(String nomNavire, String matriculeNavire) {
         this.nomNavire = nomNavire;
         this.matriculeNavire = matriculeNavire;
-        this.idConteneure = idConteneure;
     }
     
     // Getters and Setters
@@ -64,12 +62,12 @@ public class Navire {
         this.matriculeNavire = matriculeNavire;
     }
     
-    public String getIdConteneure() {
-        return idConteneure;
+    public List<Conteneure> getConteneurs() {
+        return conteneurs;
     }
     
-    public void setIdConteneure(String idConteneure) {
-        this.idConteneure = idConteneure;
+    public void setConteneurs(List<Conteneure> conteneurs) {
+        this.conteneurs = conteneurs;
     }
     
     @Override
@@ -91,7 +89,6 @@ public class Navire {
                 "idNavire='" + idNavire + '\'' +
                 ", nomNavire='" + nomNavire + '\'' +
                 ", matriculeNavire='" + matriculeNavire + '\'' +
-                ", idConteneure='" + idConteneure + '\'' +
                 '}';
     }
 } 

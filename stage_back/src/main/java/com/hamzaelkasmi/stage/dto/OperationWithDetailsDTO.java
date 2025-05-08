@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class OperationWithDetailsDTO {
     private String id_operation;
-    private String nom_operation;
+    private String type_operation;
     private String id_shift;
     private String nom_shift;
     private String id_escale;
@@ -27,12 +27,12 @@ public class OperationWithDetailsDTO {
         this.id_operation = id_operation;
     }
 
-    public String getNom_operation() {
-        return nom_operation;
+    public String getType_operation() {
+        return type_operation;
     }
 
-    public void setNom_operation(String nom_operation) {
-        this.nom_operation = nom_operation;
+    public void setType_operation(String type_operation) {
+        this.type_operation = type_operation;
     }
 
     public String getId_shift() {

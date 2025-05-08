@@ -10,19 +10,19 @@ import {
   Button,
   Typography,
   TextField,
-  InputAdornment,
   Box,
+  CircularProgress,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from "@mui/icons-material/Add";
+import { Add as AddIcon } from "@mui/icons-material";
 import ShiftService from "../../services/ShiftService";
+import ErrorHandler from "../common/ErrorHandler";
 
 const ShiftList = () => {
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchShifts();
@@ -33,10 +33,11 @@ const ShiftList = () => {
       setLoading(true);
       const response = await ShiftService.getAllShifts();
       setShifts(response.data);
-      setLoading(false);
+      setError(null);
     } catch (error) {
       console.error("Error fetching shifts:", error);
       setError("Failed to load shifts. Please try again later.");
+    } finally {
       setLoading(false);
     }
   };
@@ -60,57 +61,57 @@ const ShiftList = () => {
   };
 
   const filteredShifts = shifts.filter((shift) =>
-    (shift.id_shift?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-    (shift.nom_shift?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+    (shift.id_shift?.toString().toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (shift.nom_shift?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
-  if (loading) return <Typography align="center">Chargement...</Typography>;
-  if (error)
-    return (
-      <Typography color="error" align="center">
-        {error}
-      </Typography>
-    );
-
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        Gestion des shifts
-      </Typography>
-
+    <Box sx={{ p: 3 }}>
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
       >
+        <Typography variant="h4" gutterBottom>
+          Gestion des shifts
+        </Typography>
         <Button
           component={Link}
           to="/shifts/new"
           variant="contained"
-          color="primary"
+          sx={{ mb: 3 }}
           startIcon={<AddIcon />}
         >
-          Ajouter un nouveau shift
+          Ajouter
         </Button>
-
-        <TextField
-          variant="outlined"
-          placeholder="Rechercher par ID ou nom du shift..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          size="small"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
       </Box>
 
-      <TableContainer component={Paper}>
+      <TextField
+        label="Rechercher par ID ou nom du shift"
+        variant="outlined"
+        fullWidth
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        sx={{ mb: 3 }}
+      />
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && (
+        <ErrorHandler 
+          message={error} 
+          onRetry={fetchShifts} 
+        />
+      )}
+
+      <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
             <TableRow>
@@ -118,24 +119,18 @@ const ShiftList = () => {
               <TableCell>Nom</TableCell>
               <TableCell>Date debut</TableCell>
               <TableCell>Date fin</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredShifts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  Aucun shift trouvé
-                </TableCell>
-              </TableRow>
-            ) : (
+            {!loading && !error && filteredShifts.length > 0 ? (
               filteredShifts.map((shift) => (
                 <TableRow key={shift.id_shift}>
                   <TableCell>{shift.id_shift}</TableCell>
                   <TableCell>{shift.nom_shift || "Non spécifié"}</TableCell>
                   <TableCell>{formatTime(shift.heure_debut)}</TableCell>
                   <TableCell>{formatTime(shift.heure_fin)}</TableCell>
-                  <TableCell>
+                  <TableCell align="center">
                     <Button
                       component={Link}
                       to={`/shifts/edit/${shift.id_shift}`}
@@ -153,11 +148,19 @@ const ShiftList = () => {
                   </TableCell>
                 </TableRow>
               ))
-            )}
+            ) : !loading && !error && filteredShifts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Typography color="text.secondary">
+                    Aucun shift trouvé
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>
-    </>
+    </Box>
   );
 };
 

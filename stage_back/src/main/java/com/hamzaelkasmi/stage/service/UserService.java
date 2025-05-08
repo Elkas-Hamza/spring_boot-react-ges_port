@@ -32,7 +32,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUserById(Long id) {
+    public User getUserById(String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
@@ -56,7 +56,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUser(Long id, @Valid User userDetails) {
+    public User updateUser(String id, @Valid User userDetails) {
         User user = getUserById(id);
         
         // Check if new email is taken by another user
@@ -77,14 +77,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(String id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }
 
-    public void changePassword(Long id, String currentPassword, String newPassword) {
+    public void changePassword(String id, String currentPassword, String newPassword) {
         User user = getUserById(id);
         
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {

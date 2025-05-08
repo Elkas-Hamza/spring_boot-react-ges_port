@@ -283,6 +283,38 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   }
 };
 
+const getTokenDebugInfo = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return { exists: false, message: 'No token found' };
+  }
+  
+  try {
+    // Get token parts
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return { exists: true, valid: false, message: 'Token does not have 3 parts (header.payload.signature)' };
+    }
+    
+    // Decode the payload
+    const payload = JSON.parse(atob(parts[1]));
+    const now = Date.now() / 1000;
+    const isExpired = payload.exp && payload.exp < now;
+    
+    return {
+      exists: true,
+      valid: !isExpired,
+      expired: isExpired,
+      issueTime: payload.iat ? new Date(payload.iat * 1000).toLocaleString() : 'unknown',
+      expireTime: payload.exp ? new Date(payload.exp * 1000).toLocaleString() : 'unknown',
+      subject: payload.sub || 'unknown',
+      roles: payload.roles || []
+    };
+  } catch (e) {
+    return { exists: true, valid: false, error: e.message, message: 'Token parsing error' };
+  }
+};
+
 const AuthService = {
   login,
   register,
@@ -292,7 +324,8 @@ const AuthService = {
   verifyToken,
   requestPasswordReset,
   resetPassword,
-  changePassword
+  changePassword,
+  getTokenDebugInfo
 };
 
 export default AuthService; 

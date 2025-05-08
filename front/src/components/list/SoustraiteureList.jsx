@@ -194,39 +194,41 @@ const SoustraiteureList = () => {
         />
       )}
 
-      {!loading && !error && filteredSoustraiteures.length === 0 && (
-        <Typography sx={{ textAlign: "center", my: 4 }} color="text.secondary">
-          Aucun soustraiteure trouvé
-        </Typography>
-      )}
-
-      {!loading && !error && filteredSoustraiteures.length > 0 && (
-        <TableContainer component={Paper} elevation={3}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Matricule</TableCell>
-                <TableCell>Nom</TableCell>
-                <TableCell>Prénom</TableCell>
-                <TableCell>Fonction</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Entreprise</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredSoustraiteures.map((soustraiteure) => (
+      <TableContainer component={Paper} elevation={3}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Matricule</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Prénom</TableCell>
+              <TableCell>Fonction</TableCell>
+              <TableCell>Contact</TableCell>
+              <TableCell>Entreprise</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!loading && !error && filteredSoustraiteures.length > 0 ? (
+              filteredSoustraiteures.map((soustraiteure) => (
                 <SoustraiteureItem
                   key={soustraiteure.matricule_soustraiteure}
                   soustraiteure={soustraiteure}
                   onDelete={handleOpenDeleteDialog}
                   onEdit={handleEditSoustraiteure}
                 />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              ))
+            ) : !loading && !error && filteredSoustraiteures.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  <Typography color="text.secondary">
+                    Aucun soustraiteure trouvé
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : null}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       <Dialog open={deleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirmer la suppression</DialogTitle>

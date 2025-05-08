@@ -4,6 +4,8 @@ import com.hamzaelkasmi.stage.model.User;
 import com.hamzaelkasmi.stage.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -70,11 +74,14 @@ public class AuthService {
         
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         
+        String role = "ROLE_" + user.getRole().name();
+        logger.info("Generating token for user: {} with role: {}", user.getEmail(), role);
+        
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .claim("roles", List.of("ROLE_" + user.getRole().name()))
+                .claim("roles", List.of(role))
                 .signWith(key)
                 .compact();
     }

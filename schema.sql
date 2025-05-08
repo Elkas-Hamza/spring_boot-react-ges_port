@@ -11,7 +11,7 @@ USE `gestion_res`;
 -- Table `gestion_res`.`users`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`users` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` VARCHAR(10) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `role` ENUM('ADMIN', 'USER') NOT NULL,
@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS `gestion_res`.`users` (
 ) ENGINE = InnoDB;
 
 -- Insert default admin user (password: admin123)
-INSERT INTO `gestion_res`.`users` (`email`, `password`, `role`) 
-VALUES ('admin@marsamaroc.co.ma', '$2a$10$dCIu5sZmJQgBBB8LMjfCr.i8jGIiJW9c/ZdJIlYRJWJfLj1t0Fiz6', 'ADMIN');
+INSERT INTO `gestion_res`.`users` (`id`, `email`, `password`, `role`) 
+VALUES ('USR-001', 'admin@marsamaroc.co.ma', '$2a$10$dCIu5sZmJQgBBB8LMjfCr.i8jGIiJW9c/ZdJIlYRJWJfLj1t0Fiz6', 'ADMIN');
 
 -- Insert default regular user (password: user123)
-INSERT INTO `gestion_res`.`users` (`email`, `password`, `role`) 
-VALUES ('user@marsamaroc.co.ma', '$2a$10$jH7LIAGpyfZkR9CcO9XCLukxcQQMsthRwDQZ/FKP/zW9Qpd.EMtDy  ', 'USER');
+INSERT INTO `gestion_res`.`users` (`id`, `email`, `password`, `role`) 
+VALUES ('USR-002', 'user@marsamaroc.co.ma', '$2a$10$jH7LIAGpyfZkR9CcO9XCLukxcQQMsthRwDQZ/FKP/zW9Qpd.EMtDy', 'USER');
 
 
 
@@ -139,16 +139,54 @@ END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
+-- Table `gestion_res`.`navire`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`navire` (
+  `ID_navire` VARCHAR(45) NOT NULL,
+  `NOM_navire` VARCHAR(256) NOT NULL,
+  `MATRICULE_navire` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`ID_navire`),
+  UNIQUE INDEX `ID_navire_UNIQUE` (`ID_navire` ASC) VISIBLE,
+  UNIQUE INDEX `MATRICULE_navire_UNIQUE` (`MATRICULE_navire` ASC) VISIBLE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `gestion_res`.`navire_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_navire`
+BEFORE INSERT ON `gestion_res`.`navire`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_navire VARCHAR(45);
+  INSERT INTO `gestion_res`.`navire_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_navire = CONCAT('NAV-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_navire = formatted_navire;
+END$$
+DELIMITER ;
+
+-- -----------------------------------------------------
 -- Table `gestion_res`.`escale`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`escale` (
   `NUM_escale` VARCHAR(45) NOT NULL,
   `NOM_navire` VARCHAR(256) NOT NULL,
+  `MATRICULE_navire` VARCHAR(45) NOT NULL,
   `DATE_accostage` DATETIME NOT NULL,
   `DATE_sortie` DATETIME NOT NULL,
-  PRIMARY KEY (`NUM_escale`, `NOM_navire`),
+  PRIMARY KEY (`NUM_escale`),
   UNIQUE INDEX `NUM_escale_UNIQUE` (`NUM_escale` ASC) VISIBLE,
-  INDEX `NOM_navire_idx` (`NOM_navire` ASC) VISIBLE
+  INDEX `NOM_navire_idx` (`NOM_navire` ASC) VISIBLE,
+  INDEX `fk_escale_navire_idx` (`MATRICULE_navire` ASC) VISIBLE,
+  CONSTRAINT `fk_escale_navire`
+    FOREIGN KEY (`MATRICULE_navire`)
+    REFERENCES `gestion_res`.`navire` (`MATRICULE_navire`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `gestion_res`.`num_escale_counter` (
@@ -167,82 +205,6 @@ BEGIN
   SET next_num = LAST_INSERT_ID();
   SET formatted_num_escale = CONCAT('ESC-', LPAD(next_num, 3, '0'));
   SET NEW.NUM_escale = formatted_num_escale;
-END$$
-DELIMITER ;
-
--- -----------------------------------------------------
--- Table `gestion_res`.`arret`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `gestion_res`.`arret` (
-  `ID_arret` VARCHAR(45) NOT NULL,
-  `ID_operation` VARCHAR(45),
-  `NUM_escale` VARCHAR(45) NOT NULL,
-  `MOTIF_arret` VARCHAR(256) NOT NULL,
-  `DURE_arret` INT NOT NULL,
-  `DATE_DEBUT_arret` DATETIME NOT NULL,
-  `DATE_FIN_arret` DATETIME NOT NULL,
-  PRIMARY KEY (`ID_arret`),
-  UNIQUE INDEX `ID_arret_UNIQUE` (`ID_arret` ASC) VISIBLE,
-  INDEX `NUM_escale_idx` (`NUM_escale` ASC) VISIBLE,
-  INDEX `ID_operation_idx` (`ID_operation` ASC) VISIBLE,
-  CONSTRAINT `fk_arret_num_escale`
-    FOREIGN KEY (`NUM_escale`)
-    REFERENCES `gestion_res`.`escale` (`NUM_escale`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_arret_id_operation`
-    FOREIGN KEY (`ID_operation`)
-    REFERENCES `gestion_res`.`operation`(`ID_operation`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`arret_counter` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE = InnoDB;
-
-DELIMITER $$
-CREATE TRIGGER `before_insert_arret`
-BEFORE INSERT ON `gestion_res`.`arret`
-FOR EACH ROW
-BEGIN
-  DECLARE next_num INT;
-  DECLARE formatted_arret VARCHAR(45);
-  INSERT INTO `gestion_res`.`arret_counter` VALUES ();
-  SET next_num = LAST_INSERT_ID();
-  SET formatted_arret = CONCAT('AR-', LPAD(next_num, 3, '0'));
-  SET NEW.ID_arret = formatted_arret;
-END$$
-DELIMITER ;
-
--- -----------------------------------------------------
--- Table `gestion_res`.`conteneure`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure` (
-  `ID_conteneure` VARCHAR(45) NOT NULL,
-  `NOM_conteneure` VARCHAR(45) NOT NULL,
-  `TYPE_conteneure` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`ID_conteneure`),
-  UNIQUE INDEX `ID_conteneure_UNIQUE` (`ID_conteneure` ASC) VISIBLE
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure_counter` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE = InnoDB;
-
-DELIMITER $$
-CREATE TRIGGER `before_insert_conteneure`
-BEFORE INSERT ON `gestion_res`.`conteneure`
-FOR EACH ROW
-BEGIN
-  DECLARE next_num INT;
-  DECLARE formatted_conteneure VARCHAR(45);
-  INSERT INTO `gestion_res`.`conteneure_counter` VALUES ();
-  SET next_num = LAST_INSERT_ID();
-  SET formatted_conteneure = CONCAT('CTR-', LPAD(next_num, 3, '0'));
-  SET NEW.ID_conteneure = formatted_conteneure;
 END$$
 DELIMITER ;
 
@@ -312,7 +274,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gestion_res`.`operation` (
   `ID_operation` VARCHAR(45) NOT NULL,
-  `NOM_operation` VARCHAR(45) NOT NULL,
+  `TYPE_operation` VARCHAR(45) NULL DEFAULT 'AUTRE',
   `ID_shift` VARCHAR(45),
   `ID_escale` VARCHAR(45) NOT NULL,
   `ID_conteneure` TEXT NULL,
@@ -361,6 +323,206 @@ BEGIN
   SET NEW.ID_operation = formatted_operation;
 END$$
 DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`arret`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`arret` (
+  `ID_arret` VARCHAR(45) NOT NULL,
+  `ID_operation` VARCHAR(45),
+  `NUM_escale` VARCHAR(45) NOT NULL,
+  `MOTIF_arret` VARCHAR(256) NOT NULL,
+  `DURE_arret` INT NOT NULL,
+  `DATE_DEBUT_arret` DATETIME NOT NULL,
+  `DATE_FIN_arret` DATETIME NOT NULL,
+  PRIMARY KEY (`ID_arret`),
+  UNIQUE INDEX `ID_arret_UNIQUE` (`ID_arret` ASC) VISIBLE,
+  INDEX `NUM_escale_idx` (`NUM_escale` ASC) VISIBLE,
+  INDEX `ID_operation_idx` (`ID_operation` ASC) VISIBLE,
+  CONSTRAINT `fk_arret_num_escale`
+    FOREIGN KEY (`NUM_escale`)
+    REFERENCES `gestion_res`.`escale` (`NUM_escale`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_arret_id_operation`
+    FOREIGN KEY (`ID_operation`)
+    REFERENCES `gestion_res`.`operation`(`ID_operation`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `gestion_res`.`arret_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_arret`
+BEFORE INSERT ON `gestion_res`.`arret`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_arret VARCHAR(45);
+  INSERT INTO `gestion_res`.`arret_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_arret = CONCAT('AR-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_arret = formatted_arret;
+END$$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`type_conteneur`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`type_conteneur` (
+  `ID_type` INT NOT NULL AUTO_INCREMENT,
+  `NOM_type` VARCHAR(45) NOT NULL,
+  `DESCRIPTION` VARCHAR(255) NULL,
+  PRIMARY KEY (`ID_type`),
+  UNIQUE INDEX `NOM_type_UNIQUE` (`NOM_type` ASC) VISIBLE
+) ENGINE = InnoDB;
+
+-- Insert default container types
+INSERT INTO `gestion_res`.`type_conteneur` (`NOM_type`, `DESCRIPTION`) 
+VALUES ('TERRE', 'Conteneur sur terre');
+INSERT INTO `gestion_res`.`type_conteneur` (`NOM_type`, `DESCRIPTION`) 
+VALUES ('NAVIRE', 'Conteneur à bord du navire');
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`conteneure`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure` (
+  `ID_conteneure` VARCHAR(45) NOT NULL,
+  `NOM_conteneure` VARCHAR(45) NOT NULL,
+  `TYPE_conteneure` ENUM('TERRE', 'NAVIRE') NOT NULL DEFAULT 'TERRE',
+  `ID_type` INT NULL,
+  `ID_navire` VARCHAR(45) NULL,
+  `DATE_AJOUT` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `DERNIERE_OPERATION` VARCHAR(45) NULL,
+  PRIMARY KEY (`ID_conteneure`),
+  UNIQUE INDEX `ID_conteneure_UNIQUE` (`ID_conteneure` ASC) VISIBLE,
+  INDEX `fk_conteneure_navire_idx` (`ID_navire` ASC) VISIBLE,
+  INDEX `fk_conteneure_type_idx` (`ID_type` ASC) VISIBLE,
+  INDEX `fk_conteneure_operation_idx` (`DERNIERE_OPERATION` ASC) VISIBLE,
+  CONSTRAINT `fk_conteneure_navire`
+    FOREIGN KEY (`ID_navire`)
+    REFERENCES `gestion_res`.`navire` (`ID_navire`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_conteneure_type`
+    FOREIGN KEY (`ID_type`)
+    REFERENCES `gestion_res`.`type_conteneur` (`ID_type`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_conteneure_operation`
+    FOREIGN KEY (`DERNIERE_OPERATION`)
+    REFERENCES `gestion_res`.`operation` (`ID_operation`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `gestion_res`.`conteneure_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_conteneure`
+BEFORE INSERT ON `gestion_res`.`conteneure`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_conteneure VARCHAR(45);
+  INSERT INTO `gestion_res`.`conteneure_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_conteneure = CONCAT('CTR-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_conteneure = formatted_conteneure;
+END$$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`operation_conteneure`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`operation_conteneure_counter` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `gestion_res`.`operation_conteneure` (
+  `ID_operation_conteneure` VARCHAR(45) NOT NULL,
+  `ID_operation` VARCHAR(45) NOT NULL,
+  `ID_conteneure` VARCHAR(45) NOT NULL,
+  `TYPE_OPERATION` ENUM('CHARGEMENT', 'DECHARGEMENT') NOT NULL,
+  `DATE_OPERATION` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `STATUS` ENUM('EN_COURS', 'TERMINE', 'ANNULE') NOT NULL DEFAULT 'EN_COURS',
+  PRIMARY KEY (`ID_operation_conteneure`),
+  UNIQUE INDEX `ID_operation_conteneure_UNIQUE` (`ID_operation_conteneure` ASC) VISIBLE,
+  INDEX `fk_opconteneure_operation_idx` (`ID_operation` ASC) VISIBLE,
+  INDEX `fk_opconteneure_conteneure_idx` (`ID_conteneure` ASC) VISIBLE,
+  CONSTRAINT `fk_opconteneure_operation`
+    FOREIGN KEY (`ID_operation`)
+    REFERENCES `gestion_res`.`operation` (`ID_operation`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_opconteneure_conteneure`
+    FOREIGN KEY (`ID_conteneure`)
+    REFERENCES `gestion_res`.`conteneure` (`ID_conteneure`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER `before_insert_operation_conteneure`
+BEFORE INSERT ON `gestion_res`.`operation_conteneure`
+FOR EACH ROW
+BEGIN
+  DECLARE next_num INT;
+  DECLARE formatted_id VARCHAR(45);
+  INSERT INTO `gestion_res`.`operation_conteneure_counter` VALUES ();
+  SET next_num = LAST_INSERT_ID();
+  SET formatted_id = CONCAT('OPC-', LPAD(next_num, 3, '0'));
+  SET NEW.ID_operation_conteneure = formatted_id;
+END$$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `gestion_res`.`historique_conteneure`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gestion_res`.`historique_conteneure` (
+  `ID_historique` BIGINT NOT NULL AUTO_INCREMENT,
+  `ID_conteneure` VARCHAR(45) NOT NULL,
+  `LOCATION_PRECEDENTE` ENUM('TERRE', 'NAVIRE') NOT NULL,
+  `LOCATION_NOUVELLE` ENUM('TERRE', 'NAVIRE') NOT NULL,
+  `ID_navire_precedent` VARCHAR(45) NULL,
+  `ID_navire_nouveau` VARCHAR(45) NULL,
+  `ID_operation_conteneure` VARCHAR(45) NULL,
+  `DATE_mouvement` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `UTILISATEUR` VARCHAR(255) NULL,
+  PRIMARY KEY (`ID_historique`),
+  INDEX `fk_historique_conteneure_idx` (`ID_conteneure` ASC) VISIBLE,
+  INDEX `fk_historique_navire_prec_idx` (`ID_navire_precedent` ASC) VISIBLE,
+  INDEX `fk_historique_navire_nouv_idx` (`ID_navire_nouveau` ASC) VISIBLE,
+  INDEX `fk_historique_operation_idx` (`ID_operation_conteneure` ASC) VISIBLE,
+  CONSTRAINT `fk_historique_conteneure`
+    FOREIGN KEY (`ID_conteneure`)
+    REFERENCES `gestion_res`.`conteneure` (`ID_conteneure`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_historique_navire_prec`
+    FOREIGN KEY (`ID_navire_precedent`)
+    REFERENCES `gestion_res`.`navire` (`ID_navire`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_historique_navire_nouv`
+    FOREIGN KEY (`ID_navire_nouveau`)
+    REFERENCES `gestion_res`.`navire` (`ID_navire`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_historique_operation`
+    FOREIGN KEY (`ID_operation_conteneure`)
+    REFERENCES `gestion_res`.`operation_conteneure` (`ID_operation_conteneure`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `gestion_res`.`motif`
@@ -434,38 +596,6 @@ CREATE TABLE IF NOT EXISTS `gestion_res`.`equipe_has_soustraiteure` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table `gestion_res`.`navire`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `gestion_res`.`navire` (
-  `ID_navire` VARCHAR(45) NOT NULL,
-  `NOM_navire` VARCHAR(256) NOT NULL,
-  `MATRICULE_navire` VARCHAR(45) NOT NULL,
-  `ID_conteneure` TEXT NULL,
-  PRIMARY KEY (`ID_navire`),
-  UNIQUE INDEX `ID_navire_UNIQUE` (`ID_navire` ASC) VISIBLE,
-  UNIQUE INDEX `MATRICULE_navire_UNIQUE` (`MATRICULE_navire` ASC) VISIBLE
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS `gestion_res`.`navire_counter` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE = InnoDB;
-
-DELIMITER $$
-CREATE TRIGGER `before_insert_navire`
-BEFORE INSERT ON `gestion_res`.`navire`
-FOR EACH ROW
-BEGIN
-  DECLARE next_num INT;
-  DECLARE formatted_navire VARCHAR(45);
-  INSERT INTO `gestion_res`.`navire_counter` VALUES ();
-  SET next_num = LAST_INSERT_ID();
-  SET formatted_navire = CONCAT('NAV-', LPAD(next_num, 3, '0'));
-  SET NEW.ID_navire = formatted_navire;
-END$$
-DELIMITER ;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

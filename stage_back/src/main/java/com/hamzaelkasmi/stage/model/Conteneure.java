@@ -2,6 +2,8 @@ package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "conteneure")
@@ -15,27 +17,47 @@ public class Conteneure {
     @Column(name = "NOM_conteneure", nullable = false, length = 45)
     private String nom_conteneure;
     
-    @Column(name = "TYPE_conteneure", length = 100)
-    private String type_conteneure;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "TYPE_conteneure")
+    private ConteneureLocationType type_conteneure = ConteneureLocationType.TERRE;
     
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "ID_type", nullable = false)
+    @JoinColumn(name = "ID_type")
     private TypeConteneur typeConteneur;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "MATRICULE_navire")
+    @ManyToOne
+    @JoinColumn(name = "ID_navire")
+    @JsonBackReference
     private Navire navire;
+    
+    @Column(name = "DATE_AJOUT")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateAjout;
+    
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "DERNIERE_OPERATION")
+    private Operation derniereOperation;
+
+    // Enum for container location type
+    public enum ConteneureLocationType {
+        TERRE,
+        NAVIRE
+    }
 
     // Constructors
     public Conteneure() {
+        this.dateAjout = new Date();
+        this.type_conteneure = ConteneureLocationType.TERRE;
     }
 
-    public Conteneure(String nom_conteneure, String type_conteneure) {
+    public Conteneure(String nom_conteneure, ConteneureLocationType type_conteneure) {
+        this();
         this.nom_conteneure = nom_conteneure;
         this.type_conteneure = type_conteneure;
     }
     
-    public Conteneure(String nom_conteneure, String type_conteneure, TypeConteneur typeConteneur, Navire navire) {
+    public Conteneure(String nom_conteneure, ConteneureLocationType type_conteneure, TypeConteneur typeConteneur, Navire navire) {
+        this();
         this.nom_conteneure = nom_conteneure;
         this.type_conteneure = type_conteneure;
         this.typeConteneur = typeConteneur;
@@ -59,11 +81,11 @@ public class Conteneure {
         this.nom_conteneure = nom_conteneure;
     }
     
-    public String getType_conteneure() {
+    public ConteneureLocationType getType_conteneure() {
         return type_conteneure;
     }
 
-    public void setType_conteneure(String type_conteneure) {
+    public void setType_conteneure(ConteneureLocationType type_conteneure) {
         this.type_conteneure = type_conteneure;
     }
     
@@ -83,14 +105,30 @@ public class Conteneure {
         this.navire = navire;
     }
     
+    public Date getDateAjout() {
+        return dateAjout;
+    }
+
+    public void setDateAjout(Date dateAjout) {
+        this.dateAjout = dateAjout;
+    }
+    
+    public Operation getDerniereOperation() {
+        return derniereOperation;
+    }
+
+    public void setDerniereOperation(Operation derniereOperation) {
+        this.derniereOperation = derniereOperation;
+    }
+    
     // Helper method to check if this is a ship container
     public boolean isShipContainer() {
-        return this.typeConteneur != null && "NAVIRE".equals(this.typeConteneur.getNomType());
+        return this.type_conteneure == ConteneureLocationType.NAVIRE;
     }
     
     // Helper method to check if this is a land container
     public boolean isLandContainer() {
-        return this.typeConteneur != null && "TERRE".equals(this.typeConteneur.getNomType());
+        return this.type_conteneure == ConteneureLocationType.TERRE;
     }
 
     @Override
@@ -101,6 +139,8 @@ public class Conteneure {
                 ", type_conteneure='" + type_conteneure + '\'' +
                 ", typeConteneur=" + (typeConteneur != null ? typeConteneur.getNomType() : "null") +
                 ", navire=" + (navire != null ? navire.getNomNavire() : "null") +
+                ", dateAjout=" + dateAjout +
+                ", derniereOperation=" + (derniereOperation != null ? derniereOperation.getId_operation() : "null") +
                 '}';
     }
 } 

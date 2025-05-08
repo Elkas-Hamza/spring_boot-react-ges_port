@@ -13,6 +13,7 @@ import {
   FormControl,
   InputLabel,
   Divider,
+  FormHelperText,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ConteneureService from "../../services/ConteneureService";
@@ -20,9 +21,11 @@ import ConteneureService from "../../services/ConteneureService";
 const ConteneureForm = () => {
   const [conteneure, setConteneure] = useState({
     nom_conteneure: "",
-    type_conteneure: "",
+    type_conteneur: "", // Changed from type_conteneure to match database schema
+    id_type: 1, // Set to 1 for TERRE/port containers
+    location: "TERRE", // Default to TERRE (port) location
   });
-  
+
   // Predefined container types
   const conteneureTypes = [
     "20 pieds standard",
@@ -34,9 +37,9 @@ const ConteneureForm = () => {
     "Tank",
     "Citerne",
     "Flexitank",
-    "Autre"
+    "Autre",
   ];
-  
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -47,12 +50,44 @@ const ConteneureForm = () => {
   });
 
   useEffect(() => {
+    // Check admin permissions on component mount
+    async function checkPermissions() {
+      try {
+        const authDetails = await ConteneureService.checkAdminPermissions();
+        console.log("Admin permissions check:", authDetails);
+
+        if (!authDetails.hasAdminAuthority) {
+          setNotification({
+            open: true,
+            message:
+              "Attention: Vous êtes connecté mais vous n'avez pas les permissions d'administrateur requises pour ajouter un conteneur.",
+            severity: "warning",
+          });
+        }
+      } catch (err) {
+        console.error("Error checking permissions:", err);
+      }
+    }
+
+    if (!id) {
+      // Only check on create form, not on edit
+      checkPermissions();
+    }
+
+    // Rest of your existing effect code
     if (id) {
       // Fetch conteneure data if editing
       setLoading(true);
       ConteneureService.getConteneureById(id)
         .then((response) => {
-          setConteneure(response.data);
+          const data = response.data;
+          // Update the form with correct values
+          setConteneure({
+            ...data,
+            // For type_conteneur, use the actual name value
+            type_conteneur: data.TYPE_conteneur || "", // Changed field name
+            id_type: 2, // Always set to 2 as requested
+          });
           setLoading(false);
         })
         .catch((error) => {
@@ -69,7 +104,21 @@ const ConteneureForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setConteneure((prev) => ({ ...prev, [name]: value }));
+
+    // Special handling for type_conteneur dropdown
+    if (name === "type_conteneur") {
+      // Changed from type_conteneure
+      // For index-based selection
+      const selectedType = conteneureTypes[value - 1] || value;
+
+      setConteneure((prev) => ({
+        ...prev,
+        type_conteneur: selectedType, // Changed field name
+        id_type: 2, // Always set to 2 as requested
+      }));
+    } else {
+      setConteneure((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -87,28 +136,75 @@ const ConteneureForm = () => {
 
     try {
       setLoading(true);
+
+      // Get user role for better error messaging
+      const userRole = localStorage.getItem("userRole");
+
+      // Prepare data to send to backend - ensure proper field names and values
+      const dataToSend = {
+        nom_conteneure: conteneure.nom_conteneure,
+        // Keep type_conteneur as is - this matches the backend schema
+        type_conteneur: conteneure.type_conteneur,
+        // Set id_type to 1 for TERRE/port containers
+        id_type: 1,
+        // Keep location as TERRE
+        location: "TERRE",
+      };
+
+      console.log("Saving container data:", dataToSend);
+
       if (id) {
-        await ConteneureService.updateConteneure(id, conteneure);
+        await ConteneureService.updateConteneure(id, dataToSend);
         setNotification({
           open: true,
           message: "Conteneur modifié avec succès",
           severity: "success",
         });
+        // Redirect after a short delay
+        setTimeout(() => navigate("/conteneures"), 1500);
       } else {
-        await ConteneureService.createConteneure(conteneure);
-        setNotification({
-          open: true,
-          message: "Conteneur ajouté avec succès",
-          severity: "success",
-        });
+        try {
+          const result = await ConteneureService.createConteneure(dataToSend);
+          console.log("Container created:", result);
+
+          setNotification({
+            open: true,
+            message: "Conteneur ajouté avec succès",
+            severity: "success",
+          });
+
+          // Redirect after a short delay
+          setTimeout(() => navigate("/conteneures"), 1500);
+        } catch (error) {
+          console.error("Detailed container creation error:", error);
+
+          // Check if it contains a specific 403 error message
+          if (error.message && error.message.includes("Access forbidden")) {
+            setNotification({
+              open: true,
+              message: `Erreur d'autorisation: ${error.message}`,
+              severity: "error",
+            });
+          } else {
+            // Handle general errors
+            setNotification({
+              open: true,
+              message: `Erreur lors de l'ajout du conteneur: ${
+                error.message || "Erreur inconnue"
+              }`,
+              severity: "error",
+            });
+          }
+          // Don't redirect on error
+        }
       }
-      // Redirect after a short delay
-      setTimeout(() => navigate("/conteneures"), 1500);
     } catch (error) {
       console.error("Error saving conteneure:", error);
       setNotification({
         open: true,
-        message: "Erreur lors de l'enregistrement",
+        message: `Erreur lors de l'enregistrement: ${
+          error.response?.data?.message || error.message || "Erreur inconnue"
+        }`,
         severity: "error",
       });
     } finally {
@@ -126,7 +222,7 @@ const ConteneureForm = () => {
         <Typography variant="h5" component="h2" gutterBottom>
           {id ? "Modifier le Conteneur" : "Ajouter un Conteneur"}
         </Typography>
-        
+
         <Divider sx={{ mb: 3 }} />
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -149,25 +245,34 @@ const ConteneureForm = () => {
             margin="normal"
             required
           />
-          
+
+          {/* Container type selection - changed field name */}
           <FormControl fullWidth margin="normal">
-            <InputLabel id="type-conteneure-label">Type de Conteneur</InputLabel>
+            <InputLabel id="type-conteneur-label">Type de Conteneur</InputLabel>
             <Select
-              labelId="type-conteneure-label"
-              name="type_conteneure"
-              value={conteneure.type_conteneure || ""}
+              labelId="type-conteneur-label"
+              id="type_conteneur"
+              name="type_conteneur"
+              value={
+                conteneure.type_conteneur
+                  ? conteneureTypes.indexOf(conteneure.type_conteneur) + 1 || ""
+                  : ""
+              }
               onChange={handleChange}
               label="Type de Conteneur"
             >
               <MenuItem value="">
-                <em>Aucun type sélectionné</em>
+                <em>Sélectionnez un type</em>
               </MenuItem>
-              {conteneureTypes.map((type) => (
-                <MenuItem key={type} value={type}>
+              {conteneureTypes.map((type, index) => (
+                <MenuItem key={index} value={index + 1}>
                   {type}
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>
+              Sélectionnez le type physique du conteneur
+            </FormHelperText>
           </FormControl>
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>

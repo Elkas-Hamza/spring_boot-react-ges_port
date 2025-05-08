@@ -90,9 +90,6 @@ public class OperationController {
 
     private boolean isOperationValid(Operation operation) {
         return operation != null &&
-                operation.getNom_operation() != null &&
-                !operation.getNom_operation().trim().isEmpty() &&
-                operation.getId_shift() != null &&
                 operation.getId_escale() != null &&
                 !operation.getId_escale().trim().isEmpty() &&
                 operation.getId_equipe() != null &&

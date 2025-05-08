@@ -120,8 +120,13 @@ const EquipeList = () => {
             Liste des Équipes
           </Typography>
           <Button
-            component={Link}
-            to="/equipes/create"
+            onClick={() => {
+              console.log("Creating new equipe - direct navigation");
+              // Set a flag in localStorage to indicate we're navigating to create form
+              localStorage.setItem('redirecting_to_create_equipe', 'true');
+              // Use a more direct approach to navigate to the form
+              document.location.href = "/equipes/create";
+            }}
             variant="contained"
             color="primary"
             startIcon={<Add />}

@@ -48,20 +48,103 @@ const Navbar = () => {
     navigate('/change-password');
   };
 
-  const userNavItems = [
-    { label: "Opérations", path: "/operations" },
-    { label: "Escales", path: "/escales" },
-    { label: "Équipes", path: "/equipes" },
-    { label: "Navires", path: "/navires" },
-  ];
-
-  const adminNavItems = [
-    { label: "Personnel", path: "/personnel" },
-    { label: "Sous-traitants", path: "/soustraiteure" },
-    { label: "Shifts", path: "/shifts" },
-    { label: "Conteneurs", path: "/conteneures" },
-    { label: "Équipement", path: "/engins" },
-    { label: "Navires", path: "/navires" },
+  const menuItems = [
+    {
+      id: 'adminDashboard',
+      label: 'Admin Dashboard',
+      path: '/admin-dashboard',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      path: '/dashboard',
+      roles: ['ADMIN', 'USER']
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      path: '/analytics',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      path: '/settings',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'personnel',
+      label: 'Personnel',
+      path: '/personnel',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'users',
+      label: 'Users',
+      path: '/users',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'soustraiteurs',
+      label: 'Sous-traiteurs',
+      path: '/soustraiteure',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'equipes',
+      label: 'Equipes',
+      path: '/equipes',
+      roles: ['ADMIN', 'USER']
+    },
+    {
+      id: 'operations',
+      label: 'Operations',
+      path: '/operations',
+      roles: ['ADMIN', 'USER']
+    },
+    {
+      id: 'escales',
+      label: 'Escales',
+      path: '/escales',
+      roles: ['ADMIN', 'USER']
+    },
+    {
+      id: 'arrets',
+      label: 'Arrets',
+      path: '/arrets',
+      roles: ['ADMIN', 'USER']
+    },
+    {
+      id: 'engins',
+      label: 'Engins',
+      path: '/engins',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'shifts',
+      label: 'Shifts',
+      path: '/shifts',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'conteneures',
+      label: 'Conteneurs',
+      path: '/conteneures',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'conteneuresManagement',
+      label: 'Gestion Conteneurs',
+      path: '/conteneures/management',
+      roles: ['ADMIN']
+    },
+    {
+      id: 'navires',
+      label: 'Navires',
+      path: '/navires',
+      roles: ['ADMIN', 'USER']
+    }
   ];
 
   if (!isAuthenticated) {
@@ -75,29 +158,17 @@ const Navbar = () => {
           System De Management Des Port
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {userRole === 'ADMIN' ? (
-            adminNavItems.map((item) => (
+          {menuItems.map((item) => (
+            item.roles.includes(userRole) && (
               <Button
                 key={item.path}
                 color="inherit"
-                component={Link}
-                to={item.path}
+                onClick={() => window.location.href = item.path}
               >
                 {item.label}
               </Button>
-            ))
-          ) : (
-            userNavItems.map((item) => (
-              <Button
-                key={item.path}
-                color="inherit"
-                component={Link}
-                to={item.path}
-              >
-                {item.label}
-              </Button>
-            ))
-          )}
+            )
+          ))}
           
           <IconButton 
             color="inherit" 

@@ -18,9 +18,17 @@ import {
   ListItemText,
   Checkbox,
   FormHelperText,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Divider,
+  useTheme,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import OperationService from "../../services/OperationService";
+import ConteneureService from "../../services/ConteneureService";
+import { NavireService } from "../../services/NavireService";
 import axiosInstance from "../../services/AxiosConfig";
 
 const ITEM_HEIGHT = 48;
@@ -35,6 +43,7 @@ const MenuProps = {
 };
 
 const OperationForm = () => {
+  const theme = useTheme();
   const [operation, setOperation] = useState({
     id_shift: "",
     id_escale: "",
@@ -43,16 +52,20 @@ const OperationForm = () => {
     id_equipe: "",
     date_debut: "",
     date_fin: "",
-    nom_operation: "",
     status: "En cours",
+    type_operation: "AUTRE", // Renamed from operationType to type_operation
   });
 
   const [shifts, setShifts] = useState([]);
   const [escales, setEscales] = useState([]);
   const [conteneurs, setConteneurs] = useState([]);
+  const [portContainers, setPortContainers] = useState([]);
+  const [shipContainers, setShipContainers] = useState([]);
   const [engins, setEngins] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNavireId, setSelectedNavireId] = useState("");
+  const [navires, setNavires] = useState([]);
 
   const [notification, setNotification] = useState({
     open: false,
@@ -72,6 +85,13 @@ const OperationForm = () => {
     { value: 'Annulé', label: 'Annulé' },
   ];
 
+  // Operation types
+  const operationTypes = [
+    { value: 'CHARGEMENT', label: 'Chargement de conteneurs', color: theme.palette.success.light },
+    { value: 'DECHARGEMENT', label: 'Déchargement de conteneurs', color: theme.palette.info.light },
+    { value: 'AUTRE', label: 'Autre opération', color: theme.palette.grey[300] },
+  ];
+
   // Fetch escales from the EscaleService
   useEffect(() => {
     axiosInstance
@@ -84,6 +104,52 @@ const OperationForm = () => {
         console.error("Error fetching escales:", error);
       });
   }, []);
+
+  // Fetch ships
+  useEffect(() => {
+    NavireService.getAllNavires()
+      .then((response) => {
+        if (response.success) {
+          setNavires(response.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching ships:", error);
+      });
+  }, []);
+
+  // Fetch containers based on operation type
+  useEffect(() => {
+    if (operation.type_operation === 'CHARGEMENT') {
+      // For loading operations, we need port containers
+      ConteneureService.getPortContainers()
+        .then((response) => {
+          setPortContainers(response.data || []);
+        })
+        .catch((error) => {
+          console.error("Error fetching port containers:", error);
+        });
+    } else if (operation.type_operation === 'DECHARGEMENT' && selectedNavireId) {
+      // For unloading operations, we need ship containers
+      ConteneureService.getShipContainers(selectedNavireId)
+        .then((response) => {
+          setShipContainers(response.data || []);
+        })
+        .catch((error) => {
+          console.error("Error fetching ship containers:", error);
+        });
+    }
+  }, [operation.type_operation, selectedNavireId]);
+
+  // Get ship ID when escale changes
+  useEffect(() => {
+    if (operation.id_escale) {
+      const selectedEscale = escales.find(escale => escale.num_escale === operation.id_escale);
+      if (selectedEscale && selectedEscale.navire) {
+        setSelectedNavireId(selectedEscale.navire.idNavire);
+      }
+    }
+  }, [operation.id_escale, escales]);
 
   const fetchOperation = useCallback(async () => {
     try {
@@ -125,8 +191,8 @@ const OperationForm = () => {
         id_equipe: operationData.id_equipe || "",
         date_debut: formatDate(operationData.date_debut) || "",
         date_fin: formatDate(operationData.date_fin) || "",
-        nom_operation: operationData.nom_operation || "",
         status: operationData.status || "En cours",
+        type_operation: operationData.type_operation || "AUTRE", // Updated from operationType
       });
     } catch (error) {
       console.error("Error fetching operation:", error);
@@ -236,7 +302,7 @@ const OperationForm = () => {
     if (name === 'id_conteneure' || name === 'id_engin') {
       setOperation((prev) => ({ ...prev, [name]: Array.isArray(value) ? value : [] }));
     } else {
-    setOperation((prev) => ({ ...prev, [name]: value }));
+      setOperation((prev) => ({ ...prev, [name]: value }));
     }
     
     // Auto-update status when dates change
@@ -254,75 +320,72 @@ const OperationForm = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (
-      !operation.id_shift ||
-      !operation.id_escale ||
-      !operation.id_equipe ||
-      !operation.date_debut ||
-      !operation.date_fin ||
-      !operation.nom_operation
-    ) {
-      console.error("Required fields must be filled");
-      setNotification({
-        open: true,
-        message: "Tous les champs obligatoires doivent être remplis",
-        severity: "error",
-      });
-      return;
-    }
-    // Check that end datetime is after start datetime
-    if (new Date(operation.date_debut) >= new Date(operation.date_fin)) {
-      console.error("End time must be after start time");
-      setNotification({
-        open: true,
-        message: "La date/heure de fin doit être après la date/heure de début",
-        severity: "error",
-      });
-      return;
-    }
+    setLoading(true);
     
-    // Determine the status based on dates before submission
-    const autoStatus = determineStatus(operation.date_debut, operation.date_fin);
-    
-    // Convert arrays to comma-separated strings for submission
-    const formattedData = {
-      id_shift: operation.id_shift,
-      id_escale: operation.id_escale,
-      id_conteneure: Array.isArray(operation.id_conteneure) ? operation.id_conteneure.join(',') : (operation.id_conteneure || ''),
-      id_engin: Array.isArray(operation.id_engin) ? operation.id_engin.join(',') : (operation.id_engin || ''),
-      id_equipe: operation.id_equipe,
-      date_debut: operation.date_debut,
-      date_fin: operation.date_fin,
-      nom_operation: operation.nom_operation,
-      status: autoStatus, // Use automatically determined status
-    };
-    
-    console.log("Formatted data:", formattedData);
     try {
+      // Prepare data for submission
+      const operationData = {
+        ...operation,
+        // Ensure arrays are joined as strings for the backend
+        id_conteneure: Array.isArray(operation.id_conteneure)
+          ? operation.id_conteneure.join(",")
+          : operation.id_conteneure,
+        id_engin: Array.isArray(operation.id_engin)
+          ? operation.id_engin.join(",")
+          : operation.id_engin,
+      };
+      
+      let response;
+      
       if (id) {
-        await OperationService.updateOperation(id, formattedData);
-        setNotification({
-          open: true,
-          message: "Opération modifiée avec succès",
-          severity: "success",
-        });
+        // Update existing operation
+        response = await OperationService.updateOperation(id, operationData);
       } else {
-        await OperationService.createOperation(formattedData);
-        setNotification({
-          open: true,
-          message: "Opération ajoutée avec succès",
-          severity: "success",
-        });
+        // Create new operation
+        response = await OperationService.createOperation(operationData);
       }
-      // Redirect after a short delay
-      setTimeout(() => navigate("/operations"), 1000);
-    } catch (error) {
-      console.error("Error saving operation:", error);
+      
+      // If this is a container operation, process the containers
+      if (response.data && (operation.type_operation === 'CHARGEMENT' || operation.type_operation === 'DECHARGEMENT')) {
+        const opId = response.data.id_operation;
+        const containerIds = Array.isArray(operation.id_conteneure) ? operation.id_conteneure : [];
+        
+        if (containerIds.length > 0) {
+          if (operation.type_operation === 'CHARGEMENT') {
+            // For loading, assign containers to ship
+            await Promise.all(containerIds.map(containerId => 
+              ConteneureService.assignContainerToShip(containerId, selectedNavireId)
+            ));
+          } else if (operation.type_operation === 'DECHARGEMENT') {
+            // For unloading, unassign containers from ship
+            await Promise.all(containerIds.map(containerId => 
+              ConteneureService.unassignContainerFromShip(containerId)
+            ));
+          }
+        }
+      }
+      
       setNotification({
         open: true,
-        message: "Erreur lors de l'enregistrement",
+        message: id
+          ? "Opération mise à jour avec succès!"
+          : "Opération créée avec succès!",
+        severity: "success",
+      });
+      
+      // Navigate to operations list after successful creation/update
+      setTimeout(() => {
+        navigate("/operations");
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting operation:", error);
+      setNotification({
+        open: true,
+        message: `Erreur: ${error.response?.data?.message || "Une erreur est survenue"}`,
         severity: "error",
       });
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -330,226 +393,445 @@ const OperationForm = () => {
     setNotification({ ...notification, open: false });
   };
   
-  // Determine initial status when dates change or component mounts
-  useEffect(() => {
-    if (operation.date_debut && operation.date_fin) {
-      const status = determineStatus(operation.date_debut, operation.date_fin);
-      setOperation(prev => ({ ...prev, status }));
+  // Get containers based on operation type
+  const getContainersForSelection = () => {
+    if (operation.type_operation === 'CHARGEMENT') {
+      return portContainers;
+    } else if (operation.type_operation === 'DECHARGEMENT') {
+      return shipContainers;
+    } else {
+      return conteneurs;
     }
-  }, [operation.date_debut, operation.date_fin]);
+  };
   
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="md" sx={{ my: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress size={60} thickness={4} />
+        </Box>
+      </Container>
     );
   }
   
+  // Get background color based on operation type
+  const getOperationTypeColor = () => {
+    const selectedType = operationTypes.find(type => type.value === operation.type_operation);
+    return selectedType ? selectedType.color : theme.palette.grey[200];
+  };
+  
+  // Get chip color for status
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Planifié': return theme.palette.info.main;
+      case 'En cours': return theme.palette.warning.main;
+      case 'Terminé': return theme.palette.success.main;
+      case 'En pause': return theme.palette.grey[500];
+      case 'Annulé': return theme.palette.error.main;
+      default: return theme.palette.grey[500];
+    }
+  };
+  
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          {id ? "Modifier Opération" : "Créer Opération"}
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-          <TextField
-            label="Nom de l'opération"
-            name="nom_operation"
-            value={operation.nom_operation}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-          />
-          <TextField
-            select
-            label="Shift"
-            name="id_shift"
-            value={operation.id_shift}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-          >
-            <MenuItem value="">Sélectionner un shift</MenuItem>
-            {shifts.map((shift) => (
-              <MenuItem key={shift.id_shift} value={shift.id_shift}>
-                {shift.nom_shift || shift.id_shift} 
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Escale"
-            name="id_escale"
-            value={operation.id_escale}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-          >
-            <MenuItem value="">Sélectionner une escale</MenuItem>
-            {escales.map((escale) => (
-              <MenuItem key={escale.num_escale} value={escale.num_escale}>
-                {escale.NOM_navire} (Escale: {escale.num_escale})
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Équipe"
-            name="id_equipe"
-            value={operation.id_equipe}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-          >
-            <MenuItem value="">Sélectionner une équipe</MenuItem>
-            {equipes.map((equipe) => (
-              <MenuItem key={equipe.id_equipe} value={equipe.id_equipe}>
-                {equipe.id_equipe} - {equipe.nom_equipe}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="Date/Heure de début"
-            name="date_debut"
-            type="datetime-local"
-            value={operation.date_debut}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <TextField
-            label="Date/Heure de fin"
-            name="date_fin"
-            type="datetime-local"
-            value={operation.date_fin}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            required
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <TextField
-            label="Statut"
-            value={operation.status}
-            fullWidth
-            margin="normal"
-            disabled
-            helperText="Le statut est déterminé automatiquement en fonction des dates"
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-            Ressources
+    <Container maxWidth="lg" sx={{ my: 4 }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 4, 
+          borderRadius: 2,
+          borderTop: `4px solid ${getOperationTypeColor()}`,
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" gutterBottom fontWeight="500" color="primary">
+            {id ? "Modifier l'opération" : "Nouvelle opération"}
           </Typography>
-          
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="conteneure-multiple-chip-label">Conteneurs</InputLabel>
-            <Select
-              labelId="conteneure-multiple-chip-label"
-              id="conteneure-multiple-chip"
-              multiple
-              value={Array.isArray(operation.id_conteneure) ? operation.id_conteneure : []}
-              onChange={handleChange}
-              name="id_conteneure"
-              input={<OutlinedInput id="select-multiple-chip" label="Conteneurs" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {Array.isArray(selected) ? selected.map((value) => {
-                    const conteneur = conteneurs.find(c => c.id_conteneure === value);
-                    return (
-                      <Chip 
-                        key={value} 
-                        label={conteneur ? `${conteneur.id_conteneure} - ${conteneur.nom_conteneure || ''}` : value} 
-                      />
-                    );
-                  }) : null}
-                </Box>
-              )}
-              MenuProps={MenuProps}
-            >
-              {conteneurs.map((conteneur) => (
-                <MenuItem key={conteneur.id_conteneure} value={conteneur.id_conteneure}>
-                  <Checkbox checked={Array.isArray(operation.id_conteneure) && operation.id_conteneure.indexOf(conteneur.id_conteneure) > -1} />
-                  <ListItemText primary={`${conteneur.id_conteneure} - ${conteneur.nom_conteneure || 'Non spécifié'}`} />
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>Sélectionnez un ou plusieurs conteneurs</FormHelperText>
-          </FormControl>
-          
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="engin-multiple-chip-label">Engins</InputLabel>
-            <Select
-              labelId="engin-multiple-chip-label"
-              id="engin-multiple-chip"
-              multiple
-              value={Array.isArray(operation.id_engin) ? operation.id_engin : []}
-              onChange={handleChange}
-              name="id_engin"
-              input={<OutlinedInput id="select-multiple-chip" label="Engins" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {Array.isArray(selected) ? selected.map((value) => {
-                    const engin = engins.find(e => e.id_engin === value);
-                    return (
-                      <Chip 
-                        key={value} 
-                        label={engin ? `${engin.id_engin} - ${engin.nom_engin || ''}` : value} 
-                      />
-                    );
-                  }) : null}
-                </Box>
-              )}
-              MenuProps={MenuProps}
-            >
-              {engins.map((engin) => (
-                <MenuItem key={engin.id_engin} value={engin.id_engin}>
-                  <Checkbox checked={Array.isArray(operation.id_engin) && operation.id_engin.indexOf(engin.id_engin) > -1} />
-                  <ListItemText primary={`${engin.id_engin} - ${engin.nom_engin || 'Non spécifié'}`} />
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>Sélectionnez un ou plusieurs engins</FormHelperText>
-          </FormControl>
-          
-          <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-            <Button
-              component={Link}
-              to="/operations"
-              variant="outlined"
-              color="secondary"
-            >
-              Annuler
-            </Button>
-            <Button type="submit" variant="contained" color="primary">
-              {id ? "Mettre à jour" : "Créer"}
-            </Button>
-          </Box>
+          <Chip 
+            label={operation.status} 
+            color="default"
+            sx={{ 
+              fontSize: '0.9rem', 
+              fontWeight: 500,
+              bgcolor: getStatusColor(operation.status),
+              color: 'white',
+              px: 1
+            }}
+          />
         </Box>
+        
+        <Divider sx={{ mb: 3 }} />
+        
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-1 md:col-span-2">
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Type d'opération</InputLabel>
+                <Select
+                  name="type_operation"
+                  value={operation.type_operation}
+                  onChange={handleChange}
+                  label="Type d'opération"
+                >
+                  {operationTypes.map((type) => (
+                    <MenuItem 
+                      key={type.value} 
+                      value={type.value}
+                      sx={{ 
+                        borderLeft: `4px solid ${type.color}`,
+                        '&.Mui-selected': {
+                          bgcolor: `${type.color}40`,
+                        }
+                      }}
+                    >
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1">
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Escale</InputLabel>
+                <Select
+                  name="id_escale"
+                  value={operation.id_escale}
+                  onChange={handleChange}
+                  label="Escale"
+                  required
+                >
+                  {escales.map((escale) => (
+                    <MenuItem key={escale.num_escale} value={escale.num_escale}>
+                      {escale.num_escale} - {escale.NOM_navire}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1">
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Shift</InputLabel>
+                <Select
+                  name="id_shift"
+                  value={operation.id_shift}
+                  onChange={handleChange}
+                  label="Shift"
+                >
+                  <MenuItem value="">
+                    <em>Aucun</em>
+                  </MenuItem>
+                  {shifts.map((shift) => (
+                    <MenuItem key={shift.ID_shift} value={shift.ID_shift}>
+                      {shift.NOM_shift} ({shift.HEURE_debut} - {shift.HEURE_fin})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1">
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Equipe</InputLabel>
+                <Select
+                  name="id_equipe"
+                  value={operation.id_equipe}
+                  onChange={handleChange}
+                  label="Equipe"
+                  required
+                >
+                  {equipes.map((equipe) => (
+                    <MenuItem key={equipe.ID_equipe} value={equipe.ID_equipe}>
+                      {equipe.NOM_equipe}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1">
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <InputLabel>Statut</InputLabel>
+                <Select
+                  name="status"
+                  value={operation.status}
+                  onChange={handleChange}
+                  label="Statut"
+                >
+                  {statusOptions.map((option) => (
+                    <MenuItem 
+                      key={option.value} 
+                      value={option.value}
+                      sx={{ 
+                        borderLeft: `4px solid ${getStatusColor(option.value)}`,
+                        '&.Mui-selected': {
+                          bgcolor: `${getStatusColor(option.value)}20`,
+                        }
+                      }}
+                    >
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1">
+              <TextField
+                fullWidth
+                label="Date de début"
+                type="datetime-local"
+                name="date_debut"
+                value={operation.date_debut}
+                onChange={handleChange}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                required
+                sx={{ mb: 1 }}
+              />
+            </div>
+
+            <div className="col-span-1">
+              <TextField
+                fullWidth
+                label="Date de fin"
+                type="datetime-local"
+                name="date_fin"
+                value={operation.date_fin}
+                onChange={handleChange}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                required
+                sx={{ mb: 1 }}
+              />
+            </div>
+
+            {/* Container section with title */}
+            {(operation.type_operation === 'CHARGEMENT' || operation.type_operation === 'DECHARGEMENT' || operation.type_operation === 'AUTRE') && (
+              <div className="col-span-1 md:col-span-2">
+                <Box sx={{ mt: 2, mb: 1 }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    {operation.type_operation === 'CHARGEMENT' 
+                      ? '📦 Conteneurs à charger' 
+                      : operation.type_operation === 'DECHARGEMENT'
+                        ? '📥 Conteneurs à décharger'
+                        : '📦 Sélection des conteneurs'}
+                  </Typography>
+                  <Divider />
+                </Box>
+              </div>
+            )}
+
+            {/* Container selection based on operation type */}
+            {(operation.type_operation === 'CHARGEMENT' || operation.type_operation === 'DECHARGEMENT') && (
+              <div className="col-span-1 md:col-span-2">
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>
+                    {operation.type_operation === 'CHARGEMENT' 
+                      ? 'Conteneurs à charger' 
+                      : 'Conteneurs à décharger'}
+                  </InputLabel>
+                  <Select
+                    multiple
+                    name="id_conteneure"
+                    value={operation.id_conteneure}
+                    onChange={handleChange}
+                    input={<OutlinedInput label={operation.type_operation === 'CHARGEMENT' ? 'Conteneurs à charger' : 'Conteneurs à décharger'} />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const container = getContainersForSelection().find(c => c.id_conteneure === value);
+                          return (
+                            <Chip 
+                              key={value} 
+                              label={container ? `${container.id_conteneure} - ${container.nom_conteneure}` : value} 
+                              sx={{ 
+                                bgcolor: operation.type_operation === 'CHARGEMENT' 
+                                  ? theme.palette.success.light
+                                  : theme.palette.info.light,
+                                color: 'white',
+                                fontWeight: 500
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    MenuProps={MenuProps}
+                  >
+                    {getContainersForSelection().map((container) => (
+                      <MenuItem key={container.id_conteneure} value={container.id_conteneure}>
+                        <Checkbox checked={operation.id_conteneure.indexOf(container.id_conteneure) > -1} />
+                        <ListItemText 
+                          primary={`${container.id_conteneure} - ${container.nom_conteneure}`} 
+                          secondary={container.typeConteneur ? container.typeConteneur.nomType : ''}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {getContainersForSelection().length === 0 && (
+                    <FormHelperText sx={{ color: theme.palette.warning.main }}>
+                      {operation.type_operation === 'CHARGEMENT' 
+                        ? 'Aucun conteneur disponible au port' 
+                        : operation.id_escale
+                          ? 'Aucun conteneur disponible sur ce navire'
+                          : 'Veuillez d\'abord sélectionner une escale'}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              </div>
+            )}
+
+            {/* Standard container selection for non-specific operations */}
+            {operation.type_operation === 'AUTRE' && (
+              <div className="col-span-1 md:col-span-2">
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Conteneurs</InputLabel>
+                  <Select
+                    multiple
+                    name="id_conteneure"
+                    value={operation.id_conteneure}
+                    onChange={handleChange}
+                    input={<OutlinedInput label="Conteneurs" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const container = conteneurs.find(c => c.id_conteneure === value);
+                          return (
+                            <Chip 
+                              key={value} 
+                              label={container ? `${container.id_conteneure} - ${container.nom_conteneure}` : value} 
+                              sx={{ bgcolor: theme.palette.grey[300] }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    MenuProps={MenuProps}
+                  >
+                    {conteneurs.map((container) => (
+                      <MenuItem key={container.id_conteneure} value={container.id_conteneure}>
+                        <Checkbox checked={operation.id_conteneure.indexOf(container.id_conteneure) > -1} />
+                        <ListItemText 
+                          primary={`${container.id_conteneure} - ${container.nom_conteneure}`} 
+                          secondary={container.typeConteneur ? container.typeConteneur.nomType : ''}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+            )}
+
+            {/* Equipment section with title */}
+            <div className="col-span-1 md:col-span-2">
+              <Box sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  🚜 Équipement
+                </Typography>
+                <Divider />
+              </Box>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Engins</InputLabel>
+                <Select
+                  multiple
+                  name="id_engin"
+                  value={operation.id_engin}
+                  onChange={handleChange}
+                  input={<OutlinedInput label="Engins" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => {
+                        const engin = engins.find(e => e.ID_engin === value);
+                        return (
+                          <Chip 
+                            key={value} 
+                            label={engin ? `${engin.ID_engin} - ${engin.NOM_engin}` : value} 
+                            sx={{ bgcolor: theme.palette.secondary.light, color: 'white' }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                  MenuProps={MenuProps}
+                >
+                  {engins.map((engin) => (
+                    <MenuItem key={engin.ID_engin} value={engin.ID_engin}>
+                      <Checkbox checked={operation.id_engin.indexOf(engin.ID_engin) > -1} />
+                      <ListItemText 
+                        primary={`${engin.ID_engin} - ${engin.NOM_engin}`} 
+                        secondary={engin.TYPE_engin}
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex justify-between mt-8">
+                <Button
+                  component={Link}
+                  to="/operations"
+                  variant="outlined"
+                  color="secondary"
+                  size="large"
+                  sx={{ 
+                    px: 4, 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                  size="large"
+                  sx={{ 
+                    px: 4, 
+                    borderRadius: 2,
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                  }}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : id ? (
+                    "Mettre à jour"
+                  ) : (
+                    "Créer"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </form>
       </Paper>
+
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={handleCloseNotification}
           severity={notification.severity}
-          variant="filled"
+          sx={{ width: "100%", boxShadow: 2 }}
         >
           {notification.message}
         </Alert>
