@@ -241,7 +241,6 @@ const NavireDetail = () => {
       }));
     }
   };
-
   // Create container function with corrected field names
   const handleCreateContainer = async () => {
     if (!newContainer.nom_conteneure) {
