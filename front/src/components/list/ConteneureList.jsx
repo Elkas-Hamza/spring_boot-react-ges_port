@@ -265,7 +265,7 @@ const ConteneureList = () => {
                   <TableCell>{conteneur.id_conteneure}</TableCell>
                   <TableCell>{conteneur.nom_conteneure}</TableCell>
                   <TableCell>
-                    {conteneur.typeConteneur?.nomType || "Non spécifié"}
+                    {conteneur.type_conteneure }
                   </TableCell>
                   <TableCell>
                     {getLocationChip(conteneur)}

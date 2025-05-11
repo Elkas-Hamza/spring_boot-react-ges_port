@@ -72,7 +72,7 @@ const NavireDetail = () => {
   const [containerDialogOpen, setContainerDialogOpen] = useState(false);
   const [newContainer, setNewContainer] = useState({
     nom_conteneure: "",
-    type_conteneur: "", // Changed from type_conteneure to match database
+    type_conteneure: "", // Changed to type_conteneure to match backend model
     id_type: 2, // Always 2 for NAVIRE containers
   });
   const [containerDialogLoading, setContainerDialogLoading] = useState(false);
@@ -127,7 +127,17 @@ const NavireDetail = () => {
               "Container data received:",
               detailResponse.data.containers
             );
-            setContainers(detailResponse.data.containers);
+
+            // Filter out the location field from each container
+            const filteredContainers = detailResponse.data.containers.map(
+              (container) => {
+                // Create a new object without the location field
+                const { location, ...containerWithoutLocation } = container;
+                return containerWithoutLocation;
+              }
+            );
+
+            setContainers(filteredContainers);
           }
           setLoading(false);
           return;
@@ -208,7 +218,7 @@ const NavireDetail = () => {
   const handleOpenContainerDialog = () => {
     setNewContainer({
       nom_conteneure: "",
-      type_conteneur: "", // Changed from type_conteneure to match database
+      type_conteneure: "", // Fixed to use consistent field name
       id_type: 2, // Always 2 for NAVIRE containers
     });
     setContainerDialogOpen(true);
@@ -223,15 +233,14 @@ const NavireDetail = () => {
   const handleContainerInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Special handling for type_conteneur dropdown
-    if (name === "type_conteneur") {
-      // Changed from type_conteneure
+    // Special handling for type_conteneure dropdown
+    if (name === "type_conteneure") {
       // For index-based selection
       const selectedType = conteneureTypes[value - 1] || value;
 
       setNewContainer((prev) => ({
         ...prev,
-        type_conteneur: selectedType, // Changed from type_conteneure
+        type_conteneure: selectedType,
         id_type: 2, // Always set to 2 for NAVIRE
       }));
     } else {
@@ -252,8 +261,7 @@ const NavireDetail = () => {
       return;
     }
 
-    if (!newContainer.type_conteneur) {
-      // Changed from type_conteneure
+    if (!newContainer.type_conteneure) {
       setNotification({
         open: true,
         message: "Le type de conteneur est requis",
@@ -268,10 +276,10 @@ const NavireDetail = () => {
       // Create container data with the correct structure matching database schema
       const containerData = {
         nom_conteneure: newContainer.nom_conteneure,
-        type_conteneur: newContainer.type_conteneur, // Correct field name for database
+        type_conteneure: newContainer.type_conteneure, // Use correct field name
         id_type: 2, // Always set to 2 for NAVIRE type
         idNavire: navire.idNavire, // Include the current navire ID
-        location: "NAVIRE", // Explicitly set location to NAVIRE
+        // location field removed as it's determined by id_type and navire
       };
 
       console.log("Creating container with data:", containerData);
@@ -280,25 +288,10 @@ const NavireDetail = () => {
 
       if (result) {
         console.log("Container created successfully:", result);
-        const containerId = result.id || result.idConteneure;
+        const containerId =
+          result.id || result.idConteneure || result.id_conteneure;
 
-        // Explicitly assign the container to this navire
-        if (containerId) {
-          try {
-            console.log(
-              `Assigning container ${containerId} to ship ${navire.idNavire}`
-            );
-            await ConteneureService.assignContainerToShip(
-              containerId,
-              navire.idNavire
-            );
-            console.log("Container successfully assigned to ship");
-          } catch (assignError) {
-            console.error("Error assigning container to ship:", assignError);
-            // Still show success for container creation
-          }
-        }
-
+        // Refresh data
         setNotification({
           open: true,
           message: "Conteneur ajouté avec succès au navire",
@@ -623,14 +616,12 @@ const NavireDetail = () => {
                     <TableCell>
                       <Chip
                         size="small"
-                        label={
-                          container.typeConteneur?.nomType || "Non spécifié"
-                        }
+                        label={container.type_conteneure}
                         color="primary"
                       />
                     </TableCell>
                     <TableCell>
-                      {container.typeConteneur ? (
+                      {container.type_conteneure ? (
                         <Chip
                           size="small"
                           label={`ID: ${
@@ -748,11 +739,11 @@ const NavireDetail = () => {
             </InputLabel>
             <Select
               labelId="type-conteneure-label"
-              id="type_conteneur"
-              name="type_conteneur"
+              id="type_conteneure"
+              name="type_conteneure"
               value={
-                newContainer.type_conteneur
-                  ? conteneureTypes.indexOf(newContainer.type_conteneur) + 1 ||
+                newContainer.type_conteneure
+                  ? conteneureTypes.indexOf(newContainer.type_conteneure) + 1 ||
                     ""
                   : ""
               }
@@ -802,7 +793,7 @@ const NavireDetail = () => {
             disabled={
               containerDialogLoading ||
               !newContainer.nom_conteneure ||
-              !newContainer.type_conteneur
+              !newContainer.type_conteneure
             }
           >
             {containerDialogLoading ? (

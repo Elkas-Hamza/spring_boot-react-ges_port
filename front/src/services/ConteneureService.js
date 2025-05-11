@@ -28,8 +28,7 @@ class ConteneureService {
       // Ensure required fields are present for the backend
       const dataToSend = {
         ...containerData,
-        // Add required location type - default to TERRE (port) if not specified
-        location: containerData.location || "TERRE",
+        // Removed location field as it's determined by id_type
       };
 
       // Debug data being sent

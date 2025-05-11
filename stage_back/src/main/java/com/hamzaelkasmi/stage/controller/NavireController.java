@@ -242,15 +242,14 @@ public class NavireController {
         // Get containers with proper handling of lazy loading
         List<Map<String, Object>> containersList = new ArrayList<>();
         if (navire.getConteneurs() != null) {
-            for (   Conteneure container : navire.getConteneurs()) {
+            for (Conteneure container : navire.getConteneurs()) {
                 Map<String, Object> containerDetails = new HashMap<>();
                 containerDetails.put("id_conteneure", container.getId_conteneure());
                 containerDetails.put("nom_conteneure", container.getNom_conteneure());
-                containerDetails.put("type_conteneure", container.getType_conteneure().toString());
                 
-                if (container.getTypeConteneur() != null) {
-                    containerDetails.put("typeNom", container.getTypeConteneur().getNomType());
-                    containerDetails.put("typeDescription", container.getTypeConteneur().getDescription());
+                // Add id_type if it exists
+                if (container.getId_type() != null) {
+                    containerDetails.put("typeId", container.getId_type());
                 }
                 
                 containersList.add(containerDetails);
@@ -284,4 +283,4 @@ public class NavireController {
         
         return new ResponseEntity<>(containers, HttpStatus.OK);
     }
-} 
+}

@@ -17,13 +17,11 @@ public class Conteneure {
     @Column(name = "NOM_conteneure", nullable = false, length = 45)
     private String nom_conteneure;
     
-    @Enumerated(EnumType.STRING)
     @Column(name = "TYPE_conteneure")
-    private ConteneureLocationType type_conteneure = ConteneureLocationType.TERRE;
+    private String type_conteneure;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "ID_type")
-    private TypeConteneur typeConteneur;
+    @Column(name = "ID_type")
+    private Integer id_type;
     
     @ManyToOne
     @JoinColumn(name = "ID_navire")
@@ -38,29 +36,26 @@ public class Conteneure {
     @JoinColumn(name = "DERNIERE_OPERATION")
     private Operation derniereOperation;
 
-    // Enum for container location type
-    public enum ConteneureLocationType {
-        TERRE,
-        NAVIRE
-    }
-
     // Constructors
     public Conteneure() {
         this.dateAjout = new Date();
-        this.type_conteneure = ConteneureLocationType.TERRE;
     }
 
-    public Conteneure(String nom_conteneure, ConteneureLocationType type_conteneure) {
+    public Conteneure(String nom_conteneure) {
+        this();
+        this.nom_conteneure = nom_conteneure;
+    }
+    
+    public Conteneure(String nom_conteneure, String type_conteneure) {
         this();
         this.nom_conteneure = nom_conteneure;
         this.type_conteneure = type_conteneure;
     }
     
-    public Conteneure(String nom_conteneure, ConteneureLocationType type_conteneure, TypeConteneur typeConteneur, Navire navire) {
+    public Conteneure(String nom_conteneure, String type_conteneure, Navire navire) {
         this();
         this.nom_conteneure = nom_conteneure;
         this.type_conteneure = type_conteneure;
-        this.typeConteneur = typeConteneur;
         this.navire = navire;
     }
 
@@ -81,20 +76,20 @@ public class Conteneure {
         this.nom_conteneure = nom_conteneure;
     }
     
-    public ConteneureLocationType getType_conteneure() {
+    public String getType_conteneure() {
         return type_conteneure;
     }
 
-    public void setType_conteneure(ConteneureLocationType type_conteneure) {
+    public void setType_conteneure(String type_conteneure) {
         this.type_conteneure = type_conteneure;
     }
     
-    public TypeConteneur getTypeConteneur() {
-        return typeConteneur;
+    public Integer getId_type() {
+        return id_type;
     }
 
-    public void setTypeConteneur(TypeConteneur typeConteneur) {
-        this.typeConteneur = typeConteneur;
+    public void setId_type(Integer id_type) {
+        this.id_type = id_type;
     }
 
     public Navire getNavire() {
@@ -120,16 +115,6 @@ public class Conteneure {
     public void setDerniereOperation(Operation derniereOperation) {
         this.derniereOperation = derniereOperation;
     }
-    
-    // Helper method to check if this is a ship container
-    public boolean isShipContainer() {
-        return this.type_conteneure == ConteneureLocationType.NAVIRE;
-    }
-    
-    // Helper method to check if this is a land container
-    public boolean isLandContainer() {
-        return this.type_conteneure == ConteneureLocationType.TERRE;
-    }
 
     @Override
     public String toString() {
@@ -137,10 +122,10 @@ public class Conteneure {
                 "id_conteneure='" + id_conteneure + '\'' +
                 ", nom_conteneure='" + nom_conteneure + '\'' +
                 ", type_conteneure='" + type_conteneure + '\'' +
-                ", typeConteneur=" + (typeConteneur != null ? typeConteneur.getNomType() : "null") +
+                ", id_type=" + id_type +
                 ", navire=" + (navire != null ? navire.getNomNavire() : "null") +
                 ", dateAjout=" + dateAjout +
                 ", derniereOperation=" + (derniereOperation != null ? derniereOperation.getId_operation() : "null") +
                 '}';
     }
-} 
+}

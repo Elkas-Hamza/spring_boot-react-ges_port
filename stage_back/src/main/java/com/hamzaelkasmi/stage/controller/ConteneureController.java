@@ -2,10 +2,8 @@ package com.hamzaelkasmi.stage.controller;
 
 import com.hamzaelkasmi.stage.model.Conteneure;
 import com.hamzaelkasmi.stage.model.Navire;
-import com.hamzaelkasmi.stage.model.TypeConteneur;
 import com.hamzaelkasmi.stage.service.ConteneureService;
 import com.hamzaelkasmi.stage.service.NavireService;
-import com.hamzaelkasmi.stage.service.TypeConteneurService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +32,6 @@ public class ConteneureController {
     
     @Autowired
     private NavireService navireService;
-    
-    @Autowired
-    private TypeConteneurService typeConteneurService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
@@ -93,47 +88,17 @@ public class ConteneureController {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             
-            // Set the location type (default to TERRE if not specified)
-            Conteneure.ConteneureLocationType locationType = Conteneure.ConteneureLocationType.TERRE; // Default
-            if (containerData.containsKey("location") && 
-                (containerData.get("location").equals("TERRE") || containerData.get("location").equals("NAVIRE"))) {
-                locationType = Conteneure.ConteneureLocationType.valueOf((String) containerData.get("location"));
-            }
-            conteneure.setType_conteneure(locationType);
-            
-            // Determine the correct type ID based on location:
-            // ID=1 for TERRE (land/port)
-            // ID=2 for NAVIRE (ship)
-            Integer typeId = (locationType == Conteneure.ConteneureLocationType.TERRE) ? 1 : 2;
-            
-            // Get the container type name from request
-            String typeNom = null;
-            if (containerData.containsKey("type_conteneur") && containerData.get("type_conteneur") instanceof String) {
-                typeNom = (String) containerData.get("type_conteneur");
-            } else if (containerData.containsKey("type_conteneure") && containerData.get("type_conteneure") instanceof String) {
-                typeNom = (String) containerData.get("type_conteneure");
+            // Set container type if provided
+            if (containerData.containsKey("type_conteneure")) {
+                conteneure.setType_conteneure((String) containerData.get("type_conteneure"));
             }
             
-            // If no specific type name was provided, use defaults based on location
-            if (typeNom == null || typeNom.isEmpty() || typeNom.equals("TERRE") || typeNom.equals("NAVIRE")) {
-                typeNom = (locationType == Conteneure.ConteneureLocationType.TERRE) ? "Standard Port Container" : "Standard Ship Container";
-            }
+            // Set default ID_type (1 for TERRE containers)
+            conteneure.setId_type(1);
             
-            // Instead of trying to update the existing TypeConteneur, let's use it as is
-            Optional<TypeConteneur> typeById = typeConteneurService.getTypeById(typeId);
-            if (typeById.isPresent()) {
-                // Use the existing type with appropriate ID without changing its name
-                TypeConteneur type = typeById.get();
-                // Store the type name in the container's properties if needed, but don't update the TypeConteneur
-                conteneure.setTypeConteneur(type);
-            } else {
-                // Create a new type with the appropriate ID only if it doesn't exist
-                TypeConteneur newType = new TypeConteneur(typeId, 
-                    (locationType == Conteneure.ConteneureLocationType.TERRE) ? 
-                        "Standard Port Container" : "Standard Ship Container",
-                    (locationType == Conteneure.ConteneureLocationType.TERRE) ? 
-                        "Land container type" : "Ship container type");
-                conteneure.setTypeConteneur(typeConteneurService.saveType(newType));
+            // Set ID_type if explicitly provided
+            if (containerData.containsKey("id_type") && containerData.get("id_type") instanceof Number) {
+                conteneure.setId_type((Integer) containerData.get("id_type"));
             }
             
             // Set navire if specified (for containers created directly from the ship detail page)
@@ -143,19 +108,8 @@ public class ConteneureController {
                     Optional<Navire> navire = navireService.getNavireById(navireId);
                     if (navire.isPresent()) {
                         conteneure.setNavire(navire.get());
-                        // Force NAVIRE location type and type ID 2 when a navire is specified
-                        conteneure.setType_conteneure(Conteneure.ConteneureLocationType.NAVIRE);
-                        
-                        // Update typeConteneur to ID 2 since this is on a ship
-                        Optional<TypeConteneur> shipTypeById = typeConteneurService.getTypeById(2);
-                        if (shipTypeById.isPresent()) {
-                            // Use the existing ship type without changing its name
-                            conteneure.setTypeConteneur(shipTypeById.get());
-                        } else {
-                            // Create a new ship type only if it doesn't exist
-                            TypeConteneur newShipType = new TypeConteneur(2, "Standard Ship Container", "Ship container type");
-                            conteneure.setTypeConteneur(typeConteneurService.saveType(newShipType));
-                        }
+                        // Force type ID 2 when a navire is specified
+                        conteneure.setId_type(2);
                     }
                 }
             }
@@ -181,43 +135,14 @@ public class ConteneureController {
                 _conteneure.setNom_conteneure((String) containerData.get("nom_conteneure"));
             }
             
-            // Update container location type if provided
-            Conteneure.ConteneureLocationType locationType = _conteneure.getType_conteneure(); // Default to current value
-            if (containerData.containsKey("location") && 
-                (containerData.get("location").equals("TERRE") || containerData.get("location").equals("NAVIRE"))) {
-                locationType = Conteneure.ConteneureLocationType.valueOf((String) containerData.get("location"));
-                _conteneure.setType_conteneure(locationType);
+            // Update container type if provided
+            if (containerData.containsKey("type_conteneure")) {
+                _conteneure.setType_conteneure((String) containerData.get("type_conteneure"));
             }
             
-            // Determine the correct type ID based on location:
-            // ID=1 for TERRE (land/port)
-            // ID=2 for NAVIRE (ship)
-            Integer typeId = (locationType == Conteneure.ConteneureLocationType.TERRE) ? 1 : 2;
-            
-            // Get the container type name from request
-            String typeNom = null;
-            if (containerData.containsKey("type_conteneur") && containerData.get("type_conteneur") instanceof String) {
-                typeNom = (String) containerData.get("type_conteneur");
-            } else if (containerData.containsKey("type_conteneure") && containerData.get("type_conteneure") instanceof String) {
-                typeNom = (String) containerData.get("type_conteneure");
-            }
-            
-            // If valid type name was provided, update the container type - but don't modify TypeConteneur
-            if (typeNom != null && !typeNom.isEmpty() && !typeNom.equals("TERRE") && !typeNom.equals("NAVIRE")) {
-                // Simply use the existing type with appropriate ID based on location
-                Optional<TypeConteneur> typeById = typeConteneurService.getTypeById(typeId);
-                if (typeById.isPresent()) {
-                    // Use existing type without modifying its name
-                    _conteneure.setTypeConteneur(typeById.get());
-                } else {
-                    // Create new type with appropriate ID only if it doesn't exist
-                    TypeConteneur newType = new TypeConteneur(typeId, 
-                        (locationType == Conteneure.ConteneureLocationType.TERRE) ? 
-                            "Standard Port Container" : "Standard Ship Container",
-                        (locationType == Conteneure.ConteneureLocationType.TERRE) ? 
-                            "Land container type" : "Ship container type");
-                    _conteneure.setTypeConteneur(typeConteneurService.saveType(newType));
-                }
+            // Update ID_type if provided
+            if (containerData.containsKey("id_type") && containerData.get("id_type") instanceof Number) {
+                _conteneure.setId_type((Integer) containerData.get("id_type"));
             }
             
             // Handle navire association - if present in the update
@@ -227,32 +152,14 @@ public class ConteneureController {
                     Optional<Navire> navire = navireService.getNavireById(navireId);
                     if (navire.isPresent()) {
                         _conteneure.setNavire(navire.get());
-                        // Force NAVIRE location type and type ID 2 when a navire is specified
-                        _conteneure.setType_conteneure(Conteneure.ConteneureLocationType.NAVIRE);
-                        
-                        // Ensure the type ID is 2 (ship type) when associated with a ship
-                        if (_conteneure.getTypeConteneur() != null && 
-                            _conteneure.getTypeConteneur().getIdType() != 2) {
-                            // Need to update type to ID 2, but don't modify the existing type
-                            Optional<TypeConteneur> shipType = typeConteneurService.getTypeById(2);
-                            if (shipType.isPresent()) {
-                                // Use the existing ship type without modifying it
-                                _conteneure.setTypeConteneur(shipType.get());
-                            }
-                        }
+                        // Set ID_type to 2 when a navire is specified
+                        _conteneure.setId_type(2);
                     }
                 } else {
                     // If navireId is empty or null, remove association
                     _conteneure.setNavire(null);
-                    // Change to TERRE when no ship is associated
-                    _conteneure.setType_conteneure(Conteneure.ConteneureLocationType.TERRE);
-                    
-                    // Update type to ID 1 (land type) when unassociated from ship
-                    Optional<TypeConteneur> landType = typeConteneurService.getTypeById(1);
-                    if (landType.isPresent()) {
-                        // Use existing land type without modifying it
-                        _conteneure.setTypeConteneur(landType.get());
-                    }
+                    // Set ID_type to 1 when no ship is associated
+                    _conteneure.setId_type(1);
                 }
             }
             
@@ -350,11 +257,12 @@ public class ConteneureController {
         try {
             List<Conteneure> containers;
             
+            // Use id_type instead of location string
             if ("TERRE".equals(locationType.toUpperCase())) {
                 containers = conteneureService.getPortConteneures();
             } else if ("NAVIRE".equals(locationType.toUpperCase())) {
                 containers = conteneureService.getAllConteneures().stream()
-                    .filter(c -> c.getType_conteneure() == Conteneure.ConteneureLocationType.NAVIRE)
+                    .filter(c -> c.getNavire() != null)
                     .collect(Collectors.toList());
             } else {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

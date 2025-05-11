@@ -21,7 +21,7 @@ import ConteneureService from "../../services/ConteneureService";
 const ConteneureForm = () => {
   const [conteneure, setConteneure] = useState({
     nom_conteneure: "",
-    type_conteneur: "", // Changed from type_conteneure to match database schema
+    type_conteneure: "", // Changed from type_conteneur to type_conteneure to match backend
     id_type: 1, // Set to 1 for TERRE/port containers
     location: "TERRE", // Default to TERRE (port) location
   });
@@ -84,8 +84,8 @@ const ConteneureForm = () => {
           // Update the form with correct values
           setConteneure({
             ...data,
-            // For type_conteneur, use the actual name value
-            type_conteneur: data.TYPE_conteneur || "", // Changed field name
+            // For type_conteneure, use the actual name value
+            type_conteneure: data.TYPE_conteneure || "", // Changed field name
             id_type: 2, // Always set to 2 as requested
           });
           setLoading(false);
@@ -105,15 +105,14 @@ const ConteneureForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Special handling for type_conteneur dropdown
-    if (name === "type_conteneur") {
-      // Changed from type_conteneure
+    // Special handling for type_conteneure dropdown
+    if (name === "type_conteneure") {
       // For index-based selection
       const selectedType = conteneureTypes[value - 1] || value;
 
       setConteneure((prev) => ({
         ...prev,
-        type_conteneur: selectedType, // Changed field name
+        type_conteneure: selectedType,
         id_type: 2, // Always set to 2 as requested
       }));
     } else {
@@ -143,12 +142,9 @@ const ConteneureForm = () => {
       // Prepare data to send to backend - ensure proper field names and values
       const dataToSend = {
         nom_conteneure: conteneure.nom_conteneure,
-        // Keep type_conteneur as is - this matches the backend schema
-        type_conteneur: conteneure.type_conteneur,
-        // Set id_type to 1 for TERRE/port containers
+        type_conteneure: conteneure.type_conteneure,
         id_type: 1,
-        // Keep location as TERRE
-        location: "TERRE",
+        // Removed the location field as requested
       };
 
       console.log("Saving container data:", dataToSend);
@@ -248,14 +244,17 @@ const ConteneureForm = () => {
 
           {/* Container type selection - changed field name */}
           <FormControl fullWidth margin="normal">
-            <InputLabel id="type-conteneur-label">Type de Conteneur</InputLabel>
+            <InputLabel id="type-conteneure-label">
+              Type de Conteneur
+            </InputLabel>
             <Select
-              labelId="type-conteneur-label"
-              id="type_conteneur"
-              name="type_conteneur"
+              labelId="type-conteneure-label"
+              id="type_conteneure"
+              name="type_conteneure"
               value={
-                conteneure.type_conteneur
-                  ? conteneureTypes.indexOf(conteneure.type_conteneur) + 1 || ""
+                conteneure.type_conteneure
+                  ? conteneureTypes.indexOf(conteneure.type_conteneure) + 1 ||
+                    ""
                   : ""
               }
               onChange={handleChange}
