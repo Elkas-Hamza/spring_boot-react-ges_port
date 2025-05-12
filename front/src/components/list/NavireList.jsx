@@ -302,28 +302,6 @@ const NavireList = () => {
                     Gestion des Navires
                 </Typography>
                 <Box>
-                    <Tooltip title="Rafraîchir la liste">
-                        <IconButton 
-                            color="primary" 
-                            onClick={fetchNavires}
-                            sx={{ mr: 2 }}
-                        >
-                            <RefreshIcon />
-                        </IconButton>
-                    </Tooltip>
-                    {error && (
-                        <Tooltip title="Essayer l'API directe">
-                            <Button 
-                                variant="outlined" 
-                                color="warning" 
-                                size="small"
-                                onClick={handleTryDirectApi}
-                                sx={{ mr: 2 }}
-                            >
-                                API Directe
-                            </Button>
-                        </Tooltip>
-                    )}
                 <Button
                     variant="contained"
                     sx={{ mb: 3 }}
@@ -397,15 +375,6 @@ const NavireList = () => {
                                             sx={{ mr: 1 }}
                                         >
                                             Détails
-                                        </Button>
-                                        <Button
-                                            color="primary"
-                                            size="small"
-                                            component={Link}
-                                            to={`/navire/edit/${navire.idNavire}`}
-                                            sx={{ mr: 1 }}
-                                        >
-                                            Modifier
                                         </Button>
                                         <Button
                                             color="error"

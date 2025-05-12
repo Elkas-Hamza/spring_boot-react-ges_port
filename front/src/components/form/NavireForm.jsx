@@ -9,16 +9,9 @@ import {
   CircularProgress,
   Box,
   Paper,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Chip,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { NavireService } from "../../services/NavireService";
-import ConteneureService from "../../services/ConteneureService";
-import { Delete } from "@mui/icons-material";
 
 const NavireForm = () => {
   const [navire, setNavire] = useState({
@@ -26,10 +19,6 @@ const NavireForm = () => {
     matriculeNavire: "",
   });
 
-  // Container management state
-  const [containerIds, setContainerIds] = useState([]);
-  const [allContainers, setAllContainers] = useState([]);
-  const [containerInput, setContainerInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState("No actions taken yet");
   const { id } = useParams();
@@ -73,19 +62,6 @@ const NavireForm = () => {
               nomNavire: navireData.nomNavire || "",
               matriculeNavire: navireData.matriculeNavire || "",
             });
-
-            // Fetch containers for this ship
-            try {
-              const containersResponse =
-                await ConteneureService.getShipContainers(id);
-              if (containersResponse.data) {
-                setContainerIds(
-                  containersResponse.data.map((c) => c.id_conteneure)
-                );
-              }
-            } catch (error) {
-              console.error("Error fetching ship containers:", error);
-            }
           } else {
             setNotification({
               open: true,
@@ -112,45 +88,6 @@ const NavireForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNavire((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Container management handlers
-  const handleContainerInputChange = (e) => {
-    setContainerInput(e.target.value);
-  };
-
-  const handleAddContainer = () => {
-    if (!containerInput.trim()) return;
-
-    // Create a container ID-like format for manually entered containers
-    const containerId = `CONT-${Date.now().toString().slice(-6)}`;
-
-    setContainerIds((prev) => [...prev, containerId]);
-
-    // Also add to allContainers so we can display the name
-    setAllContainers((prev) => [
-      ...prev,
-      {
-        id_conteneure: containerId,
-        nom_conteneure: containerInput.trim(),
-      },
-    ]);
-
-    setContainerInput("");
-  };
-
-  const handleRemoveContainer = (containerId) => {
-    setContainerIds((prev) => prev.filter((id) => id !== containerId));
-    setAllContainers((prev) =>
-      prev.filter((container) => container.id_conteneure !== containerId)
-    );
-  };
-
-  const handleContainerInputKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddContainer();
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -193,97 +130,25 @@ const NavireForm = () => {
         setDebugInfo((prev) => `${prev}\nAttempting to create new navire`);
         response = await NavireService.createNavire(navireData);
       }
-
       if (response.success) {
         setDebugInfo((prev) => `${prev}\nServer response: Success`);
 
-        // Get the ship ID from the response or from the URL
-        const shipId = id || response.data.idNavire;
-        console.log("Ship ID for container assignment:", shipId);
+        // Get the navire ID from the response or from the URL
+        const navireId = id || response.data.idNavire;
 
-        // Process all containers that need to be created
-        const containersToProcess = [...allContainers];
-
-        // Track successful container creations
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const container of containersToProcess) {
-          try {
-            setDebugInfo(
-              (prev) =>
-                `${prev}\nProcessing container: ${container.nom_conteneure}`
-            );
-
-            // 1. Create the container with direct navire reference and NAVIRE type
-            const containerData = {
-              nom_conteneure: container.nom_conteneure,
-              type_conteneure: "NAVIRE", // Explicitly set as NAVIRE type
-              navire: {
-                idNavire: shipId, // Direct reference to the ship
-              },
-            };
-
-            console.log("Creating container with data:", containerData);
-
-            // 2. Create the container in the database
-            const creationResponse = await ConteneureService.createConteneure(
-              containerData
-            );
-            console.log("Container creation response:", creationResponse);
-
-            // If the above approach fails, try the two-step approach as fallback
-            if (!creationResponse || !creationResponse.data) {
-              // Alternative approach: First create container then assign to ship
-              const basicContainerData = {
-                nom_conteneure: container.nom_conteneure,
-              };
-
-              const containerResponse =
-                await ConteneureService.createConteneure(basicContainerData);
-              console.log(
-                "Created container with basic data:",
-                containerResponse.data
-              );
-
-              // Now assign it to the ship
-              await ConteneureService.assignContainerToShip(
-                containerResponse.data.id_conteneure,
-                shipId
-              );
-              console.log(
-                `Assigned container ${containerResponse.data.id_conteneure} to ship ${shipId}`
-              );
-            }
-
-            successCount++;
-          } catch (error) {
-            console.error(
-              `Error processing container ${container.nom_conteneure}:`,
-              error
-            );
-            errorCount++;
-          }
-        }
-
-        // Set notification with results
         setNotification({
           open: true,
-          message: `Navire ${
-            id ? "modifié" : "créé"
-          } avec succès. ${successCount} conteneurs ajoutés.${
-            errorCount > 0 ? ` ${errorCount} échecs.` : ""
-          }`,
+          message: `Navire ${id ? "modifié" : "créé"} avec succès.`,
           severity: "success",
         });
 
-        // Redirect using direct navigation instead of React Router
+        // Redirect to navire details page instead of the list
         setDebugInfo(
           (prev) =>
-            `${prev}\nRedirecting to navires list using direct navigation`
+            `${prev}\nRedirecting to navire details page: /navire/details/${navireId}`
         );
         setTimeout(() => {
-          window.location.href = "/navires";
+          window.location.href = `/navire/details/${navireId}`;
         }, 1500);
       } else {
         setDebugInfo(
@@ -361,83 +226,6 @@ const NavireForm = () => {
           margin="normal"
           required
         />
-
-        {/* Container Management Section */}
-        <Box sx={{ mt: 4, mb: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Ajouter des conteneurs
-          </Typography>
-
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <TextField
-                label="Nom du conteneur"
-                value={containerInput}
-                onChange={handleContainerInputChange}
-                onKeyDown={handleContainerInputKeyDown}
-                fullWidth
-                sx={{ mr: 1 }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleAddContainer}
-                disabled={!containerInput.trim()}
-              >
-                Ajouter
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Containers list */}
-          {containerIds.length > 0 ? (
-            <Paper variant="outlined" sx={{ mt: 2, mb: 2 }}>
-              <List>
-                {containerIds.map((containerId) => {
-                  const container = allContainers.find(
-                    (c) => c.id_conteneure === containerId
-                  );
-                  return (
-                    <ListItem
-                      key={containerId}
-                      secondaryAction={
-                        <IconButton
-                          edge="end"
-                          aria-label="delete"
-                          onClick={() => handleRemoveContainer(containerId)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={
-                          container ? container.nom_conteneure : containerId
-                        }
-                        secondary={containerId}
-                      />
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </Paper>
-          ) : (
-            <Typography color="text.secondary" sx={{ mt: 2, mb: 2 }}>
-              Aucun conteneur sélectionné
-            </Typography>
-          )}
-
-          {/* Chip display of container count */}
-          {containerIds.length > 0 && (
-            <Chip
-              label={`${containerIds.length} conteneur${
-                containerIds.length > 1 ? "s" : ""
-              }`}
-              color="primary"
-              variant="outlined"
-              size="small"
-            />
-          )}
-        </Box>
 
         <Button
           type="submit"

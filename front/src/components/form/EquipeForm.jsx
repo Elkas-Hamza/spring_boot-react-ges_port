@@ -128,7 +128,6 @@ const EquipeForm = () => {
           (prev) =>
             `${prev}\nAttempting to create equipe with name: ${equipe.nom_equipe}`
         );
-
         const response = await EquipeService.createEquipe({
           nom_equipe: equipe.nom_equipe,
         });
@@ -144,14 +143,14 @@ const EquipeForm = () => {
           open: true,
           message: "Équipe créée avec succès",
           severity: "success",
-        });
-
-        // Use setTimeout with direct navigation instead of navigate
-        setDebugInfo((prev) => `${prev}\nPreparing navigation to /equipes`);
+        }); // Redirect to equipe details page instead of the list
+        setDebugInfo(
+          (prev) => `${prev}\nPreparing navigation to /equipe/${createdId}`
+        );
         setTimeout(() => {
-          console.log("Navigating to equipe list after creation");
-          // Force direct location change instead of navigate
-          window.location.href = "/equipes";
+          console.log(`Navigating to equipe details: /equipe/${createdId}`);
+          // Force direct location change to the details page of the newly created equipe
+          window.location.href = `/equipe/${createdId}`;
         }, 1500);
       }
     } catch (error) {

@@ -29,7 +29,7 @@ public class Equipe {
     )
     private Set<Personnel> personnel = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "equipe_has_soustraiteure",
         joinColumns = @JoinColumn(name = "equipe_ID_equipe"),
@@ -102,4 +102,4 @@ public class Equipe {
                 ", nom_equipe='" + nom_equipe + '\'' +
                 '}';
     }
-} 
+}

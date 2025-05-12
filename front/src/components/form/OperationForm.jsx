@@ -49,7 +49,7 @@ const OperationForm = () => {
     date_debut: "",
     date_fin: "",
     status: "En cours",
-    type_operation: "AUTRE", // Renamed from operationType to type_operation
+    type_operation: "AUTRE", 
   });
 
   const [shifts, setShifts] = useState([]);
@@ -582,8 +582,8 @@ const OperationForm = () => {
                     <em>Aucun</em>
                   </MenuItem>
                   {shifts.map((shift) => (
-                    <MenuItem key={shift.ID_shift} value={shift.ID_shift}>
-                      {shift.NOM_shift} ({shift.HEURE_debut} - {shift.HEURE_fin}
+                    <MenuItem key={shift.id_shift} value={shift.id_shift}>
+                      {shift.nom_shift} ({shift.heure_debut} - {shift.heure_fin}
                       )
                     </MenuItem>
                   ))}

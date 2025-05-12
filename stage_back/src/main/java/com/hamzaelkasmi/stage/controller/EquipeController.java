@@ -19,7 +19,7 @@ public class EquipeController {
 
     @Autowired
     private EquipeService equipeService;
-    
+
     @Autowired
     private EquipeRepository equipeRepository;
 
@@ -38,20 +38,20 @@ public class EquipeController {
     public ResponseEntity<Equipe> getEquipeById(@PathVariable("id") String id) {
         try {
             System.out.println("Received request to fetch equipe with ID: " + id);
-            
+
             // Try both methods to see which one works
             var byEquipeId = equipeService.getEquipeById(id);
             var byId = equipeRepository.findById(id);
-            
+
             System.out.println("equipeService.getEquipeById result: " + (byEquipeId.isPresent() ? "Found" : "Not Found"));
             System.out.println("equipeRepository.findById result: " + (byId.isPresent() ? "Found" : "Not Found"));
-            
+
             if (byEquipeId.isPresent()) {
                 return ResponseEntity.ok(byEquipeId.get());
             } else if (byId.isPresent()) {
                 return ResponseEntity.ok(byId.get());
             }
-            
+
             System.out.println("Equipe not found with ID: " + id);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -60,7 +60,7 @@ public class EquipeController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @GetMapping("/search")
     public ResponseEntity<List<Equipe>> searchEquipes(@RequestParam("name") String name) {
         try {
@@ -71,7 +71,7 @@ public class EquipeController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @GetMapping("/personnel/{personnelId}")
     public ResponseEntity<List<Equipe>> getEquipesByPersonnel(@PathVariable("personnelId") String personnelId) {
         try {
@@ -82,7 +82,7 @@ public class EquipeController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @GetMapping("/soustraiteur/{soustraiteurId}")
     public ResponseEntity<List<Equipe>> getEquipesBySoustraiteur(@PathVariable("soustraiteurId") String soustraiteurId) {
         try {
@@ -100,18 +100,18 @@ public class EquipeController {
             if (equipe.getNom_equipe() == null || equipe.getNom_equipe().isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            
+
             System.out.println("Creating equipe with name: " + equipe.getNom_equipe());
             Equipe savedEquipe = equipeService.saveEquipe(equipe);
             System.out.println("Equipe created with ID: " + savedEquipe.getId_equipe());
-            
+
             // Verify the equipe is immediately retrievable
             var verifyEquipe = equipeService.getEquipeById(savedEquipe.getId_equipe());
             if (verifyEquipe.isPresent()) {
                 System.out.println("Verified equipe can be retrieved via getEquipeById after creation");
             } else {
                 System.out.println("WARNING: Created equipe cannot be retrieved via getEquipeById immediately");
-                
+
                 // Try direct repository access
                 var verifyEquipeRepo = equipeRepository.findById(savedEquipe.getId_equipe());
                 if (verifyEquipeRepo.isPresent()) {
@@ -120,7 +120,7 @@ public class EquipeController {
                     System.out.println("WARNING: Created equipe cannot be retrieved via repository immediately");
                 }
             }
-            
+
             return new ResponseEntity<>(savedEquipe, HttpStatus.CREATED);
         } catch (Exception e) {
             System.err.println("Error creating equipe: " + e.getMessage());
@@ -157,7 +157,7 @@ public class EquipeController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @PostMapping("/{id}/personnel")
     public ResponseEntity<Object> addPersonnelToEquipe(
             @PathVariable("id") String equipeId,
@@ -165,42 +165,42 @@ public class EquipeController {
         try {
             System.out.println("Received request to add personnel to equipe: " + equipeId);
             System.out.println("Request body: " + request);
-            
+
             String personnelId = request.get("personnelId");
             System.out.println("Personnel ID extracted from request: " + personnelId);
-            
+
             if (personnelId == null) {
                 System.out.println("Personnel ID is null, returning BAD_REQUEST");
                 return new ResponseEntity<>("Personnel ID is required", HttpStatus.BAD_REQUEST);
             }
-            
+
             // Verify equipe exists
             var equipe = equipeService.getEquipeById(equipeId);
             if (equipe.isEmpty()) {
                 System.out.println("Equipe not found with ID: " + equipeId);
                 return new ResponseEntity<>("Equipe not found with ID: " + equipeId, HttpStatus.NOT_FOUND);
             }
-            
+
             Equipe updatedEquipe = equipeService.addPersonnelToEquipe(equipeId, personnelId);
             System.out.println("Successfully added personnel to equipe");
             return new ResponseEntity<>(updatedEquipe, HttpStatus.OK);
         } catch (RuntimeException e) {
             System.err.println("Error adding personnel to equipe: " + e.getMessage());
             e.printStackTrace();
-            
-            if (e.getMessage().contains("doesn't have a default value") || 
-                e.getMessage().contains("Incorrect integer value")) {
+
+            if (e.getMessage().contains("doesn't have a default value") ||
+                    e.getMessage().contains("Incorrect integer value")) {
                 System.err.println("SQL schema mismatch detected");
-                
+
                 // Return meaningful error for debugging
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Database schema mismatch");
                 errorResponse.put("message", e.getMessage());
                 errorResponse.put("solution", "Contact system administrator to fix the database schema");
-                
+
                 return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            
+
             return new ResponseEntity<>("Error adding personnel to equipe: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             System.err.println("Error adding personnel to equipe: " + e.getMessage());
@@ -208,7 +208,7 @@ public class EquipeController {
             return new ResponseEntity<>("Unexpected error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @DeleteMapping("/{id}/personnel/{personnelId}")
     public ResponseEntity<Equipe> removePersonnelFromEquipe(
             @PathVariable("id") String equipeId,
@@ -224,7 +224,7 @@ public class EquipeController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @PostMapping("/{id}/soustraiteur")
     public ResponseEntity<Object> addSoustraiteurToEquipe(
             @PathVariable("id") String equipeId,
@@ -232,42 +232,42 @@ public class EquipeController {
         try {
             System.out.println("Received request to add soustraiteur to equipe: " + equipeId);
             System.out.println("Request body: " + request);
-            
+
             String soustraiteurId = request.get("soustraiteurId");
             System.out.println("Soustraiteur ID extracted from request: " + soustraiteurId);
-            
+
             if (soustraiteurId == null) {
                 System.out.println("Soustraiteur ID is null, returning BAD_REQUEST");
                 return new ResponseEntity<>("Soustraiteur ID is required", HttpStatus.BAD_REQUEST);
             }
-            
+
             // Verify equipe exists
             var equipe = equipeService.getEquipeById(equipeId);
             if (equipe.isEmpty()) {
                 System.out.println("Equipe not found with ID: " + equipeId);
                 return new ResponseEntity<>("Equipe not found with ID: " + equipeId, HttpStatus.NOT_FOUND);
             }
-            
+
             Equipe updatedEquipe = equipeService.addSoustraiteurToEquipe(equipeId, soustraiteurId);
             System.out.println("Successfully added soustraiteur to equipe");
             return new ResponseEntity<>(updatedEquipe, HttpStatus.OK);
         } catch (RuntimeException e) {
             System.err.println("Error adding soustraiteur to equipe: " + e.getMessage());
             e.printStackTrace();
-            
-            if (e.getMessage().contains("doesn't have a default value") || 
-                e.getMessage().contains("Incorrect integer value")) {
+
+            if (e.getMessage().contains("doesn't have a default value") ||
+                    e.getMessage().contains("Incorrect integer value")) {
                 System.err.println("SQL schema mismatch detected");
-                
+
                 // Return meaningful error for debugging
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Database schema mismatch");
                 errorResponse.put("message", e.getMessage());
                 errorResponse.put("solution", "Contact system administrator to fix the database schema");
-                
+
                 return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            
+
             return new ResponseEntity<>("Error adding soustraiteur to equipe: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             System.err.println("Error adding soustraiteur to equipe: " + e.getMessage());
@@ -275,7 +275,7 @@ public class EquipeController {
             return new ResponseEntity<>("Unexpected error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @DeleteMapping("/{id}/soustraiteur/{soustraiteurId}")
     public ResponseEntity<Equipe> removeSoustraiteurFromEquipe(
             @PathVariable("id") String equipeId,
@@ -298,4 +298,4 @@ public class EquipeController {
         System.out.println("Test endpoint hit for equipe: " + equipeId);
         return ResponseEntity.ok("Test endpoint working for equipe: " + equipeId);
     }
-} 
+}

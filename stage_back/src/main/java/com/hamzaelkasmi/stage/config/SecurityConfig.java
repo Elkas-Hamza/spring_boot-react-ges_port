@@ -52,14 +52,14 @@ public class SecurityConfig {
                 
                 // User endpoints - do not restrict here, let method-level security handle it
                 .requestMatchers("/api/users/**").authenticated()
-                
-                // Endpoints accessible to both ADMIN and USER roles
+                  // Endpoints accessible to both ADMIN and USER roles
                 .requestMatchers("/api/operations/**").authenticated()
                 .requestMatchers("/api/escales/**").authenticated()
                 .requestMatchers("/api/equipes/**").authenticated()
                 .requestMatchers("/api/shifts/**").authenticated()
                 .requestMatchers("/api/engins/**").authenticated()
                 .requestMatchers("/api/soustraitants/**").authenticated()
+                .requestMatchers("/api/soustraiteurs/**").authenticated() // Added correct endpoint with 'e'
                 .requestMatchers("/api/personnel/**").authenticated()
                 .requestMatchers("/api/analytics/**").authenticated()
                 .requestMatchers("/api/navires/**").authenticated()

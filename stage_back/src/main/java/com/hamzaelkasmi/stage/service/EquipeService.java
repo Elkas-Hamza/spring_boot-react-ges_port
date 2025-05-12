@@ -30,8 +30,22 @@ public class EquipeService {
         return equipeRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Equipe> getEquipeById(String id) {
-        return equipeRepository.findByEquipeId(id);
+        Optional<Equipe> equipeOpt = equipeRepository.findByEquipeId(id);
+        
+        // Initialize collections if the equipe exists
+        equipeOpt.ifPresent(equipe -> {
+            if (equipe.getSoustraiteurs() != null) {
+                // Force collection initialization by accessing its size
+                equipe.getSoustraiteurs().size();
+            }
+            if (equipe.getPersonnel() != null) {
+                equipe.getPersonnel().size();
+            }
+        });
+        
+        return equipeOpt;
     }
     
     public List<Equipe> searchEquipesByName(String name) {
@@ -284,4 +298,4 @@ public class EquipeService {
             throw new RuntimeException("Error removing soustraiteur from equipe: " + e.getMessage(), e);
         }
     }
-} 
+}

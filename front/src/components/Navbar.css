@@ -19,10 +19,7 @@
   background: transparent;
 }
 
-body {
-  overflow-y: hidden;
-  overflow-x: hidden;
-}
+
 
 /* Hide scrollbar if you want it completely gone (uncomment below) */
 
