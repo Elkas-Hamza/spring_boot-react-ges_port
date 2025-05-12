@@ -85,7 +85,7 @@ const EnginList = () => {
         </Typography>
         <Button
           component={Link}
-          to="/engins/new"
+          to="/engins/create"
           variant="contained"
           sx={{ mb: 3 }}
           startIcon={<AddIcon />}

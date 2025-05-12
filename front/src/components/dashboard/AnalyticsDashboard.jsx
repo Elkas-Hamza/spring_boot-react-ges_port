@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Card,
@@ -7,7 +7,6 @@ import {
   Box,
   CircularProgress,
   Paper,
-  Divider,
   Tabs,
   Tab,
   Select,
@@ -22,10 +21,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  LinearProgress
-} from '@mui/material';
-import AnalyticsService from '../../services/AnalyticsService';
-import AuthService from '../../services/AuthService';
+  LinearProgress,
+} from "@mui/material";
+import AnalyticsService from "../../services/AnalyticsService";
+import AuthService from "../../services/AuthService";
 import {
   TrendingUp,
   People,
@@ -35,8 +34,8 @@ import {
   CheckCircleOutlineOutlined,
   ErrorOutlineOutlined,
   DonutLarge,
-  AvTimer
-} from '@mui/icons-material';
+  AvTimer,
+} from "@mui/icons-material";
 
 const AnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -51,10 +50,10 @@ const AnalyticsDashboard = () => {
       try {
         const result = await AnalyticsService.testApiConnection();
         setTestConnection(result);
-        console.log('API Test successful:', result);
+        console.log("API Test successful:", result);
       } catch (err) {
-        console.error('API Test failed:', err);
-        setTestConnection('Connection failed');
+        console.error("API Test failed:", err);
+        setTestConnection("Connection failed");
       }
     };
 
@@ -63,31 +62,33 @@ const AnalyticsDashboard = () => {
         setLoading(true);
         // First test the connection
         await testApi();
-        
+
         // Now try to get the actual data
         const tokenInfo = AuthService.getTokenDebugInfo();
-        console.log('Token debug info:', tokenInfo);
-        
+        console.log("Token debug info:", tokenInfo);
+
         const data = await AnalyticsService.getAllAnalytics();
         setAnalytics(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching analytics data:', err);
+        console.error("Error fetching analytics data:", err);
         if (err.response) {
-          console.log('Error status:', err.response.status);
-          console.log('Error data:', err.response.data);
+          console.log("Error status:", err.response.status);
+          console.log("Error data:", err.response.data);
         }
-        
+
         // Check token validity
         const tokenInfo = AuthService.getTokenDebugInfo();
         if (!tokenInfo.exists) {
-          setError('Authentication error: No token found. Please login again.');
+          setError("Authentication error: No token found. Please login again.");
         } else if (tokenInfo.expired) {
-          setError('Authentication error: Token has expired. Please login again.');
+          setError(
+            "Authentication error: Token has expired. Please login again."
+          );
         } else if (!tokenInfo.valid) {
           setError(`Authentication error: Invalid token. ${tokenInfo.message}`);
         } else {
-          setError('Failed to load analytics data. Please try again later.');
+          setError("Failed to load analytics data. Please try again later.");
         }
       } finally {
         setLoading(false);
@@ -120,7 +121,7 @@ const AnalyticsDashboard = () => {
 
   if (error) {
     const tokenInfo = AuthService.getTokenDebugInfo();
-    
+
     return (
       <Box
         display="flex"
@@ -130,36 +131,46 @@ const AnalyticsDashboard = () => {
       >
         <Paper
           elevation={3}
-          sx={{ padding: 3, maxWidth: 550, textAlign: 'center' }}
+          sx={{ padding: 3, maxWidth: 550, textAlign: "center" }}
         >
           <ErrorOutlineOutlined color="error" sx={{ fontSize: 60 }} />
           <Typography variant="h5" color="error" gutterBottom>
             Error
           </Typography>
           <Typography variant="body1">{error}</Typography>
-          
+
           {testConnection && (
-            <Box mt={2} p={1} bgcolor={testConnection === 'Connection failed' ? '#ffebee' : '#e8f5e9'} borderRadius={1}>
+            <Box
+              mt={2}
+              p={1}
+              bgcolor={
+                testConnection === "Connection failed" ? "#ffebee" : "#e8f5e9"
+              }
+              borderRadius={1}
+            >
               <Typography variant="body2">
-                API Test: {typeof testConnection === 'string' ? testConnection : 'Connection successful'}
+                API Test:{" "}
+                {typeof testConnection === "string"
+                  ? testConnection
+                  : "Connection successful"}
               </Typography>
             </Box>
           )}
-          
+
           <Box mt={2} p={2} bgcolor="#f5f5f5" borderRadius={1} textAlign="left">
             <Typography variant="subtitle2" gutterBottom>
               Authentication Debug Info:
             </Typography>
             <Typography variant="body2">
-              Token exists: {tokenInfo.exists ? 'Yes' : 'No'}
+              Token exists: {tokenInfo.exists ? "Yes" : "No"}
             </Typography>
             {tokenInfo.exists && (
               <>
                 <Typography variant="body2">
-                  Valid: {tokenInfo.valid ? 'Yes' : 'No'}
+                  Valid: {tokenInfo.valid ? "Yes" : "No"}
                 </Typography>
                 <Typography variant="body2">
-                  Expired: {tokenInfo.expired ? 'Yes' : 'No'}
+                  Expired: {tokenInfo.expired ? "Yes" : "No"}
                 </Typography>
                 <Typography variant="body2">
                   Issued: {tokenInfo.issueTime}
@@ -171,12 +182,13 @@ const AnalyticsDashboard = () => {
                   User: {tokenInfo.subject}
                 </Typography>
                 <Typography variant="body2">
-                  Roles: {tokenInfo.roles ? JSON.stringify(tokenInfo.roles) : 'None'}
+                  Roles:{" "}
+                  {tokenInfo.roles ? JSON.stringify(tokenInfo.roles) : "None"}
                 </Typography>
               </>
             )}
           </Box>
-          
+
           <Box mt={2} display="flex" justifyContent="space-between">
             <Button
               variant="contained"
@@ -185,13 +197,13 @@ const AnalyticsDashboard = () => {
             >
               Retry
             </Button>
-            
+
             <Button
               variant="outlined"
               color="secondary"
               onClick={() => {
                 AuthService.logout();
-                window.location.href = '/';
+                window.location.href = "/";
               }}
             >
               Logout & Login Again
@@ -207,7 +219,7 @@ const AnalyticsDashboard = () => {
       <Typography variant="h4" gutterBottom>
         Port Operations Analytics
       </Typography>
-      
+
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -225,15 +237,21 @@ const AnalyticsDashboard = () => {
                 </Box>
               </Box>
               <Box display="flex" alignItems="center" mt={1}>
-                <CheckCircleOutlineOutlined sx={{ color: 'green', mr: 1 }} />
+                <CheckCircleOutlineOutlined sx={{ color: "green", mr: 1 }} />
                 <Typography variant="body2">
-                  {analytics.summary.completedOperations} completed ({Math.round((analytics.summary.completedOperations / analytics.summary.totalOperations) * 100)}%)
+                  {analytics.summary.completedOperations} completed (
+                  {Math.round(
+                    (analytics.summary.completedOperations /
+                      analytics.summary.totalOperations) *
+                      100
+                  )}
+                  %)
                 </Typography>
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -249,7 +267,7 @@ const AnalyticsDashboard = () => {
                 </Box>
               </Box>
               <Box display="flex" alignItems="center" mt={1}>
-                <DonutLarge sx={{ color: 'orange', mr: 1 }} />
+                <DonutLarge sx={{ color: "orange", mr: 1 }} />
                 <Typography variant="body2">
                   {analytics.summary.activeEscales} active now
                 </Typography>
@@ -257,7 +275,7 @@ const AnalyticsDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -273,7 +291,7 @@ const AnalyticsDashboard = () => {
                 </Box>
               </Box>
               <Box display="flex" alignItems="center" mt={1}>
-                <AssessmentOutlined sx={{ color: 'blue', mr: 1 }} />
+                <AssessmentOutlined sx={{ color: "blue", mr: 1 }} />
                 <Typography variant="body2">
                   {analytics.summary.totalPersonnel} personnel total
                 </Typography>
@@ -281,7 +299,7 @@ const AnalyticsDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -297,7 +315,7 @@ const AnalyticsDashboard = () => {
                 </Box>
               </Box>
               <Box display="flex" alignItems="center" mt={1}>
-                <Schedule sx={{ color: 'purple', mr: 1 }} />
+                <Schedule sx={{ color: "purple", mr: 1 }} />
                 <Typography variant="body2">
                   Median: {analytics.operationDurations.medianDuration} min
                 </Typography>
@@ -308,10 +326,10 @@ const AnalyticsDashboard = () => {
       </Grid>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
-          onChange={handleTabChange} 
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
           aria-label="analytics tabs"
           variant="scrollable"
           scrollButtons="auto"
@@ -343,14 +361,18 @@ const AnalyticsDashboard = () => {
                     </TableHead>
                     <TableBody>
                       {analytics.operationsByType.map((type) => {
-                        const percentage = (type.count / analytics.summary.totalOperations) * 100;
+                        const percentage =
+                          (type.count / analytics.summary.totalOperations) *
+                          100;
                         return (
                           <TableRow key={type.type}>
                             <TableCell>{type.type}</TableCell>
                             <TableCell align="right">{type.count}</TableCell>
                             <TableCell align="right">
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Box sx={{ width: '100%', mr: 1 }}>
+                              <Box
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                <Box sx={{ width: "100%", mr: 1 }}>
                                   <LinearProgress
                                     variant="determinate"
                                     value={percentage}
@@ -359,7 +381,10 @@ const AnalyticsDashboard = () => {
                                   />
                                 </Box>
                                 <Box sx={{ minWidth: 35 }}>
-                                  <Typography variant="body2" color="text.secondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
                                     {`${Math.round(percentage)}%`}
                                   </Typography>
                                 </Box>
@@ -378,10 +403,13 @@ const AnalyticsDashboard = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    Operations by Month
-                  </Typography>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Typography variant="h6">Operations by Month</Typography>
                   <FormControl sx={{ minWidth: 120 }}>
                     <InputLabel id="year-select-label">Year</InputLabel>
                     <Select
@@ -438,32 +466,44 @@ const AnalyticsDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {analytics.operationDurations.durations.map((duration) => {
-                        const percentage = (duration.count / analytics.summary.totalOperations) * 100;
-                        return (
-                          <TableRow key={duration.range}>
-                            <TableCell>{duration.range}</TableCell>
-                            <TableCell align="right">{duration.count}</TableCell>
-                            <TableCell align="right">
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Box sx={{ width: '100%', mr: 1 }}>
-                                  <LinearProgress
-                                    variant="determinate"
-                                    value={percentage}
-                                    color="success"
-                                    sx={{ height: 10, borderRadius: 5 }}
-                                  />
+                      {analytics.operationDurations.durations.map(
+                        (duration) => {
+                          const percentage =
+                            (duration.count /
+                              analytics.summary.totalOperations) *
+                            100;
+                          return (
+                            <TableRow key={duration.range}>
+                              <TableCell>{duration.range}</TableCell>
+                              <TableCell align="right">
+                                {duration.count}
+                              </TableCell>
+                              <TableCell align="right">
+                                <Box
+                                  sx={{ display: "flex", alignItems: "center" }}
+                                >
+                                  <Box sx={{ width: "100%", mr: 1 }}>
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={percentage}
+                                      color="success"
+                                      sx={{ height: 10, borderRadius: 5 }}
+                                    />
+                                  </Box>
+                                  <Box sx={{ minWidth: 35 }}>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      {`${Math.round(percentage)}%`}
+                                    </Typography>
+                                  </Box>
                                 </Box>
-                                <Box sx={{ minWidth: 35 }}>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {`${Math.round(percentage)}%`}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -495,19 +535,28 @@ const AnalyticsDashboard = () => {
                       {analytics.topEquipesByOperations.map((equipe) => (
                         <TableRow key={equipe.equipe}>
                           <TableCell>{equipe.equipe}</TableCell>
-                          <TableCell align="right">{equipe.operations}</TableCell>
                           <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Box sx={{ width: '100%', mr: 1 }}>
+                            {equipe.operations}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Box sx={{ width: "100%", mr: 1 }}>
                                 <LinearProgress
                                   variant="determinate"
                                   value={equipe.efficiency}
-                                  color={equipe.efficiency > 90 ? "success" : "primary"}
+                                  color={
+                                    equipe.efficiency > 90
+                                      ? "success"
+                                      : "primary"
+                                  }
                                   sx={{ height: 10, borderRadius: 5 }}
                                 />
                               </Box>
                               <Box sx={{ minWidth: 35 }}>
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
                                   {`${Math.round(equipe.efficiency)}%`}
                                 </Typography>
                               </Box>
@@ -537,28 +586,39 @@ const AnalyticsDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {analytics.personnelUtilization.byDepartment.map((dept) => (
-                        <TableRow key={dept.department}>
-                          <TableCell>{dept.department}</TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Box sx={{ width: '100%', mr: 1 }}>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={dept.utilization}
-                                  color={dept.utilization > 85 ? "success" : "primary"}
-                                  sx={{ height: 10, borderRadius: 5 }}
-                                />
+                      {analytics.personnelUtilization.byDepartment.map(
+                        (dept) => (
+                          <TableRow key={dept.department}>
+                            <TableCell>{dept.department}</TableCell>
+                            <TableCell align="right">
+                              <Box
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                <Box sx={{ width: "100%", mr: 1 }}>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={dept.utilization}
+                                    color={
+                                      dept.utilization > 85
+                                        ? "success"
+                                        : "primary"
+                                    }
+                                    sx={{ height: 10, borderRadius: 5 }}
+                                  />
+                                </Box>
+                                <Box sx={{ minWidth: 35 }}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    {`${dept.utilization}%`}
+                                  </Typography>
+                                </Box>
                               </Box>
-                              <Box sx={{ minWidth: 35 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {`${dept.utilization}%`}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -574,25 +634,40 @@ const AnalyticsDashboard = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    Port Utilization
-                  </Typography>
-                  <Chip 
-                    color={analytics.portUtilization.currentOccupancy > 0.8 ? "error" : "success"} 
-                    label={`Current: ${Math.round(analytics.portUtilization.currentOccupancy * 100)}%`} 
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Typography variant="h6">Port Utilization</Typography>
+                  <Chip
+                    color={
+                      analytics.portUtilization.currentOccupancy > 0.8
+                        ? "error"
+                        : "success"
+                    }
+                    label={`Current: ${Math.round(
+                      analytics.portUtilization.currentOccupancy * 100
+                    )}%`}
                   />
                 </Box>
                 <Box mt={3} mb={3}>
                   <LinearProgress
                     variant="determinate"
                     value={analytics.portUtilization.currentOccupancy * 100}
-                    color={analytics.portUtilization.currentOccupancy > 0.8 ? "error" : 
-                          analytics.portUtilization.currentOccupancy > 0.7 ? "warning" : "success"}
+                    color={
+                      analytics.portUtilization.currentOccupancy > 0.8
+                        ? "error"
+                        : analytics.portUtilization.currentOccupancy > 0.7
+                        ? "warning"
+                        : "success"
+                    }
                     sx={{ height: 20, borderRadius: 5 }}
                   />
                   <Typography variant="body2" align="center" mt={1}>
-                    {analytics.portUtilization.occupiedSlots} of {analytics.portUtilization.totalSlots} slots occupied
+                    {analytics.portUtilization.occupiedSlots} of{" "}
+                    {analytics.portUtilization.totalSlots} slots occupied
                   </Typography>
                 </Box>
                 <Typography variant="h6" gutterBottom mt={4}>
@@ -613,17 +688,26 @@ const AnalyticsDashboard = () => {
                         <TableRow key={zone.zone}>
                           <TableCell>{zone.zone}</TableCell>
                           <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Box sx={{ width: '100%', mr: 1 }}>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Box sx={{ width: "100%", mr: 1 }}>
                                 <LinearProgress
                                   variant="determinate"
                                   value={zone.utilization * 100}
-                                  color={zone.utilization > 0.8 ? "error" : zone.utilization > 0.7 ? "warning" : "success"}
+                                  color={
+                                    zone.utilization > 0.8
+                                      ? "error"
+                                      : zone.utilization > 0.7
+                                      ? "warning"
+                                      : "success"
+                                  }
                                   sx={{ height: 10, borderRadius: 5 }}
                                 />
                               </Box>
                               <Box sx={{ minWidth: 35 }}>
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
                                   {`${Math.round(zone.utilization * 100)}%`}
                                 </Typography>
                               </Box>
@@ -669,13 +753,15 @@ const AnalyticsDashboard = () => {
                           <TableCell>{escale.id}</TableCell>
                           <TableCell>{escale.navire}</TableCell>
                           <TableCell>{escale.arrival}</TableCell>
-                          <TableCell>{escale.departure || 'In Port'}</TableCell>
-                          <TableCell align="right">{escale.operations}</TableCell>
+                          <TableCell>{escale.departure || "In Port"}</TableCell>
+                          <TableCell align="right">
+                            {escale.operations}
+                          </TableCell>
                           <TableCell>
-                            <Chip 
+                            <Chip
                               size="small"
-                              label={escale.departure ? 'Completed' : 'Active'}
-                              color={escale.departure ? 'success' : 'primary'}
+                              label={escale.departure ? "Completed" : "Active"}
+                              color={escale.departure ? "success" : "primary"}
                             />
                           </TableCell>
                         </TableRow>
@@ -692,4 +778,4 @@ const AnalyticsDashboard = () => {
   );
 };
 
-export default AnalyticsDashboard; 
+export default AnalyticsDashboard;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { TableRow, TableCell, Button, Chip } from "@mui/material";
 import { Link } from "react-router-dom";
 import ArretService from "../../services/ArretService";
@@ -14,28 +14,31 @@ const OperationItem = ({ operation, onDelete }) => {
       isMounted.current = false;
     };
   }, []);
-
   // Determine initial status based on dates when component mounts
   useEffect(() => {
     // Reset check status when operation changes
     hasCheckedArretsRef.current = false;
-    
+
     const determineStatus = () => {
       try {
         // Get current date
         const now = new Date();
-        
+
         // Parse operation dates
-        const startDate = operation.date_debut ? new Date(operation.date_debut) : null;
-        const endDate = operation.date_fin ? new Date(operation.date_fin) : null;
-        
+        const startDate = operation.date_debut
+          ? new Date(operation.date_debut)
+          : null;
+        const endDate = operation.date_fin
+          ? new Date(operation.date_fin)
+          : null;
+
         // If dates are not available, use the existing status
         if (!startDate || !endDate) {
           setDisplayStatus(operation.status || "En cours");
           hasCheckedArretsRef.current = true;
           return;
         }
-        
+
         // Determine status based on dates
         if (startDate > now) {
           // Operation is in the future
@@ -55,18 +58,19 @@ const OperationItem = ({ operation, onDelete }) => {
         hasCheckedArretsRef.current = true;
       }
     };
-    
+
     // Call the function immediately if not already checked
     if (!hasCheckedArretsRef.current) {
       determineStatus();
     }
-  }, [operation]);
-
+  }, [operation, checkForActiveArrets]);
   // Function to check for active arrêts
-  const checkForActiveArrets = async () => {
+  const checkForActiveArrets = useCallback(async () => {
     try {
-      const activeArrets = await ArretService.getActiveArretsForOperation(operation.id_operation);
-      
+      const activeArrets = await ArretService.getActiveArretsForOperation(
+        operation.id_operation
+      );
+
       // Only update state if component still mounted
       if (isMounted.current) {
         // If there are active arrêts, set status to "En pause"
@@ -76,20 +80,19 @@ const OperationItem = ({ operation, onDelete }) => {
           // Otherwise, use operation's status or default to "En cours"
           setDisplayStatus(operation.status || "En cours");
         }
-        
+
         // Mark that we've checked
         hasCheckedArretsRef.current = true;
       }
     } catch (error) {
       // Only update state if component still mounted
       if (isMounted.current) {
-        console.error("Error checking for active arrêts:", error);
-        // Set default status and mark checked
+        console.error("Error checking for active arrêts:", error); // Set default status and mark checked
         setDisplayStatus(operation.status || "En cours");
         hasCheckedArretsRef.current = true;
       }
     }
-  };
+  }, [operation.id_operation, operation.status]);
 
   // Format date strings to readable format
   const formatDateTime = (dateTimeStr) => {
@@ -101,18 +104,18 @@ const OperationItem = ({ operation, onDelete }) => {
   // Get status color based on status
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Planifié':
-        return 'info';
-      case 'En cours':
-        return 'primary';
-      case 'Terminé':
-        return 'success';
-      case 'En pause':
-        return 'warning';
-      case 'Annulé':
-        return 'error';
+      case "Planifié":
+        return "info";
+      case "En cours":
+        return "primary";
+      case "Terminé":
+        return "success";
+      case "En pause":
+        return "warning";
+      case "Annulé":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -128,16 +131,12 @@ const OperationItem = ({ operation, onDelete }) => {
       <TableCell>{formatDateTime(operation.date_debut)}</TableCell>
       <TableCell>{formatDateTime(operation.date_fin)}</TableCell>
       <TableCell>
-        <Chip 
-          label={status} 
-          size="small"
-          color={getStatusColor(status)}
-        />
+        <Chip label={status} size="small" color={getStatusColor(status)} />
       </TableCell>
       <TableCell align="right">
         <Button
           component={Link}
-          to={`/operations/${operation.id_operation}`}
+          to={`/operation/${operation.id_operation}`}
           color="primary"
           sx={{ mr: 1 }}
         >
@@ -145,7 +144,7 @@ const OperationItem = ({ operation, onDelete }) => {
         </Button>
         <Button
           component={Link}
-          to={`/operations/edit/${operation.id_operation}`}
+          to={`/operation/edit/${operation.id_operation}`}
           color="primary"
           sx={{ mr: 1 }}
         >

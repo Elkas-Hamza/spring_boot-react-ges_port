@@ -96,11 +96,6 @@ class ConteneureService {
 
   // Updated methods for container management
 
-  // Get containers by location type (TERRE or NAVIRE)
-  getConteneuresByLocationType(locationType) {
-    return axiosInstance.get(`${ENDPOINT}/location/${locationType}`);
-  }
-
   // Assign container to ship
   assignContainerToShip(containerId, shipId) {
     return axiosInstance.put(`${ENDPOINT}/${containerId}/assign/${shipId}`);
@@ -142,4 +137,5 @@ class ConteneureService {
   }
 }
 
-export default new ConteneureService();
+const conteneureServiceInstance = new ConteneureService();
+export default conteneureServiceInstance;

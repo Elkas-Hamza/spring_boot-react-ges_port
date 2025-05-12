@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams ,Link} from "react-router-dom";
 import {
   Container,
   Paper,
@@ -91,11 +91,7 @@ const NavireDetail = () => {
   });
 
   // Fetch data on component mount
-  useEffect(() => {
-    fetchNavireData();
-  }, [id]);
-
-  const fetchNavireData = async () => {
+  const fetchNavireData = useCallback(async () => {
     if (!id) {
       setError("ID de navire non valide");
       setLoading(false);
@@ -212,7 +208,11 @@ const NavireDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchNavireData();
+  }, [id, fetchNavireData]);
 
   // Handle container dialog open
   const handleOpenContainerDialog = () => {
@@ -288,9 +288,7 @@ const NavireDetail = () => {
 
       if (result) {
         console.log("Container created successfully:", result);
-        const containerId =
-          result.id || result.idConteneure || result.id_conteneure;
-
+        // Removed unused variable 'containerId'
         // Refresh data
         setNotification({
           open: true,

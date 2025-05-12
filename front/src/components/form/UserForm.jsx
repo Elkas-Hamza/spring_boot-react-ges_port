@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   TextField,
   Button,
   Typography,
   Box,
   Paper,
-  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Alert,
   CircularProgress,
-  Snackbar
+  Snackbar,
 } from "@mui/material";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import UserService from "../../services/UserService";
 import ErrorHandler from "../common/ErrorHandler";
 
@@ -26,9 +25,9 @@ const UserForm = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "USER"
+    role: "USER",
   });
-  
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditMode);
@@ -43,9 +42,8 @@ const UserForm = () => {
     if (isEditMode) {
       fetchUser();
     }
-  }, [id]);
-
-  const fetchUser = async () => {
+  }, [isEditMode, id, fetchUser]);
+  const fetchUser = useCallback(async () => {
     setInitialLoading(true);
     setError(null);
     try {
@@ -53,39 +51,39 @@ const UserForm = () => {
       setFormData({
         email: response.data.email,
         role: response.data.role,
-        password: "" // Password is not returned from API
+        password: "", // Password is not returned from API
       });
     } catch (err) {
       console.error("Error fetching user:", err);
       setError(
-        err.response?.data?.message || 
-        err.message || 
-        "Failed to load user. Please try again."
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load user. Please try again."
       );
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [id]);
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid";
     }
-    
+
     if (!isEditMode && !formData.password) {
       newErrors.password = "Password is required";
     } else if (!isEditMode && formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-    
+
     if (!formData.role) {
       newErrors.role = "Role is required";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -97,25 +95,25 @@ const UserForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
     try {
       if (isEditMode) {
         // For edit, only send the changed fields
         const updateData = {
           email: formData.email,
-          role: formData.role
+          role: formData.role,
         };
-        
+
         // Only include password if it was provided
         if (formData.password.trim() !== "") {
           updateData.password = formData.password;
         }
-        
+
         await UserService.updateUser(id, updateData);
         setNotification({
           open: true,
@@ -129,15 +127,15 @@ const UserForm = () => {
           message: "User created successfully",
           severity: "success",
         });
-        
+
         // Reset form after successful creation
         setFormData({
           email: "",
           password: "",
-          role: "USER"
+          role: "USER",
         });
       }
-      
+
       // Navigate back to user list after a short delay
       setTimeout(() => {
         navigate("/users");
@@ -146,8 +144,9 @@ const UserForm = () => {
       console.error("Error saving user:", err);
       setNotification({
         open: true,
-        message: err.response?.data?.message || 
-                 "Failed to save user. Please try again.",
+        message:
+          err.response?.data?.message ||
+          "Failed to save user. Please try again.",
         severity: "error",
       });
     } finally {
@@ -192,9 +191,13 @@ const UserForm = () => {
               type="email"
               autoComplete="email"
             />
-            
+
             <TextField
-              label={isEditMode ? "New Password (leave blank to keep current)" : "Password"}
+              label={
+                isEditMode
+                  ? "New Password (leave blank to keep current)"
+                  : "Password"
+              }
               name="password"
               value={formData.password}
               onChange={handleChange}
@@ -205,7 +208,7 @@ const UserForm = () => {
               type="password"
               autoComplete={isEditMode ? "new-password" : "current-password"}
             />
-            
+
             <FormControl fullWidth error={!!errors.role}>
               <InputLabel id="role-label">Role</InputLabel>
               <Select
@@ -219,13 +222,16 @@ const UserForm = () => {
                 <MenuItem value="USER">User</MenuItem>
               </Select>
               {errors.role && (
-                <Box component="span" sx={{ color: "error.main", fontSize: "0.75rem", mt: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{ color: "error.main", fontSize: "0.75rem", mt: 0.5 }}
+                >
                   {errors.role}
                 </Box>
               )}
             </FormControl>
           </div>
-          
+
           <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
             <Button
               component={Link}
@@ -271,4 +277,4 @@ const UserForm = () => {
   );
 };
 
-export default UserForm; 
+export default UserForm;

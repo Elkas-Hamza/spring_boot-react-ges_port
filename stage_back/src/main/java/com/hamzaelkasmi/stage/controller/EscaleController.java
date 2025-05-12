@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import com.hamzaelkasmi.stage.service.EscaleService;
 import com.hamzaelkasmi.stage.model.Escale;
 
-
 import java.util.List;
 
 @RestController
@@ -25,7 +24,6 @@ public class EscaleController {
             return new ResponseEntity<>(escales, HttpStatus.OK);
         } catch (Exception e) {
             System.err.println("Error retrieving all escales: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -38,7 +36,6 @@ public class EscaleController {
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             System.err.println("Error retrieving escale by ID: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -46,17 +43,22 @@ public class EscaleController {
     @PostMapping
     public ResponseEntity<Escale> createEscale(@RequestBody Escale escale) {
         try {
-            if (!isEscaleValid(escale)) {
+            // Basic validation
+            if (escale == null || 
+                escale.getNOM_navire() == null || escale.getNOM_navire().isEmpty() ||
+                escale.getMATRICULE_navire() == null || escale.getMATRICULE_navire().isEmpty() ||
+                escale.getDATE_accostage() == null || 
+                escale.getDATE_sortie() == null) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             
-            System.out.println("Creating escale: " + escale); // Log escale data for debugging
-            
             Escale savedEscale = escaleService.saveEscale(escale);
             return new ResponseEntity<>(savedEscale, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error creating escale: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             System.err.println("Error creating escale: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -64,13 +66,18 @@ public class EscaleController {
     @PutMapping("/{id}")
     public ResponseEntity<Escale> updateEscale(@PathVariable("id") String id, @RequestBody Escale updatedEscale) {
         try {
-            System.out.println("Updating escale with ID: " + id); // Log ID for debugging
-            System.out.println("Updated escale data: " + updatedEscale); // Log escale data for debugging
-            
+            if (updatedEscale == null || 
+                updatedEscale.getNOM_navire() == null || updatedEscale.getNOM_navire().isEmpty() ||
+                updatedEscale.getMATRICULE_navire() == null || updatedEscale.getMATRICULE_navire().isEmpty() ||
+                updatedEscale.getDATE_accostage() == null || 
+                updatedEscale.getDATE_sortie() == null) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
             return escaleService.getEscaleById(id)
                     .map(existingEscale -> {
                         existingEscale.setNOM_navire(updatedEscale.getNOM_navire());
-                        existingEscale.setNavire(updatedEscale.getNavire());
+                        existingEscale.setMATRICULE_navire(updatedEscale.getMATRICULE_navire());
                         existingEscale.setDATE_accostage(updatedEscale.getDATE_accostage());
                         existingEscale.setDATE_sortie(updatedEscale.getDATE_sortie());
 
@@ -78,9 +85,11 @@ public class EscaleController {
                         return new ResponseEntity<>(savedEscale, HttpStatus.OK);
                     })
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error updating escale: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             System.err.println("Error updating escale: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -95,15 +104,7 @@ public class EscaleController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             System.err.println("Error deleting escale: " + e.getMessage());
-            e.printStackTrace(); // Print full stack trace for debugging
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private boolean isEscaleValid(Escale escale) {
-        return escale != null
-                && escale.getNOM_navire() != null && !escale.getNOM_navire().isEmpty()
-                && escale.getDATE_accostage() != null
-                && escale.getDATE_sortie() != null;
     }
 }

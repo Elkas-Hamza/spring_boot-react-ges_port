@@ -80,7 +80,7 @@ const ShiftList = () => {
         </Typography>
         <Button
           component={Link}
-          to="/shifts/new"
+          to="/shifts/create"
           variant="contained"
           sx={{ mb: 3 }}
           startIcon={<AddIcon />}

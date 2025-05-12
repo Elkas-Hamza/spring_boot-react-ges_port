@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/soustraiteurs";
 
@@ -28,4 +28,5 @@ class SoustraiteureService {
   }
 }
 
-export default new SoustraiteureService();
+const soustraiteureServiceInstance = new SoustraiteureService();
+export default soustraiteureServiceInstance;

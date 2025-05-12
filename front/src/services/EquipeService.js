@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/equipes";
 
@@ -38,24 +38,29 @@ class EquipeService {
   addPersonnelToEquipe(equipeId, personnelId) {
     console.log(`Adding personnel ${personnelId} to equipe ${equipeId}`);
     return axiosInstance.post(`${ENDPOINT}/${equipeId}/personnel`, {
-      personnelId: personnelId
+      personnelId: personnelId,
     });
   }
 
   removePersonnelFromEquipe(equipeId, personnelId) {
-    return axiosInstance.delete(`${ENDPOINT}/${equipeId}/personnel/${personnelId}`);
+    return axiosInstance.delete(
+      `${ENDPOINT}/${equipeId}/personnel/${personnelId}`
+    );
   }
 
   addSoustraiteurToEquipe(equipeId, soustraiteurId) {
     console.log(`Adding sous-traiteur ${soustraiteurId} to equipe ${equipeId}`);
     return axiosInstance.post(`${ENDPOINT}/${equipeId}/soustraiteur`, {
-      soustraiteurId: soustraiteurId
+      soustraiteurId: soustraiteurId,
     });
   }
 
   removeSoustraiteurFromEquipe(equipeId, soustraiteurId) {
-    return axiosInstance.delete(`${ENDPOINT}/${equipeId}/soustraiteur/${soustraiteurId}`);
+    return axiosInstance.delete(
+      `${ENDPOINT}/${equipeId}/soustraiteur/${soustraiteurId}`
+    );
   }
 }
 
-export default new EquipeService();
+const equipeServiceInstance = new EquipeService();
+export default equipeServiceInstance;

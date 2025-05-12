@@ -27,6 +27,14 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotBlank(message = "Nom is required")
+    @Column(nullable = false)
+    private String nom;
+
+    @NotBlank(message = "Prenom is required")
+    @Column(nullable = false)
+    private String prenom;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
@@ -64,10 +72,12 @@ public class User {
     public User() {}
 
     // Constructor with required fields
-    public User(String email, String password, UserRole role) {
+    public User(String email, String password, UserRole role, String nom, String prenom) {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.nom = nom;
+        this.prenom = prenom;
     }
 
     // Getters and Setters
@@ -93,6 +103,22 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public String getPrenom() {
+        return prenom;
+    }
+
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
     }
 
     public UserRole getRole() {
@@ -183,8 +209,10 @@ public class User {
         return "User{" +
                 "id=" + id +
                 ", email='" + email + '\'' +
+                ", nom='" + nom + '\'' +
+                ", prenom='" + prenom + '\'' +
                 ", role=" + role +
                 ", createdAt=" + createdAt +
                 '}';
     }
-} 
+}

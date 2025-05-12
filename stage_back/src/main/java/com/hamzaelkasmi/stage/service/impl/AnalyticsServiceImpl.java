@@ -302,9 +302,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     int totalOps = operationRepository.countByEscaleId(escale.getNum_escale());
                     int completedOps = operationRepository.countByEscaleIdAndStatus(escale.getNum_escale(), "TERMINEE");
                     
-                    String navireNom = escale.getNavire() != null ? 
-                                      escale.getNavire().getNomNavire() : 
-                                      escale.getNOM_navire();
+                    String navireNom = escale.getNOM_navire();
                     
                     return new RecentEscaleDTO(
                             escale.getNum_escale(),
@@ -318,4 +316,4 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 })
                 .toArray(RecentEscaleDTO[]::new);
     }
-} 
+}

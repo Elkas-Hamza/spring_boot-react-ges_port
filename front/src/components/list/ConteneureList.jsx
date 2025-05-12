@@ -22,7 +22,7 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import { Add as AddIcon, LocalShipping, Landscape } from "@mui/icons-material";
+import { Add as AddIcon, Landscape, Anchor } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import ConteneureService from "../../services/ConteneureService";
 import ErrorHandler from "../common/ErrorHandler";
@@ -51,7 +51,7 @@ const ConteneureList = () => {
       if (response.data && Array.isArray(response.data)) {
         response.data.forEach((container) => {
           console.log(
-            `Container ${container.id_conteneure} - Type ID: ${container.typeConteneur?.id}, Type: ${container.typeConteneur?.nomType}`
+            `Container ${container.id_conteneure} - Type ID: ${container.id_type?.id}, Type: ${container.id_type?.nomType}`
           );
         });
       }
@@ -75,7 +75,7 @@ const ConteneureList = () => {
     if (searchQuery) {
       const filtered = conteneurs.filter((c) =>
         `${c.id_conteneure} ${c.nom_conteneure} ${c.type_conteneure || ""} ${
-          c.typeConteneur?.nomType || ""
+          c.id_type?.nomType || ""
         } ${c.navire?.nomNavire || "Port"}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
@@ -127,10 +127,9 @@ const ConteneureList = () => {
     // Debug the container object
     console.log("Container in getLocationChip:", conteneur);
 
-    // Check if the container has typeConteneur property with correct structure
-    // Different endpoints might return either typeConteneur.id or typeConteneur.idType
-    const typeId =
-      conteneur.typeConteneur?.id || conteneur.typeConteneur?.idType || 1;
+    // Check if the container has id_type property with correct structure
+    // Different endpoints might return either id_type.id or id_type.idType
+    const typeId = conteneur.id_type || conteneur.id_type;
     console.log("Determined typeId:", typeId);
 
     // Check if this container is on a ship - two conditions:
@@ -143,14 +142,12 @@ const ConteneureList = () => {
       return (
         <Tooltip
           title={
-            conteneur.navire
-              ? `Navire: ${conteneur.navire.nomNavire}`
-              : "Type: NAVIRE"
+            conteneur.navire ? `Navire: ${conteneur.idNavire}` : "Type: NAVIRE"
           }
         >
           <Chip
-            icon={<LocalShipping />}
-            label="Navire"
+            icon={<Anchor />}
+            label={conteneur.idNavire}
             color="primary"
             size="small"
             sx={{ mr: 1 }}
@@ -171,29 +168,17 @@ const ConteneureList = () => {
       );
     }
   };
-
-  // Modify the columns definition to use typeConteneur.id for determining emplacement
-  const columns = [
-    // ...other columns
-    {
-      field: "typeConteneur",
-      headerName: "Emplacement",
-      width: 150,
-      renderCell: (params) => {
-        const typeId = params.value?.id || 1; // Default to 1 (INPORT) if not specified
-        const value = typeId === 2 ? "NAVIRE" : "INPORT";
-
-        return (
-          <Chip
-            label={value}
-            color={typeId === 2 ? "primary" : "default"}
-            variant={typeId === 2 ? "contained" : "outlined"}
-          />
-        );
-      },
-    },
-    // ...other columns
-  ];
+  // Provide type definition in JSX directly without unused columns variable
+  const renderEmplacementChip = (typeId) => {
+    const value = typeId === 2 ? "NAVIRE" : "INPORT";
+    return (
+      <Chip
+        label={value}
+        color={typeId === 2 ? "primary" : "default"}
+        variant={typeId === 2 ? "contained" : "outlined"}
+      />
+    );
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -209,15 +194,6 @@ const ConteneureList = () => {
           Gestion des Conteneurs
         </Typography>
         <Box>
-          <Button
-            component={Link}
-            to="/conteneures/management"
-            variant="outlined"
-            color="primary"
-            sx={{ mr: 2 }}
-          >
-            Gérer l'emplacement
-          </Button>
           <Button
             component={Link}
             to="/conteneures/create"
@@ -264,27 +240,9 @@ const ConteneureList = () => {
                 <TableRow hover key={conteneur.id_conteneure}>
                   <TableCell>{conteneur.id_conteneure}</TableCell>
                   <TableCell>{conteneur.nom_conteneure}</TableCell>
-                  <TableCell>
-                    {conteneur.type_conteneure }
-                  </TableCell>
-                  <TableCell>
-                    {getLocationChip(conteneur)}
-                    {conteneur.typeConteneur?.id === 2 ||
-                    conteneur.typeConteneur?.idType === 2 ||
-                    conteneur.navire
-                      ? conteneur.navire?.nomNavire || "Navire sans nom"
-                      : "Port"}
-                  </TableCell>
+                  <TableCell>{conteneur.type_conteneure}</TableCell>
+                  <TableCell>{getLocationChip(conteneur)}</TableCell>
                   <TableCell align="center">
-                    <Button
-                      component={Link}
-                      to={`/conteneures/management/${conteneur.id_conteneure}`}
-                      color="info"
-                      size="small"
-                      sx={{ mr: 1 }}
-                    >
-                      Déplacer
-                    </Button>
                     <Button
                       component={Link}
                       to={`/conteneures/edit/${conteneur.id_conteneure}`}

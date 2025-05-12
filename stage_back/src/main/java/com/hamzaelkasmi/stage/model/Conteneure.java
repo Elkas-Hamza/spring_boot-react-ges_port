@@ -116,6 +116,11 @@ public class Conteneure {
         this.derniereOperation = derniereOperation;
     }
 
+    // Additional getter to expose ship ID in JSON without causing recursion issues
+    public String getIdNavire() {
+        return navire != null ? navire.getIdNavire() : null;
+    }
+
     @Override
     public String toString() {
         return "Conteneure{" +

@@ -137,7 +137,7 @@ const OperationList = () => {
         </Typography>
         <Button
           component={Link}
-          to="/operations/create"
+          to="/operation/create"
           variant="contained"
           sx={{ mb: 3 }}
           startIcon={<AddIcon />}

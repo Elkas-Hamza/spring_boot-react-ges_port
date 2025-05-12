@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 public class EscaleIdGenerator implements IdentifierGenerator {
 
-    private static int counter = 1; // Static counter to ensure uniqueness
+    private static int counter = 1;
 
     @Override
     public Serializable generate(SharedSessionContractImplementor session, Object object) {

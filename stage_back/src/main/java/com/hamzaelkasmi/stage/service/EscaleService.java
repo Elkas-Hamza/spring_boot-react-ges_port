@@ -5,19 +5,17 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import com.hamzaelkasmi.stage.model.Escale;
-import com.hamzaelkasmi.stage.model.Navire;
 import com.hamzaelkasmi.stage.repository.EscaleRepository;
 import com.hamzaelkasmi.stage.repository.NavireRepository;
 
 @Service
 public class EscaleService {
-
     @Autowired
     private EscaleRepository escaleRepository;
     
     @Autowired
     private NavireRepository navireRepository;
-
+    
     /**
      * Retrieve all escales from the database.
      */
@@ -46,35 +44,18 @@ public class EscaleService {
         if (escale.getNOM_navire() == null || escale.getNOM_navire().isEmpty()) {
             throw new IllegalArgumentException("NOM_navire must not be null or empty");
         }
+        if (escale.getMATRICULE_navire() == null || escale.getMATRICULE_navire().isEmpty()) {
+            throw new IllegalArgumentException("MATRICULE_navire must not be null or empty");
+        }
         if (escale.getDATE_accostage() == null || escale.getDATE_sortie() == null) {
             throw new IllegalArgumentException("DATE_accostage and DATE_sortie must not be null");
         }
-        
-        // Handle navire reference
-        if (escale.getNavire() != null && escale.getNavire().getIdNavire() != null) {
-            // Check if the navire exists
-            Optional<Navire> navireOpt = navireRepository.findById(escale.getNavire().getIdNavire());
-            if (navireOpt.isPresent()) {
-                // Use the existing navire to avoid creating duplicates
-                escale.setNavire(navireOpt.get());
-            } else {
-                // If navire doesn't exist, try to load by matricule
-                if (escale.getNavire().getMatriculeNavire() != null) {
-                    Optional<Navire> navireByMatricule = navireRepository.findByMatriculeNavire(escale.getNavire().getMatriculeNavire());
-                    if (navireByMatricule.isPresent()) {
-                        escale.setNavire(navireByMatricule.get());
-                    } else {
-                        // If no navire with this matricule exists, set to null
-                        escale.setNavire(null);
-                    }
-                } else {
-                    // If no matricule provided, set to null
-                    escale.setNavire(null);
-                }
-            }
+
+        // Verify the navire exists before saving
+        if (!navireRepository.existsByMatriculeNavire(escale.getMATRICULE_navire())) {
+            throw new IllegalArgumentException("No navire found with matricule: " + escale.getMATRICULE_navire());
         }
 
-        // Save the escale (the database trigger will generate NUM_escale if not provided)
         return escaleRepository.save(escale);
     }
 

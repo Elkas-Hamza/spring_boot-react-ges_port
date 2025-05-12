@@ -48,6 +48,8 @@ public class UserService {
         }
         
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // user.setNom(user.getNom()); // Already set by @RequestBody mapping
+        // user.setPrenom(user.getPrenom()); // Already set by @RequestBody mapping
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setFailedLoginAttempts(0);
@@ -66,6 +68,8 @@ public class UserService {
         }
         
         user.setEmail(userDetails.getEmail());
+        user.setNom(userDetails.getNom()); // Ensure nom is updated
+        user.setPrenom(userDetails.getPrenom()); // Ensure prenom is updated
         
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
@@ -172,4 +176,4 @@ public class UserService {
     public List<User> getAllAdmins() {
         return userRepository.findAllAdmins();
     }
-} 
+}

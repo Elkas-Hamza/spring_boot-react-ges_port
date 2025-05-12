@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/shifts";
 
@@ -24,4 +24,5 @@ class ShiftService {
   }
 }
 
-export default new ShiftService();
+const shiftServiceInstance = new ShiftService();
+export default shiftServiceInstance;

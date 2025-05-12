@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/personnel";
 
@@ -28,4 +28,5 @@ class PersonnelService {
   }
 }
 
-export default new PersonnelService();
+const personnelServiceInstance = new PersonnelService();
+export default personnelServiceInstance;

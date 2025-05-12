@@ -8,7 +8,6 @@ import {
   TableRow,
   Paper,
   Button,
-  IconButton,
   Typography,
   Container,
   Box,
@@ -18,7 +17,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
-import { Delete, Edit, Add, Search, Visibility } from "@mui/icons-material";
+import { Add, Search } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import EquipeService from "../../services/EquipeService";
 
@@ -123,7 +122,7 @@ const EquipeList = () => {
             onClick={() => {
               console.log("Creating new equipe - direct navigation");
               // Set a flag in localStorage to indicate we're navigating to create form
-              localStorage.setItem('redirecting_to_create_equipe', 'true');
+              localStorage.setItem("redirecting_to_create_equipe", "true");
               // Use a more direct approach to navigate to the form
               document.location.href = "/equipes/create";
             }}
@@ -184,7 +183,7 @@ const EquipeList = () => {
                           <Button
                             color="info"
                             onClick={() =>
-                              navigate(`/equipes/${equipe.id_equipe}`)
+                              navigate(`/equipe/${equipe.id_equipe}`)
                             }
                           >
                             detail
@@ -194,7 +193,7 @@ const EquipeList = () => {
                           <Button
                             color="primary"
                             onClick={() =>
-                              navigate(`/equipes/edit/${equipe.id_equipe}`)
+                              navigate(`/equipe/edit/${equipe.id_equipe}`)
                             }
                           >
                             Modifier

@@ -136,9 +136,6 @@ const ConteneureForm = () => {
     try {
       setLoading(true);
 
-      // Get user role for better error messaging
-      const userRole = localStorage.getItem("userRole");
-
       // Prepare data to send to backend - ensure proper field names and values
       const dataToSend = {
         nom_conteneure: conteneure.nom_conteneure,

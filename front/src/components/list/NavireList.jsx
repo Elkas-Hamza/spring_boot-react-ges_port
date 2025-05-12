@@ -393,7 +393,7 @@ const NavireList = () => {
                                             color="info"
                                             size="small"
                                             component={Link}
-                                            to={`/navires/details/${navire.idNavire}`}
+                                            to={`/navire/details/${navire.idNavire}`}
                                             sx={{ mr: 1 }}
                                         >
                                             Détails
@@ -402,7 +402,7 @@ const NavireList = () => {
                                             color="primary"
                                             size="small"
                                             component={Link}
-                                            to={`/navires/edit/${navire.idNavire}`}
+                                            to={`/navire/edit/${navire.idNavire}`}
                                             sx={{ mr: 1 }}
                                         >
                                             Modifier

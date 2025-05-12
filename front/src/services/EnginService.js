@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/engins";
 
@@ -9,7 +9,7 @@ class EnginService {
 
   getEnginById(id) {
     // If id contains commas, it's a multiple request
-    if (typeof id === 'string' && id.includes(',')) {
+    if (typeof id === "string" && id.includes(",")) {
       return axiosInstance.get(`${ENDPOINT}/multiple/${id}`);
     }
     return axiosInstance.get(`${ENDPOINT}/${id}`);
@@ -28,4 +28,5 @@ class EnginService {
   }
 }
 
-export default new EnginService();
+const enginServiceInstance = new EnginService();
+export default enginServiceInstance;

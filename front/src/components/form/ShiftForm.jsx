@@ -103,7 +103,7 @@ const ShiftForm = () => {
           severity: "success",
         });
       }
-      // Redirect after a short delay
+      // Redirect after a short delay - fixed the route to match App.js configuration
       setTimeout(() => navigate("/shifts"), 1500);
     } catch (error) {
       console.error("Error saving shift:", error);

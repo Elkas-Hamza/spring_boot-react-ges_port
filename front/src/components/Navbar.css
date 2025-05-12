@@ -1,0 +1,35 @@
+/* Custom minimal scrollbar for the sidebar drawer */
+.MuiDrawer-paper {
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd #f5f5f5;
+}
+
+.MuiDrawer-paper::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+.MuiDrawer-paper::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 4px;
+}
+.MuiDrawer-paper::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+.MuiDrawer-paper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar if you want it completely gone (uncomment below) */
+
+/* .MuiDrawer-paper {
+  scrollbar-width: none !important;
+}
+.MuiDrawer-paper::-webkit-scrollbar {
+  display: none !important;
+} */
+
