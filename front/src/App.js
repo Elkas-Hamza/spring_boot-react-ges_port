@@ -45,6 +45,9 @@ import AdminDashboard from "./components/dashboard/AdminDashboard";
 import SystemSettings from "./components/settings/SystemSettings";
 import AnalyticsDashboard from "./components/dashboard/AnalyticsDashboard";
 import EscaleApiTester from "./components/debug/EscaleApiTester";
+import MonitoringDashboard from "./components/monitoring/MonitoringDashboard";
+import SettingsService from "./services/SettingsService";
+import PerformanceMonitor from "./components/monitoring/PerformanceMonitor";
 
 // PrivateRoute component for protected routes
 const PrivateRoute = ({ children, requiredRole }) => {
@@ -130,7 +133,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const initApp = async () => {
+      // Check authentication
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("userRole");
 
@@ -141,6 +145,17 @@ function App() {
           if (isValid) {
             setIsAuthenticated(true);
             setUserRole(role);
+
+            // Initialize performance monitoring (only when authenticated)
+            try {
+              await SettingsService.initPerformanceMonitoring();
+              console.log("Performance monitoring initialized");
+            } catch (perfError) {
+              console.error(
+                "Error initializing performance monitoring:",
+                perfError
+              );
+            }
           } else {
             // Token is invalid, perform logout
             AuthService.logout();
@@ -154,7 +169,7 @@ function App() {
       setIsLoading(false);
     };
 
-    checkAuth();
+    initApp();
   }, []);
 
   const handleLogin = (role) => {
@@ -639,10 +654,13 @@ function App() {
             path="/performance"
             element={
               <PrivateRoute requiredRole="ADMIN">
-                <div>Performance Page (Not implemented yet)</div>
+                <MonitoringDashboard />
               </PrivateRoute>
             }
           />
+
+          {/* Performance Monitor Route (always-on, for all roles) */}
+          <Route path="/monitoring" element={<PerformanceMonitor />} />
 
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/dashboard" />} />

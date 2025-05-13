@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams ,Link} from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   Container,
   Paper,
@@ -53,6 +53,20 @@ const NavireDetail = () => {
     message: "",
     severity: "success",
   });
+
+  // Utility function to map typeId to readable container type
+  const getContainerTypeName = (typeId) => {
+    if (typeId === undefined || typeId === null) return "Non spécifié";
+
+    const typeMap = {
+      1: "PORT",
+      2: "NAVIRE",
+      3: "ENTREPÔT",
+      4: "EN TRANSIT",
+    };
+
+    return typeMap[typeId] || `Type ${typeId}`;
+  };
 
   // Predefined container types - same as in ConteneureForm.jsx
   const conteneureTypes = [
@@ -124,16 +138,33 @@ const NavireDetail = () => {
               detailResponse.data.containers
             );
 
-            // Filter out the location field from each container
-            const filteredContainers = detailResponse.data.containers.map(
+            // Process the containers to ensure consistent field naming
+            const processedContainers = detailResponse.data.containers.map(
               (container) => {
-                // Create a new object without the location field
-                const { location, ...containerWithoutLocation } = container;
-                return containerWithoutLocation;
+                // Get the type_conteneure field (database column)
+                let typeValue = container.type_conteneure;
+
+                // If type_conteneure is missing, set a default value
+                if (!typeValue && container.id_conteneure) {
+                  typeValue = "Standard"; // Default string value from database
+                  console.warn(
+                    `Container ${container.id_conteneure} has no type_conteneure information, using default`
+                  );
+                }
+
+                // Normalize field names to match what the UI expects
+                return {
+                  id_conteneure: container.id_conteneure,
+                  nom_conteneure: container.nom_conteneure,
+                  type_conteneure: typeValue, // String value from database column
+                  id_type: container.typeId || 2, // Default to 2 for NAVIRE containers
+                  idNavire: container.idNavire || detailResponse.data.idNavire,
+                  dateAjout: container.dateAjout,
+                };
               }
             );
 
-            setContainers(filteredContainers);
+            setContainers(processedContainers);
           }
           setLoading(false);
           return;
@@ -160,7 +191,30 @@ const NavireDetail = () => {
             console.log(
               `Loaded ${containersResponse.data.length} containers from direct endpoint`
             );
-            setContainers(containersResponse.data);
+
+            // Process containers to ensure type_conteneure is present
+            const processedDirectContainers = containersResponse.data.map(
+              (container) => {
+                // Get the type_conteneure field (database column)
+                let typeValue = container.type_conteneure;
+
+                // If type_conteneure is missing, set a default value
+                if (!typeValue && container.id_conteneure) {
+                  typeValue = "Standard"; // Default string value from database
+                  console.warn(
+                    `Container ${container.id_conteneure} has no type_conteneure information, using default`
+                  );
+                }
+
+                return {
+                  ...container,
+                  type_conteneure: typeValue,
+                  id_type: container.typeId || 2,
+                };
+              }
+            );
+
+            setContainers(processedDirectContainers);
             setLoading(false);
             return;
           }
@@ -188,7 +242,55 @@ const NavireDetail = () => {
             containersResponse.data &&
             Array.isArray(containersResponse.data)
           ) {
-            setContainers(containersResponse.data);
+            // Process containers to ensure type_conteneure is present for fallback method
+            const processedFallbackContainers = containersResponse.data.map(
+              (container) => {
+                // First, check for the actual physical type of the container (predefined container type)
+                let physicalType = container.type_conteneure;
+
+                // We need to display one of the predefined container physical types (20 pieds standard, 40 pieds high cube, etc.)
+                if (!physicalType) {
+                  // Default to a value for newly created containers with no type specified
+                  physicalType = container.id_conteneure
+                    ? conteneureTypes[1]
+                    : "Non spécifié"; // Default to "40 pieds standard"
+                  console.warn(
+                    `Container ${container.id_conteneure} has no type_conteneure information, using default "40 pieds standard"`
+                  );
+                }
+
+                // Determine container location type from typeId
+                let locationType = "Inconnu";
+                if (container.typeId) {
+                  const typeMap = {
+                    1: "PORT",
+                    2: "NAVIRE",
+                    3: "ENTREPÔT",
+                    4: "EN TRANSIT",
+                  };
+                  locationType =
+                    typeMap[container.typeId] || `Type ${container.typeId}`;
+                  console.log(
+                    `Mapped typeId ${container.typeId} to location type: ${locationType}`
+                  );
+                } else {
+                  // Default to NAVIRE type for containers in this view
+                  console.log("No typeId found, defaulting to NAVIRE (2)");
+                  container.typeId = 2;
+                  locationType = "NAVIRE";
+                }
+
+                return {
+                  ...container,
+                  type_conteneure: physicalType, // Physical container type (40 pieds standard, etc.)
+                  location_type: locationType, // Location category (NAVIRE, PORT, etc.)
+                  id_type: container.typeId || 2, // Location type ID
+                  idNavire: container.idNavire || id, // Ensure navire ID is set
+                };
+              }
+            );
+
+            setContainers(processedFallbackContainers);
           } else {
             console.warn("No containers found or invalid container data");
             setContainers([]);
@@ -276,10 +378,10 @@ const NavireDetail = () => {
       // Create container data with the correct structure matching database schema
       const containerData = {
         nom_conteneure: newContainer.nom_conteneure,
-        type_conteneure: newContainer.type_conteneure, // Use correct field name
-        id_type: 2, // Always set to 2 for NAVIRE type
+        type_conteneure: newContainer.type_conteneure, // Physical container type (e.g., "40 pieds high cube")
+        id_type: 2, // Always set to 2 for NAVIRE type (location type)
         idNavire: navire.idNavire, // Include the current navire ID
-        // location field removed as it's determined by id_type and navire
+        typeId: 2, // Ensure typeId is set to NAVIRE type
       };
 
       console.log("Creating container with data:", containerData);
@@ -404,9 +506,23 @@ const NavireDetail = () => {
 
   // Handle details dialog open
   const handleOpenDetailsDialog = (container) => {
+    // Create a copy of the container with proper fields
+    const containerWithDetails = {
+      ...container,
+      // Make sure we have the correct fields for display
+      id_conteneure: container.id_conteneure,
+      nom_conteneure: container.nom_conteneure,
+      type_conteneure: container.type_conteneure,
+      id_type: container.id_type || 2, // Default to 2 for NAVIRE containers
+      dateAjout: container.dateAjout,
+      idNavire: container.idNavire || navire?.idNavire,
+    };
+
+    console.log("Opening details dialog with container:", containerWithDetails);
+
     setDetailsDialog({
       open: true,
-      container,
+      container: containerWithDetails,
     });
   };
 
@@ -463,6 +579,120 @@ const NavireDetail = () => {
         severity: "error",
       });
     }
+  };
+
+  // Handle debug and attempt to fix container type display
+  const handleDebugAndFixContainer = (container) => {
+    console.log("Debug container:", container);
+
+    // Log all properties for debugging
+    console.log("Container properties:", Object.keys(container));
+    console.log(
+      `Container type_conteneure value: "${container.type_conteneure}"`
+    );
+    console.log(`Container typeId value: "${container.typeId}"`);
+    console.log(`Container id_type value: "${container.id_type}"`);
+
+    // Create a corrected container with type field if missing
+    const correctedContainer = { ...container };
+    let wasUpdated = false;
+    let updateMessage = [];
+
+    // If type_conteneure is missing, set a physical container type
+    if (!correctedContainer.type_conteneure) {
+      console.log(
+        "Missing physical type_conteneure, assigning default type..."
+      );
+
+      // Set a default container physical type (40 pieds standard)
+      const defaultType = conteneureTypes[1]; // "40 pieds standard"
+      console.log(`Assigning default physical type: ${defaultType}`);
+
+      correctedContainer.type_conteneure = defaultType;
+      wasUpdated = true;
+      updateMessage.push(`Type physique: ${defaultType}`);
+    }
+
+    // Check for missing typeId (location type)
+    if (correctedContainer.typeId === undefined) {
+      console.log("Missing typeId, setting default NAVIRE (2)");
+      correctedContainer.typeId = 2;
+      correctedContainer.id_type = 2;
+      wasUpdated = true;
+      updateMessage.push("Type de localisation: NAVIRE");
+    }
+
+    // Check for missing id_type (should match typeId)
+    if (correctedContainer.id_type === undefined) {
+      console.log("Missing id_type, setting from typeId or default");
+      correctedContainer.id_type = correctedContainer.typeId || 2;
+      wasUpdated = true;
+      updateMessage.push("ID Type corrigé");
+    }
+
+    // If any updates were made, update the container in the array
+    if (wasUpdated) {
+      // Update the container in the containers array
+      const updatedContainers = containers.map((c) => {
+        if (c.id_conteneure === container.id_conteneure) {
+          return correctedContainer;
+        }
+        return c;
+      });
+
+      setContainers(updatedContainers);
+
+      setNotification({
+        open: true,
+        message: "Corrections appliquées: " + updateMessage.join(", "),
+        severity: "success",
+      });
+      return;
+    }
+
+    // Container already has all required fields, allow manual type change
+    console.log(
+      "Container physical type is already present:",
+      container.type_conteneure
+    );
+
+    // Ask user if they want to change the physical type
+    const newPhysicalType = prompt(
+      "Choisissez un nouveau type physique de conteneur:\n" +
+        conteneureTypes.map((type, i) => `${i + 1}. ${type}`).join("\n"),
+      container.type_conteneure
+    );
+
+    if (newPhysicalType && newPhysicalType !== container.type_conteneure) {
+      // Update the container with the new physical type
+      const updatedContainers = containers.map((c) => {
+        if (c.id_conteneure === container.id_conteneure) {
+          return {
+            ...c,
+            type_conteneure: newPhysicalType,
+          };
+        }
+        return c;
+      });
+
+      setContainers(updatedContainers);
+
+      setNotification({
+        open: true,
+        message: `Type physique de conteneur modifié: ${newPhysicalType}`,
+        severity: "success",
+      });
+    }
+  };
+
+  // Handle debug - logs container data to console
+  const handleDebugContainerData = (container) => {
+    console.log("Container data structure:", {
+      ...container,
+      hasIdNavire: !!container.idNavire,
+      hasTypeConteneur: !!container.typeConteneur,
+      hasType_conteneure: !!container.type_conteneure,
+    });
   };
 
   if (loading) {
@@ -596,9 +826,8 @@ const NavireDetail = () => {
               <TableRow>
                 <TableCell>ID</TableCell>
                 <TableCell>Nom</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Type ID</TableCell>
-                <TableCell>Navire</TableCell>
+                <TableCell>Type de conteneur</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell>Date d'ajout</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -614,32 +843,16 @@ const NavireDetail = () => {
                     <TableCell>
                       <Chip
                         size="small"
-                        label={container.type_conteneure}
+                        label={container.type_conteneure || "Non spécifié"}
                         color="primary"
                       />
                     </TableCell>
+
                     <TableCell>
-                      {container.type_conteneure ? (
+                      {container.idNavire ? (
                         <Chip
                           size="small"
-                          label={`ID: ${
-                            container.typeConteneur.idType || "N/A"
-                          }`}
-                          color={
-                            container.typeConteneur.idType === 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      ) : (
-                        <Chip size="small" label="Manquant" color="error" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {container.navire ? (
-                        <Chip
-                          size="small"
-                          label={`ID: ${container.navire.idNavire}`}
+                          label={`Associé au navire`}
                           color="success"
                         />
                       ) : (
@@ -688,8 +901,18 @@ const NavireDetail = () => {
                           onClick={() => handleOpenDeleteDialog(container)}
                           color="error"
                           size="small"
+                          sx={{ mr: 1 }}
                         >
                           <Delete />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Corriger ou modifier le type de conteneur">
+                        <IconButton
+                          onClick={() => handleDebugAndFixContainer(container)}
+                          color="default"
+                          size="small"
+                        >
+                          <Refresh fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </TableCell>
@@ -883,11 +1106,13 @@ const NavireDetail = () => {
 
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Type
+                    Type de conteneur
                   </Typography>
                   <Chip
                     size="small"
-                    label={detailsDialog.container.type_conteneur || "NAVIRE"}
+                    label={
+                      detailsDialog.container.type_conteneure || "Standard"
+                    }
                     color="primary"
                   />
                 </Box>
@@ -906,7 +1131,7 @@ const NavireDetail = () => {
                 </Box>
               </Box>
 
-              {detailsDialog.container.typeConteneur && (
+              {detailsDialog.container.id_type !== undefined && (
                 <>
                   <Typography variant="h6" sx={{ mt: 3 }}>
                     Type de conteneur
@@ -926,17 +1151,16 @@ const NavireDetail = () => {
                         ID Type
                       </Typography>
                       <Typography>
-                        {detailsDialog.container.typeConteneur.idType ||
-                          "Non spécifié"}
+                        {detailsDialog.container.id_type || "Non spécifié"}
                       </Typography>
                     </Box>
 
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Nom du type
+                        Type physique du conteneur
                       </Typography>
                       <Typography>
-                        {detailsDialog.container.typeConteneur.nomType ||
+                        {detailsDialog.container.type_conteneure ||
                           "Non spécifié"}
                       </Typography>
                     </Box>
@@ -946,8 +1170,7 @@ const NavireDetail = () => {
                         Description
                       </Typography>
                       <Typography>
-                        {detailsDialog.container.typeConteneur.description ||
-                          "Non spécifiée"}
+                        {detailsDialog.container.description || "Non spécifiée"}
                       </Typography>
                     </Box>
                   </Box>
@@ -960,22 +1183,16 @@ const NavireDetail = () => {
               <Divider sx={{ my: 1 }} />
 
               <Box sx={{ mt: 2 }}>
-                {detailsDialog.container.navire ? (
+                {detailsDialog.container.idNavire || navire ? (
                   <Typography>
-                    {detailsDialog.container.navire.nomNavire ||
-                      navire?.nomNavire}
-                    (
-                    {detailsDialog.container.navire.matriculeNavire ||
-                      navire?.matriculeNavire}
-                    )
+                    {navire?.nomNavire || "Navire actuel"}
+                    {navire?.matriculeNavire && ` (${navire.matriculeNavire})`}
                     <Typography
                       variant="caption"
                       display="block"
                       color="text.secondary"
                     >
-                      ID:{" "}
-                      {detailsDialog.container.navire.idNavire ||
-                        navire?.idNavire}
+                      ID: {detailsDialog.container.idNavire || navire?.idNavire}
                     </Typography>
                   </Typography>
                 ) : (

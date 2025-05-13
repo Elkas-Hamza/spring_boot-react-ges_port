@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers("/api/maintenance/**").permitAll()
                 .requestMatchers("/api/analytics/test").permitAll()
+                .requestMatchers("/api/settings/**").permitAll()
                 
                 // Explicitly allow all container operations for ADMIN role
                 .requestMatchers(HttpMethod.GET, "/api/conteneurs/**").permitAll()
@@ -104,9 +105,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-} 
+}

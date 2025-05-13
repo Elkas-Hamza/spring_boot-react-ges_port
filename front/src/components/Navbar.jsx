@@ -33,7 +33,7 @@ import EngineeringIcon from "@mui/icons-material/Engineering";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+// Removed unused import AdminPanelSettingsIcon
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -111,6 +111,13 @@ const Navbar = () => {
           path: "/analytics",
           roles: ["ADMIN"],
           icon: <AnalyticsIcon />,
+        },
+        {
+          id: "performance",
+          label: "Performance",
+          path: "/performance",
+          roles: ["ADMIN"],
+          icon: <SettingsIcon />,
         },
         {
           id: "users",
@@ -193,6 +200,13 @@ const Navbar = () => {
       path: "/navires",
       roles: ["ADMIN", "USER"],
       icon: <DirectionsBoatIcon />,
+    },
+    {
+      id: "monitoring",
+      label: "Monitoring",
+      path: "/monitoring",
+      roles: ["ADMIN"],
+      icon: <AnalyticsIcon color="secondary" />,
     },
   ];
 

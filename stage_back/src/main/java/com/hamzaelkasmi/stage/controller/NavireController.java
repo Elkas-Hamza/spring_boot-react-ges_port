@@ -238,14 +238,16 @@ public class NavireController {
         details.put("idNavire", navire.getIdNavire());
         details.put("nomNavire", navire.getNomNavire());
         details.put("matriculeNavire", navire.getMatriculeNavire());
-        
-        // Get containers with proper handling of lazy loading
+          // Get containers with proper handling of lazy loading
         List<Map<String, Object>> containersList = new ArrayList<>();
         if (navire.getConteneurs() != null) {
             for (Conteneure container : navire.getConteneurs()) {
                 Map<String, Object> containerDetails = new HashMap<>();
                 containerDetails.put("id_conteneure", container.getId_conteneure());
                 containerDetails.put("nom_conteneure", container.getNom_conteneure());
+                
+                // Add type_conteneure field for physical container type
+                containerDetails.put("type_conteneure", container.getType_conteneure());
                 
                 // Add id_type if it exists
                 if (container.getId_type() != null) {
