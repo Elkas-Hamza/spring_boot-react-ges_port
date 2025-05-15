@@ -1,17 +1,36 @@
 package com.hamzaelkasmi.stage.model;
 
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * Represents metrics for an API call
  */
+@Entity
+@Table(name = "api_call_metrics")
 public class ApiCallMetric implements Serializable {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "endpoint")
     private String endpoint;
+    
+    @Column(name = "response_time")
     private double responseTime;
+    
+    @Column(name = "successful")
     private boolean successful;
+    
+    @Column(name = "method")
     private String method;
+    
+    @Column(name = "status_code")
     private int statusCode;
+    
+    @Column(name = "timestamp")
     private Instant timestamp;
 
     public ApiCallMetric() {
@@ -69,9 +88,15 @@ public class ApiCallMetric implements Serializable {
 
     public Instant getTimestamp() {
         return timestamp;
-    }
-
-    public void setTimestamp(Instant timestamp) {
+    }    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+    
+    public Long getId() {
+        return id;
+    }
+    
+    public void setId(Long id) {
+        this.id = id;
     }
 }

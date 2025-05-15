@@ -1,0 +1,275 @@
+import axiosInstance from "./AxiosConfig";
+
+const ENDPOINT = "/operations";
+
+class OperationService {
+  getAllOperations() {
+    return axiosInstance.get(ENDPOINT);
+  }
+
+  /**
+   * Call the backend to refresh operation statuses based on their dates
+   * This will update operations in the database to reflect their current status
+   * NOTE: This endpoint requires ADMIN privileges and will be rejected on the server if not authorized
+   */
+  refreshOperationStatuses() {
+    console.log("Refreshing operation statuses from database...");
+    return axiosInstance
+      .post(`${ENDPOINT}/refresh-statuses`)
+      .then((response) => {
+        const { updatedCount, timestamp } = response.data;
+        console.log(
+          `Status refresh successful: ${updatedCount} operations updated at ${new Date(
+            timestamp
+          ).toLocaleString()}`
+        );
+
+        // Store last successful refresh time in session storage
+        sessionStorage.setItem("lastStatusRefresh", timestamp);
+        sessionStorage.setItem("lastStatusRefreshCount", updatedCount);
+
+        return response;
+      })
+      .catch((error) => {
+        // Enhanced error logging
+        if (error.response) {
+          console.error("Status refresh error:", {
+            status: error.response.status,
+            message: error.response.data?.message || error.response.statusText,
+            error: error.response.data?.error
+          });
+
+          // Rethrow with descriptive message for 403 errors
+          if (error.response.status === 403) {
+            throw new Error("Accès refusé. Droits d'administrateur requis.");
+          }
+        } else if (error.request) {
+          console.error("No response received:", error.request);
+          throw new Error("Le serveur ne répond pas. Veuillez réessayer.");
+        } else {
+          console.error("Error setting up request:", error.message);
+        }
+        throw error;
+      });
+  }
+
+  getAllOperationsWithDetails() {
+    console.log(
+      "Fetching operations with details from URL:",
+      `${ENDPOINT}/with-details`
+    );
+    const response = axiosInstance.get(`${ENDPOINT}/with-details`);
+    response
+      .then((data) => {
+        console.log("Operations API response status:", data.status);
+
+        if (Array.isArray(data.data)) {
+          console.log("API returned array with", data.data.length, "items");
+
+          // Check first few operations and specifically verify status field
+          if (data.data.length > 0) {
+            const sampleOp = data.data[0];
+            console.log("Sample operation data:", {
+              id: sampleOp.id_operation,
+              status: sampleOp.status || "MISSING STATUS",
+              dates: {
+                debut: sampleOp.date_debut,
+                fin: sampleOp.date_fin,
+              },
+            });
+
+            // Count operations with each status type
+            const statusCounts = data.data.reduce((counts, op) => {
+              const status = op.status || "undefined";
+              counts[status] = (counts[status] || 0) + 1;
+              return counts;
+            }, {});
+
+            console.log(
+              "Status distribution in fetched operations:",
+              statusCounts
+            );
+
+            // Check for operations missing status
+            const missingStatus = data.data.filter((op) => !op.status).length;
+            if (missingStatus > 0) {
+              console.warn(
+                `Warning: ${missingStatus} operations missing status field`
+              );
+            }
+          }
+        } else {
+          console.error("API did not return an array:", typeof data.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching operations:", err);
+        if (err.response) {
+          console.error(
+            "Error response:",
+            err.response.status,
+            err.response.data
+          );
+        }
+      });
+    return response;
+  }
+
+  /**
+   * Get all operations with their details, using cache-breaking parameter to ensure fresh data
+   * This method adds a timestamp to force the browser and network to get fresh data
+   * @returns {Promise} Promise that resolves with the fresh operation data
+   */
+  getAllOperationsWithFreshDetails() {
+    console.log("Explicitly fetching FRESH operations data from database");
+
+    // Add timestamp to force cache-breaking
+    const timestamp = Date.now();
+    const url = `${ENDPOINT}/with-details?_t=${timestamp}`;
+
+    console.log(`Fetching from URL: ${url}`);
+
+    return axiosInstance
+      .get(url, {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+          "If-Modified-Since": "0",
+        },
+      })
+      .then((response) => {
+        if (Array.isArray(response.data)) {
+          console.log(
+            `[FRESH] Retrieved ${response.data.length} operations with fresh data`
+          );
+
+          // Log status statistics for debugging
+          const statusCounts = response.data.reduce((counts, op) => {
+            const status = op.status || "undefined";
+            counts[status] = (counts[status] || 0) + 1;
+            return counts;
+          }, {});
+
+          console.log("[FRESH] Status distribution:", statusCounts);
+        }
+
+        return response;
+      });
+  }
+
+  getOperationById(id) {
+    return axiosInstance.get(`${ENDPOINT}/${id}`);
+  }
+
+  getOperationWithDetailsById(id) {
+    return axiosInstance.get(`${ENDPOINT}/${id}/with-details`);
+  }
+
+  getOperationsByEscaleId(escaleId) {
+    return axiosInstance.get(`${ENDPOINT}/escale/${escaleId}`);
+  }
+
+  getOperationsByShiftId(shiftId) {
+    return axiosInstance.get(`${ENDPOINT}/shift/${shiftId}`);
+  }
+
+  getOperationsByEquipeId(equipeId) {
+    return axiosInstance.get(`${ENDPOINT}/equipe/${equipeId}`);
+  }
+
+  createOperation(data) {
+    return axiosInstance.post(ENDPOINT, data);
+  }
+
+  updateOperation(id, data) {
+    return axiosInstance.put(`${ENDPOINT}/${id}`, data);
+  }
+
+  deleteOperation(id) {
+    // Now the delete endpoint returns the updated operation with status "Annulé"
+    return axiosInstance.delete(`${ENDPOINT}/${id}`);
+  }
+
+  cancelOperation(id) {
+    // Alias for deleteOperation for better readability
+    return this.deleteOperation(id);
+  }
+
+  /**
+   * Get the latest status for a specific operation directly from the database
+   * @param {string} operationId - The ID of the operation
+   * @returns {Promise} - Promise resolving to the operation with fresh status
+   */
+  getOperationWithFreshStatus(operationId) {
+    if (!operationId) {
+      console.error("Cannot fetch status - missing operation ID");
+      return Promise.reject(new Error("Operation ID is required"));
+    }
+
+    console.log(
+      `Fetching fresh status for operation ${operationId} from database`
+    );
+    return axiosInstance
+      .get(`${ENDPOINT}/${operationId}`)
+      .then((response) => {
+        const operation = response.data;
+
+        // Log the status received from backend
+        console.log(
+          `[DB STATUS] Operation ${operationId}: ${operation.status || "null"}`
+        );
+
+        return operation;
+      })
+      .catch((error) => {
+        console.error(
+          `Error fetching status for operation ${operationId}:`,
+          error
+        );
+        throw error;
+      });
+  }
+
+  /**
+   * Get fresh statuses for multiple operations directly from the database
+   * @param {Array<string>} operationIds - Array of operation IDs
+   * @returns {Promise} - Promise resolving to an array of operations with fresh statuses
+   */
+  getMultipleOperationsWithFreshStatus(operationIds) {
+    if (!operationIds || !operationIds.length) {
+      return Promise.resolve([]);
+    }
+
+    console.log(
+      `Fetching fresh statuses for ${operationIds.length} operations`
+    );
+    // We'll use the with-details endpoint but filter for specific operations
+    return axiosInstance.get(`${ENDPOINT}/with-details`).then((response) => {
+      if (!Array.isArray(response.data)) {
+        throw new Error("API did not return an array of operations");
+      }
+
+      // Filter for the requested operations
+      const operations = response.data.filter((op) =>
+        operationIds.includes(op.id_operation)
+      );
+
+      console.log(
+        `Retrieved ${operations.length} operations with fresh statuses`
+      );
+
+      // Log the statuses
+      operations.forEach((op) => {
+        console.log(
+          `[DB STATUS] Operation ${op.id_operation}: ${op.status || "null"}`
+        );
+      });
+
+      return operations;
+    });
+  }
+}
+
+const operationServiceInstance = new OperationService();
+
+export default operationServiceInstance;
