@@ -21,6 +21,7 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
+  Chip,
 } from "@mui/material";
 import {
   Refresh as RefreshIcon,
@@ -29,6 +30,9 @@ import {
   Warning as WarningIcon,
   Delete as DeleteIcon,
   Memory as MemoryIcon,
+  AccessTime as AccessTimeIcon,
+  Error as ErrorIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import performanceService from "../../services/PerformanceService";
 // Import charts correctly from @mui/x-charts
@@ -48,6 +52,7 @@ const PerformanceMonitor = () => {
   const [serverMetrics, setServerMetrics] = useState(null);
   const [serverMetricsLastUpdated, setServerMetricsLastUpdated] =
     useState(null);
+  const [connectionError, setConnectionError] = useState(null);
 
   // On mount, fetch all metrics once
   useEffect(() => {
@@ -62,50 +67,90 @@ const PerformanceMonitor = () => {
     const intervalId = setInterval(fetchServerMetrics, 5000);
     return () => clearInterval(intervalId);
   }, []);
+  // Calculate metrics locally
+  const calculateMetrics = (apiCalls) => {
+    if (!apiCalls || apiCalls.length === 0) {
+      return {
+        responseTimeAverage: 0,
+        slowestEndpoint: null,
+      };
+    }
+
+    const successfulCalls = apiCalls.filter(
+      (call) => call && call.isSuccessful
+    );
+
+    if (successfulCalls.length === 0) {
+      return {
+        responseTimeAverage: 0,
+        slowestEndpoint: null,
+      };
+    }
+
+    // Calculate average response time
+    const totalTime = successfulCalls.reduce(
+      (sum, call) => sum + call.responseTime,
+      0
+    );
+    const responseTimeAverage = totalTime / successfulCalls.length;
+
+    // Find slowest endpoint
+    const endpointMap = {};
+    successfulCalls.forEach((call) => {
+      if (!endpointMap[call.endpoint]) endpointMap[call.endpoint] = [];
+      endpointMap[call.endpoint].push(call.responseTime);
+    });
+
+    let slowest = null;
+    let slowestTime = -1;
+    Object.entries(endpointMap).forEach(([endpoint, times]) => {
+      const avg = times.reduce((a, b) => a + b, 0) / times.length;
+      if (avg > slowestTime) {
+        slowestTime = avg;
+        slowest = { endpoint, avgTime: avg };
+      }
+    });
+
+    return {
+      responseTimeAverage,
+      slowestEndpoint: slowest,
+    };
+  };
 
   // Fetch latest metrics (API calls, slowest endpoint, etc.)
   const fetchMetrics = async () => {
     try {
       const latestMetrics = await performanceService.getMetrics();
-      // Calculate responseTimeAverage and slowestEndpoint if missing
+      // Ensure we have arrays and other required data
       let apiCalls = latestMetrics.apiCalls || [];
+      let systemLoad = latestMetrics.systemLoad || [];
+
+      // Calculate metrics if needed
       let responseTimeAverage = latestMetrics.responseTimeAverage;
       let slowestEndpoint = latestMetrics.slowestEndpoint;
-      if (!responseTimeAverage || !slowestEndpoint) {
-        const successfulCalls = apiCalls.filter(
-          (call) => call && call.isSuccessful
-        );
-        if (successfulCalls.length > 0) {
-          const totalTime = successfulCalls.reduce(
-            (sum, call) => sum + call.responseTime,
-            0
-          );
-          responseTimeAverage = totalTime / successfulCalls.length;
-          // Group by endpoint
-          const endpointMap = {};
-          successfulCalls.forEach((call) => {
-            if (!endpointMap[call.endpoint]) endpointMap[call.endpoint] = [];
-            endpointMap[call.endpoint].push(call.responseTime);
-          });
-          let slowest = null;
-          let slowestTime = -1;
-          Object.entries(endpointMap).forEach(([endpoint, times]) => {
-            const avg = times.reduce((a, b) => a + b, 0) / times.length;
-            if (avg > slowestTime) {
-              slowestTime = avg;
-              slowest = { endpoint, avgTime: avg };
-            }
-          });
-          slowestEndpoint = slowest;
-        } else {
-          responseTimeAverage = 0;
-          slowestEndpoint = null;
-        }
+
+      if ((!responseTimeAverage || !slowestEndpoint) && apiCalls.length > 0) {
+        const calculated = calculateMetrics(apiCalls);
+        responseTimeAverage = calculated.responseTimeAverage;
+        slowestEndpoint = calculated.slowestEndpoint;
       }
+
+      // Ensure we have at least one system load data point
+      if (systemLoad.length === 0 && serverMetrics) {
+        systemLoad.push({
+          timestamp: new Date(),
+          memory: serverMetrics.memory || 0,
+          cpu: serverMetrics.cpu || 0,
+          diskSpace: serverMetrics.diskSpace || { used: 0, total: 100000 },
+          activeConnections: serverMetrics.activeConnections || 0,
+        });
+      }
+
       setMetrics({
         ...latestMetrics,
         apiCalls,
-        responseTimeAverage,
+        systemLoad,
+        responseTimeAverage: responseTimeAverage || 0,
         slowestEndpoint,
       });
       setLastUpdated(new Date());
@@ -123,16 +168,71 @@ const PerformanceMonitor = () => {
       });
       setAlerts([]);
     }
-  };
-
-  // Fetch server metrics - wrapped in useCallback to maintain stable reference
+  }; // Fetch server metrics - wrapped in useCallback to maintain stable reference
   const fetchServerMetrics = useCallback(async () => {
     try {
       const metrics = await performanceService.fetchServerMetrics();
       setServerMetrics(metrics);
       setServerMetricsLastUpdated(new Date());
+
+      // Update system load with this metric data if possible
+      if (
+        metrics &&
+        (metrics.status === "online" ||
+          metrics.status === "permission-fallback") &&
+        metrics.cpu !== undefined
+      ) {
+        // Update the global metrics state to include this server data
+        setMetrics((prevMetrics) => {
+          if (!prevMetrics) return prevMetrics;
+
+          const systemLoadItem = {
+            timestamp: new Date(),
+            memory: metrics.memory !== undefined ? metrics.memory : 0,
+            cpu: metrics.cpu !== undefined ? metrics.cpu : 0,
+            diskSpace: metrics.diskSpace || { used: 0, total: 100000 },
+            activeConnections: metrics.activeConnections || 0,
+          };
+
+          // Add to system load if needed
+          const systemLoad = [...(prevMetrics.systemLoad || [])];
+          systemLoad.push(systemLoadItem);
+
+          // Keep only the most recent entries
+          if (systemLoad.length > 10) {
+            systemLoad.shift();
+          }
+
+          return {
+            ...prevMetrics,
+            systemLoad,
+          };
+        });
+      }
+
+      // Update connection status based on server response
+      if (
+        metrics.status === "online" ||
+        metrics.status === "permission-fallback"
+      ) {
+        setConnectionError(null);
+      } else if (metrics.status === "connection-error") {
+        setConnectionError(metrics.errorMessage || "Connection error");
+      } else if (metrics.status === "error") {
+        setConnectionError("Server returned an error. Check server logs.");
+      }
+
+      // If we still have no data for CPU or memory, show a warning in console
+      if (metrics.cpu === 0 && metrics.memory === 0) {
+        console.warn(
+          "Server returned zeros for both CPU and memory - possible configuration issue"
+        );
+      }
     } catch (error) {
       console.error("Failed to fetch server metrics:", error);
+      setConnectionError(
+        `Failed to connect to the monitoring service: ${error.message}`
+      );
     }
   }, []);
 
@@ -412,7 +512,6 @@ const PerformanceMonitor = () => {
       />
     );
   };
-
   // Server metrics component
   const ServerMetricsDisplay = () => {
     if (!serverMetrics) {
@@ -424,6 +523,36 @@ const PerformanceMonitor = () => {
           minHeight={100}
         >
           <CircularProgress size={30} />
+        </Box>
+      );
+    }
+
+    // Show connection error if there is one
+    if (connectionError || serverMetrics.status === "connection-error") {
+      const errorMsg =
+        connectionError ||
+        serverMetrics.errorMessage ||
+        "Connection error occurred";
+      return (
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight={100}
+          p={2}
+        >
+          <Alert
+            severity="error"
+            sx={{ width: "100%", mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={fetchServerMetrics}>
+                Retry
+              </Button>
+            }
+          >
+            {errorMsg}
+          </Alert>
         </Box>
       );
     }
@@ -671,6 +800,52 @@ const PerformanceMonitor = () => {
     );
   };
 
+  // Add a connection status display component
+  const ConnectionStatusDisplay = () => {
+    // If serverMetrics haven't loaded yet
+    if (!serverMetrics) {
+      return (
+        <Chip
+          icon={<AccessTimeIcon />}
+          label="Checking connection..."
+          color="default"
+          size="small"
+          sx={{ ml: 1 }}
+        />
+      );
+    }
+
+    // If there's a connection error
+    if (connectionError || serverMetrics.status === "connection-error") {
+      return (
+        <Tooltip
+          title={
+            connectionError || serverMetrics.errorMessage || "Connection error"
+          }
+        >
+          <Chip
+            icon={<ErrorIcon />}
+            label="Connection Error"
+            color="error"
+            size="small"
+            sx={{ ml: 1 }}
+          />
+        </Tooltip>
+      );
+    }
+
+    // Connected successfully
+    return (
+      <Chip
+        icon={<CheckCircleIcon />}
+        label="Connected"
+        color="success"
+        size="small"
+        sx={{ ml: 1 }}
+      />
+    );
+  };
+
   if (!metrics) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
@@ -724,7 +899,7 @@ const PerformanceMonitor = () => {
                 <Typography variant="h6" component="div">
                   Average Response Time
                 </Typography>
-              </Box>
+              </Box>{" "}
               <Typography
                 variant="h3"
                 component="div"
@@ -732,9 +907,9 @@ const PerformanceMonitor = () => {
               >
                 {metrics.apiCalls &&
                 metrics.apiCalls.length > 0 &&
-                metrics.responseTimeAverage
+                metrics.responseTimeAverage > 0
                   ? formatTime(metrics.responseTimeAverage)
-                  : "No data"}
+                  : "0ms"}
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 Based on{" "}
@@ -743,6 +918,12 @@ const PerformanceMonitor = () => {
                       .length
                   : 0}{" "}
                 API calls
+                {metrics.apiCalls && metrics.apiCalls.length === 0 && (
+                  <span style={{ color: "#f57c00" }}>
+                    {" "}
+                    (Make API calls to see data)
+                  </span>
+                )}
               </Typography>
             </CardContent>
           </Card>
@@ -763,7 +944,7 @@ const PerformanceMonitor = () => {
                 <Typography variant="h6" component="div">
                   Slowest Endpoint
                 </Typography>
-              </Box>
+              </Box>{" "}
               <Typography
                 variant="h5"
                 component="div"
@@ -771,7 +952,9 @@ const PerformanceMonitor = () => {
               >
                 {metrics.slowestEndpoint && metrics.slowestEndpoint.endpoint
                   ? metrics.slowestEndpoint.endpoint
-                  : "No data"}
+                  : metrics.apiCalls && metrics.apiCalls.length > 0
+                  ? "Processing..."
+                  : "No API calls yet"}
               </Typography>
               <Typography
                 variant="body1"
@@ -781,8 +964,21 @@ const PerformanceMonitor = () => {
                 {metrics.slowestEndpoint &&
                 metrics.slowestEndpoint.avgTime !== undefined
                   ? formatTime(metrics.slowestEndpoint.avgTime)
-                  : "No timing data"}
+                  : metrics.apiCalls && metrics.apiCalls.length > 0
+                  ? "Calculating..."
+                  : "Make some API calls to see data"}
               </Typography>
+              {!metrics.slowestEndpoint &&
+                metrics.apiCalls &&
+                metrics.apiCalls.length > 0 && (
+                  <Typography
+                    variant="caption"
+                    color="warning.main"
+                    sx={{ display: "block", mt: 1, textAlign: "center" }}
+                  >
+                    Re-calculating endpoint performance...
+                  </Typography>
+                )}
             </CardContent>
           </Card>
         </Grid>
@@ -799,6 +995,7 @@ const PerformanceMonitor = () => {
               <Box
                 sx={{ display: "flex", justifyContent: "space-around", my: 2 }}
               >
+                {" "}
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h5" component="div">
                     {metrics.systemLoad &&
@@ -809,11 +1006,23 @@ const PerformanceMonitor = () => {
                       ? `${metrics.systemLoad[
                           metrics.systemLoad.length - 1
                         ].memory.toFixed(1)}%`
-                      : "N/A"}
+                      : serverMetrics && serverMetrics.memory !== undefined
+                      ? `${serverMetrics.memory.toFixed(1)}%`
+                      : "0.0%"}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Memory
                   </Typography>
+                  {(serverMetrics === null ||
+                    serverMetrics.memory === undefined) && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ display: "block", mt: 0.5, fontSize: "0.7rem" }}
+                    >
+                      Waiting for server data...
+                    </Typography>
+                  )}
                 </Box>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h5" component="div">
@@ -825,19 +1034,29 @@ const PerformanceMonitor = () => {
                       ? `${metrics.systemLoad[
                           metrics.systemLoad.length - 1
                         ].cpu.toFixed(1)}%`
-                      : "N/A"}
+                      : serverMetrics && serverMetrics.cpu !== undefined
+                      ? `${serverMetrics.cpu.toFixed(1)}%`
+                      : "0.0%"}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     CPU
                   </Typography>
+                  {(serverMetrics === null ||
+                    serverMetrics.cpu === undefined) && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ display: "block", mt: 0.5, fontSize: "0.7rem" }}
+                    >
+                      Waiting for server data...
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-
-     
 
       {/* Error rates table */}
       <Paper elevation={2} sx={{ p: 2 }}>
@@ -985,8 +1204,13 @@ const PerformanceMonitor = () => {
             {serverMetricsLastUpdated.toLocaleTimeString()}
           </Typography>
         )}
-        <Divider sx={{ mb: 2 }} />
-        <ServerMetricsDisplay />
+        <Divider sx={{ mb: 2 }} /> <ServerMetricsDisplay />
+        <Box display="flex" alignItems="center" justifyContent="center" mt={2}>
+          <Typography variant="body2" color="textSecondary" mr={1}>
+            Server Connection Status:
+          </Typography>
+          <ConnectionStatusDisplay />
+        </Box>
       </Paper>
     </Box>
   );

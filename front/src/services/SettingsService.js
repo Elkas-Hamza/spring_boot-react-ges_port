@@ -1,5 +1,17 @@
 import axios from "axios";
-import performanceService from "./PerformanceService";
+// Import performanceService lazily to avoid circular dependencies
+let performanceService = null;
+const getPerformanceService = async () => {
+  if (!performanceService) {
+    try {
+      const module = await import("./PerformanceService");
+      performanceService = module.default;
+    } catch (error) {
+      console.error("Failed to load performance service:", error);
+    }
+  }
+  return performanceService;
+};
 
 // Create a direct axios instance to avoid baseURL issues
 const directAxios = axios.create({
@@ -171,26 +183,37 @@ const clearCache = async () => {
 const initPerformanceMonitoring = async () => {
   try {
     const settings = await getSettings();
-
     if (!settings.performance) return false;
+
+    // Get the performance service lazily
+    const perfService = await getPerformanceService();
+    if (!perfService) {
+      console.error("Performance service could not be loaded");
+      return false;
+    }
 
     // Configure performance service with settings regardless of auto-start
     if (settings.performance.maxDataPoints) {
-      performanceService.maxDataPoints = settings.performance.maxDataPoints;
+      perfService.maxDataPoints = settings.performance.maxDataPoints;
     }
 
     // Configure alerts
-    if (settings.performance.alertOnSlowResponses !== undefined) {
-      performanceService.configureAlerts(
+    if (
+      settings.performance.alertOnSlowResponses !== undefined &&
+      typeof perfService.configureAlerts === "function"
+    ) {
+      perfService.configureAlerts(
         settings.performance.alertOnSlowResponses,
         settings.performance.slowResponseThreshold || 5000
       );
     }
-
     // Start monitoring if auto-start is enabled
-    if (settings.performance.autoStartMonitoring) {
+    if (
+      settings.performance.autoStartMonitoring &&
+      typeof perfService.enableMonitoring === "function"
+    ) {
       console.log("Auto-starting performance monitoring based on settings");
-      performanceService.enableMonitoring();
+      perfService.enableMonitoring();
       return true;
     } else {
       console.log("Performance monitoring auto-start disabled");
@@ -213,25 +236,30 @@ const updatePerformanceSettings = async (performanceSettings) => {
       ...performanceSettings,
     };
 
+    // Get the performance service lazily
+    const perfService = await getPerformanceService();
+    if (!perfService) {
+      console.error("Performance service could not be loaded");
+      return settings;
+    }
+
     // Apply the changes to the performance service
     if (performanceSettings.maxDataPoints) {
-      performanceService.maxDataPoints = performanceSettings.maxDataPoints;
+      perfService.maxDataPoints = performanceSettings.maxDataPoints;
     }
 
     if (performanceSettings.enableMonitoring !== undefined) {
       if (performanceSettings.enableMonitoring) {
-        performanceService.enableMonitoring();
+        perfService.enableMonitoring();
       } else {
-        performanceService.disableMonitoring();
+        perfService.disableMonitoring();
       }
-    }
-
-    // Configure alerts if related settings are provided
+    } // Configure alerts if related settings are provided
     if (
       performanceSettings.alertOnSlowResponses !== undefined ||
       performanceSettings.slowResponseThreshold !== undefined
     ) {
-      performanceService.configureAlerts(
+      perfService.configureAlerts(
         performanceSettings.alertOnSlowResponses !== undefined
           ? performanceSettings.alertOnSlowResponses
           : settings.performance.alertOnSlowResponses,
@@ -251,10 +279,20 @@ const updatePerformanceSettings = async (performanceSettings) => {
 };
 
 // Clear performance monitoring data
-const clearPerformanceData = () => {
+const clearPerformanceData = async () => {
   try {
-    performanceService.resetMetrics();
-    return true;
+    // Get the performance service lazily
+    const perfService = await getPerformanceService();
+    if (!perfService) {
+      console.error("Performance service could not be loaded");
+      return false;
+    }
+
+    if (typeof perfService.resetMetrics === "function") {
+      perfService.resetMetrics();
+      return true;
+    }
+    return false;
   } catch (error) {
     console.error("Failed to clear performance data", error);
     return false;

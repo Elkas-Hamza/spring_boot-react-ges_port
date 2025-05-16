@@ -145,15 +145,23 @@ function App() {
           const isValid = await AuthService.verifyToken();
           if (isValid) {
             setIsAuthenticated(true);
-            setUserRole(role);
-
-            // Initialize performance monitoring (only when authenticated)
+            setUserRole(role); // Initialize performance monitoring (only when authenticated)
             try {
-              await SettingsService.initPerformanceMonitoring();
-              console.log("Performance monitoring initialized");
+              // Add delay to ensure proper initialization order
+              setTimeout(async () => {
+                try {
+                  await SettingsService.initPerformanceMonitoring();
+                  console.log("Performance monitoring initialized");
+                } catch (perfError) {
+                  console.error(
+                    "Error initializing performance monitoring:",
+                    perfError
+                  );
+                }
+              }, 500);
             } catch (perfError) {
               console.error(
-                "Error initializing performance monitoring:",
+                "Error preparing performance monitoring initialization:",
                 perfError
               );
             }

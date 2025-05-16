@@ -33,16 +33,55 @@ const SystemHealthCheck = () => {
   const [healthData, setHealthData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const fetchHealthData = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get("/api/monitoring/health");
+      const response = await axiosInstance.get("/monitoring/health");
       setHealthData(response.data);
       setError(null);
     } catch (err) {
       console.error("Error fetching health data:", err);
-      setError("Failed to fetch system health data");
+      // Check if it's a connection error
+      const isConnectionError =
+        err.code === "ECONNREFUSED" ||
+        err.message.includes("Network Error") ||
+        !err.response;
+
+      if (isConnectionError) {
+        setError(
+          "Cannot connect to server. Please check if the backend server is running."
+        );
+      } else if (err.response && err.response.status === 403) {
+        setError(
+          "You don't have permission to access health data. Please check your authentication or verify monitoring settings."
+        );
+        // Try to use the performance service to get metrics as a fallback
+        import("../../services/PerformanceService").then((module) => {
+          const performanceService = module.default;
+          performanceService
+            .fetchServerMetrics()
+            .then((metrics) => {
+              if (metrics && metrics.status === "online") {
+                setHealthData({
+                  status: "UP",
+                  cpu: metrics.cpu || 0,
+                  memory: metrics.memory || 0,
+                  uptime: metrics.uptime || 0,
+                  timestamp: new Date().toISOString(),
+                  monitoringEnabled: true,
+                });
+                setError(
+                  "Using client-side metrics due to server permission issues"
+                );
+              }
+            })
+            .catch(() => {
+              // Keep the original error if the fallback fails
+            });
+        });
+      } else {
+        setError("Failed to fetch system health data");
+      }
     } finally {
       setLoading(false);
     }
@@ -65,22 +104,38 @@ const SystemHealthCheck = () => {
       </Box>
     );
   }
-
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="h6">System Health</Typography>
-        <Box
-          sx={{
-            mt: 2,
-            color: "error.main",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <ErrorIcon sx={{ mr: 1 }} />
-          <Typography>{error}</Typography>
-        </Box>
+        <Card sx={{ mt: 2 }}>
+          <CardContent>
+            <Box
+              sx={{
+                color: "error.main",
+                display: "flex",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <ErrorIcon sx={{ mr: 1 }} />
+              <Typography>{error}</Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <IconButton
+                color="primary"
+                onClick={fetchHealthData}
+                size="small"
+                sx={{ mt: 1 }}
+              >
+                <RefreshIcon />
+                <Typography variant="body2" sx={{ ml: 0.5 }}>
+                  Retry
+                </Typography>
+              </IconButton>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
     );
   }

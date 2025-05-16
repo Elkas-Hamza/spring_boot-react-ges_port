@@ -201,9 +201,18 @@ const AdminDashboard = () => {
             const userResponse = await UserService.getUserById(userId);
             if (userResponse && userResponse.data) {
               setUserData({
-                nom: userResponse.data.nom || localStorage.getItem("userName") || "",
-                prenom: userResponse.data.prenom || localStorage.getItem("userLastName") || "",
-                email: userResponse.data.email || localStorage.getItem("email") || "",
+                nom:
+                  userResponse.data.nom ||
+                  localStorage.getItem("userName") ||
+                  "",
+                prenom:
+                  userResponse.data.prenom ||
+                  localStorage.getItem("userLastName") ||
+                  "",
+                email:
+                  userResponse.data.email ||
+                  localStorage.getItem("email") ||
+                  "",
               });
             }
           }
@@ -251,23 +260,33 @@ const AdminDashboard = () => {
     <Box sx={{ flexGrow: 1, p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Admin Dashboard
-      </Typography>      {/* Admin Welcome Banner */}
-      <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'secondary.light', color: 'secondary.contrastText', borderRadius: 2 }}>
+      </Typography>{" "}
+      {/* Admin Welcome Banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 4,
+          bgcolor: "secondary.light",
+          color: "secondary.contrastText",
+          borderRadius: 2,
+        }}
+      >
         <Box display="flex" alignItems="center">
           <Avatar
-            sx={{ 
-              width: 56, 
-              height: 56, 
-              bgcolor: 'secondary.main', 
-              color: 'white',
-              mr: 2
+            sx={{
+              width: 56,
+              height: 56,
+              bgcolor: "secondary.main",
+              color: "white",
+              mr: 2,
             }}
           >
-            {userData.nom?.charAt(0) || userData.email?.charAt(0) || 'A'}
+            {userData.nom?.charAt(0) || userData.email?.charAt(0) || "A"}
           </Avatar>
           <Box>
             <Typography variant="h4">
-              Bonjour, {userData.prenom || userData.nom || 'Admin'}
+              Bonjour, {userData.prenom || userData.nom || "Admin"}
             </Typography>
             <Typography variant="body1">
               Welcome to the admin control panel
@@ -275,7 +294,6 @@ const AdminDashboard = () => {
           </Box>
         </Box>
       </Paper>
-
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} sm={6} md={3}>
@@ -315,7 +333,6 @@ const AdminDashboard = () => {
           />
         </Grid>
       </Grid>
-
       <Grid container spacing={3}>
         {/* Quick Access Section */}
         <Grid item xs={12} md={6}>

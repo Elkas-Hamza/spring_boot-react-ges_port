@@ -156,29 +156,32 @@ const Navbar = () => {
       path: userRole === "ADMIN" ? "/admin-dashboard" : "/user-dashboard",
       roles: ["ADMIN", "USER"],
       icon: <DashboardIcon />,
-      subItems: userRole === "ADMIN" ? [
-        {
-          id: "analytics",
-          label: "Analytics",
-          path: "/analytics",
-          roles: ["ADMIN"],
-          icon: <AnalyticsIcon />,
-        },
-        {
-          id: "performance",
-          label: "Performance",
-          path: "/performance",
-          roles: ["ADMIN"],
-          icon: <SettingsIcon />,
-        },
-        {
-          id: "users",
-          label: "Users",
-          path: "/users",
-          roles: ["ADMIN"],
-          icon: <PersonIcon />,
-        },
-      ] : null,
+      subItems:
+        userRole === "ADMIN"
+          ? [
+              {
+                id: "analytics",
+                label: "Analytics",
+                path: "/analytics",
+                roles: ["ADMIN"],
+                icon: <AnalyticsIcon />,
+              },
+              {
+                id: "performance",
+                label: "Performance",
+                path: "/performance",
+                roles: ["ADMIN"],
+                icon: <SettingsIcon />,
+              },
+              {
+                id: "users",
+                label: "Users",
+                path: "/users",
+                roles: ["ADMIN"],
+                icon: <PersonIcon />,
+              },
+            ]
+          : null,
     },
 
     {
@@ -253,7 +256,6 @@ const Navbar = () => {
       roles: ["ADMIN", "USER"],
       icon: <DirectionsBoatIcon />,
     },
-
   ];
 
   const toggleDrawer = () => {
