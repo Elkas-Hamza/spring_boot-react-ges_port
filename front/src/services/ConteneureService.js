@@ -14,7 +14,6 @@ class ConteneureService {
     }
     return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
-
   async createConteneure(containerData) {
     try {
       // Get authentication details
@@ -23,6 +22,14 @@ class ConteneureService {
 
       if (!token) {
         throw new Error("Authentication required. Please log in.");
+      }
+
+      // Ensure idNavire is a string if present
+      if (
+        containerData.idNavire !== undefined &&
+        containerData.idNavire !== null
+      ) {
+        containerData.idNavire = String(containerData.idNavire);
       }
 
       // Ensure required fields are present for the backend

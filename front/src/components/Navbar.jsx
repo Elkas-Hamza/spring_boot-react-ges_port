@@ -153,10 +153,10 @@ const Navbar = () => {
     {
       id: "dashboardGroup",
       label: "Dashboard",
-      path: "/admin-dashboard",
-      roles: ["ADMIN"],
+      path: userRole === "ADMIN" ? "/admin-dashboard" : "/user-dashboard",
+      roles: ["ADMIN", "USER"],
       icon: <DashboardIcon />,
-      subItems: [
+      subItems: userRole === "ADMIN" ? [
         {
           id: "analytics",
           label: "Analytics",
@@ -178,7 +178,7 @@ const Navbar = () => {
           roles: ["ADMIN"],
           icon: <PersonIcon />,
         },
-      ],
+      ] : null,
     },
 
     {
@@ -253,13 +253,7 @@ const Navbar = () => {
       roles: ["ADMIN", "USER"],
       icon: <DirectionsBoatIcon />,
     },
-    {
-      id: "monitoring",
-      label: "Monitoring",
-      path: "/monitoring",
-      roles: ["ADMIN"],
-      icon: <AnalyticsIcon color="secondary" />,
-    },
+
   ];
 
   const toggleDrawer = () => {

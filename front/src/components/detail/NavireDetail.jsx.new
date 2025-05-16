@@ -151,14 +151,12 @@ const NavireDetail = () => {
                     `Container ${container.id_conteneure} has no type_conteneure information, using default`
                   );
                 }
-                const dateValue = container.D;
-
+                const dateValue = container.D
+    
                 // Log the date field to help debug
                 if (!dateValue) {
-                  console.warn(
-                    `Container ${container.id_conteneure} missing date field. Available fields:`,
-                    Object.keys(container)
-                  );
+                  console.warn(`Container ${container.id_conteneure} missing date field. Available fields:`, 
+                    Object.keys(container));
                 }
                 // Normalize field names to match what the UI expects
                 return {
@@ -360,7 +358,7 @@ const NavireDetail = () => {
       }));
     }
   };
-
+  
   // Create container function with retry mechanism
   const handleCreateContainer = async (retryCount = 0) => {
     if (!newContainer.nom_conteneure) {
@@ -380,7 +378,7 @@ const NavireDetail = () => {
       });
       return;
     }
-
+    
     const maxRetries = 3;
 
     try {
@@ -397,13 +395,8 @@ const NavireDetail = () => {
         // Removed typeId as it's not used in the backend and might cause confusion
       };
 
-      console.log(
-        `Creating container with data (attempt ${retryCount + 1}/${
-          maxRetries + 1
-        }):`,
-        containerData
-      );
-
+      console.log(`Creating container with data (attempt ${retryCount + 1}/${maxRetries + 1}):`, containerData);
+      
       const result = await ConteneureService.createConteneure(containerData);
 
       if (result) {
@@ -428,32 +421,26 @@ const NavireDetail = () => {
       }
     } catch (error) {
       console.error("Error creating container:", error);
-
+      
       // Check if this is a duplicate key error that we can retry
-      const isDuplicateKeyError =
-        (error.response &&
-          error.response.data &&
-          error.response.status === 409) ||
+      const isDuplicateKeyError = 
+        (error.response && error.response.data && error.response.status === 409) ||
         (error.message && error.message.includes("Duplicate entry"));
-
+      
       if (isDuplicateKeyError && retryCount < maxRetries) {
-        console.log(
-          `Container ID conflict, retrying (attempt ${
-            retryCount + 1
-          } of ${maxRetries})`
-        );
-
+        console.log(`Container ID conflict, retrying (attempt ${retryCount + 1} of ${maxRetries})`);
+        
         // Wait a short delay before retrying
         setTimeout(() => {
           handleCreateContainer(retryCount + 1);
         }, 500);
         return;
       }
-
+      
       // If we can't retry or have exhausted retries, show error to user
       // Extract more detailed error message if available
       let errorMessage = "Erreur lors de la création du conteneur";
-
+      
       if (error.response && error.response.data) {
         // For axios errors or fetch errors with response data
         if (error.response.data.error) {
@@ -462,19 +449,19 @@ const NavireDetail = () => {
           errorMessage = error.response.data.message;
         } else if (error.response.data.action) {
           errorMessage = error.response.data.action;
-        } else if (typeof error.response.data === "string") {
+        } else if (typeof error.response.data === 'string') {
           errorMessage = error.response.data;
         }
         console.log("Server error details:", error.response.data);
       } else if (error.message) {
         errorMessage = error.message;
       }
-
+      
       // If this was the last retry, show a more detailed message
       if (isDuplicateKeyError && retryCount >= maxRetries) {
         errorMessage = `Erreur persistante de conflit d'ID. Veuillez réessayer plus tard.`;
       }
-
+      
       setNotification({
         open: true,
         message: `Erreur: ${errorMessage}`,

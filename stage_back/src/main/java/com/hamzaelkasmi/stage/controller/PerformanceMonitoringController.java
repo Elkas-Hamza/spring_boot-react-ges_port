@@ -9,6 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,10 +91,58 @@ public class PerformanceMonitoringController {
     
     /**
      * Get monitoring status
-     */
-    @GetMapping("/status")
+     */    @GetMapping("/status")
     public ResponseEntity<Map<String, Boolean>> getMonitoringStatus() {
         logger.debug("API call: GET monitoring status");
         return ResponseEntity.ok(Map.of("enabled", monitoringService.isMonitoringEnabled()));
+    }
+    
+    /**
+     * Get system health information
+     */
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> getHealthInfo() {
+        logger.debug("API call: GET health information");
+        Map<String, Object> healthInfo = new HashMap<>();
+        
+        // Get JVM information
+        RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+        
+        // System status
+        healthInfo.put("status", "UP");
+        
+        // JVM information
+        Map<String, Object> jvmInfo = new HashMap<>();
+        jvmInfo.put("uptime", runtimeBean.getUptime());
+        jvmInfo.put("vmVendor", runtimeBean.getVmVendor());
+        jvmInfo.put("vmName", runtimeBean.getVmName());
+        jvmInfo.put("vmVersion", runtimeBean.getVmVersion());
+        healthInfo.put("jvm", jvmInfo);
+        
+        // Memory information
+        Map<String, Object> memoryInfo = new HashMap<>();
+        memoryInfo.put("heapUsed", memoryBean.getHeapMemoryUsage().getUsed());
+        memoryInfo.put("heapMax", memoryBean.getHeapMemoryUsage().getMax());
+        double usagePercentage = (double) memoryBean.getHeapMemoryUsage().getUsed() / 
+                                 (double) memoryBean.getHeapMemoryUsage().getMax() * 100.0;
+        memoryInfo.put("heapUsagePercentage", Math.round(usagePercentage * 100.0) / 100.0);
+        healthInfo.put("memory", memoryInfo);
+        
+        // CPU information
+        Map<String, Object> cpuInfo = new HashMap<>();
+        cpuInfo.put("availableProcessors", osBean.getAvailableProcessors());
+        cpuInfo.put("systemLoadAverage", osBean.getSystemLoadAverage());
+        healthInfo.put("cpu", cpuInfo);
+        
+        // Disk space information (simplified)
+        Map<String, Object> diskInfo = new HashMap<>();
+        diskInfo.put("free", 10000000000L); // Example values
+        diskInfo.put("total", 50000000000L);
+        diskInfo.put("usagePercentage", 80.0);
+        healthInfo.put("disk", diskInfo);
+        
+        return ResponseEntity.ok(healthInfo);
     }
 }

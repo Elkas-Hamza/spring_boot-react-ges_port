@@ -15,6 +15,7 @@ import {
   ListItemIcon,
   CircularProgress,
   useTheme,
+  Avatar,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -182,12 +183,35 @@ const AdminDashboard = () => {
     activeEscales: null,
     personnelCount: null,
   });
-  const [loading, setLoading] = useState(false); // Add this line
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState({
+    nom: localStorage.getItem("userName") || "",
+    prenom: localStorage.getItem("userLastName") || "",
+    email: localStorage.getItem("email") || "admin@example.com",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Get user details if possible
+        try {
+          const userId = localStorage.getItem("userId");
+          if (userId) {
+            const userResponse = await UserService.getUserById(userId);
+            if (userResponse && userResponse.data) {
+              setUserData({
+                nom: userResponse.data.nom || localStorage.getItem("userName") || "",
+                prenom: userResponse.data.prenom || localStorage.getItem("userLastName") || "",
+                email: userResponse.data.email || localStorage.getItem("email") || "",
+              });
+            }
+          }
+        } catch (userErr) {
+          console.error("Error fetching user details:", userErr);
+          // Continue with localStorage data
+        }
+
         // These could be run in parallel with Promise.all
         const users = await UserService.getAllUsers();
         const operations = await OperationService.getAllOperations();
@@ -227,7 +251,30 @@ const AdminDashboard = () => {
     <Box sx={{ flexGrow: 1, p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Admin Dashboard
-      </Typography>
+      </Typography>      {/* Admin Welcome Banner */}
+      <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'secondary.light', color: 'secondary.contrastText', borderRadius: 2 }}>
+        <Box display="flex" alignItems="center">
+          <Avatar
+            sx={{ 
+              width: 56, 
+              height: 56, 
+              bgcolor: 'secondary.main', 
+              color: 'white',
+              mr: 2
+            }}
+          >
+            {userData.nom?.charAt(0) || userData.email?.charAt(0) || 'A'}
+          </Avatar>
+          <Box>
+            <Typography variant="h4">
+              Bonjour, {userData.prenom || userData.nom || 'Admin'}
+            </Typography>
+            <Typography variant="body1">
+              Welcome to the admin control panel
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>

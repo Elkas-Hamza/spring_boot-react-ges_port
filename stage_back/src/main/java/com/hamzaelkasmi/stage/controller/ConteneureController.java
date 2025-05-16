@@ -72,12 +72,12 @@ public class ConteneureController {
         }
         
         return new ResponseEntity<>(conteneurs, HttpStatus.OK);
-    }
-
-    @PostMapping
+    }    @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Conteneure> createConteneure(@RequestBody Map<String, Object> containerData) {
+    public ResponseEntity<?> createConteneure(@RequestBody Map<String, Object> containerData) {
         try {
+            System.out.println("Received container data: " + containerData);
+            
             // Create a new container with the data from the request
             Conteneure conteneure = new Conteneure();
 
@@ -85,7 +85,7 @@ public class ConteneureController {
             if (containerData.containsKey("nom_conteneure")) {
                 conteneure.setNom_conteneure((String) containerData.get("nom_conteneure"));
             } else {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(Map.of("error", "Container name is required"), HttpStatus.BAD_REQUEST);
             }
             
             // Set container type if provided
@@ -97,29 +97,61 @@ public class ConteneureController {
             conteneure.setId_type(1);
             
             // Set ID_type if explicitly provided
-            if (containerData.containsKey("id_type") && containerData.get("id_type") instanceof Number) {
-                conteneure.setId_type((Integer) containerData.get("id_type"));
+            if (containerData.containsKey("id_type")) {
+                if (containerData.get("id_type") instanceof Number) {
+                    conteneure.setId_type(((Number) containerData.get("id_type")).intValue());
+                } else if (containerData.get("id_type") instanceof String) {
+                    try {
+                        conteneure.setId_type(Integer.parseInt((String) containerData.get("id_type")));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Failed to parse id_type: " + containerData.get("id_type"));
+                        // Continue with default value
+                    }
+                }
             }
             
             // Set navire if specified (for containers created directly from the ship detail page)
-            if (containerData.containsKey("idNavire") && containerData.get("idNavire") instanceof String) {
-                String navireId = (String) containerData.get("idNavire");
-                if (!navireId.isEmpty()) {
+            if (containerData.containsKey("idNavire")) {
+                String navireId;
+                if (containerData.get("idNavire") instanceof String) {
+                    navireId = (String) containerData.get("idNavire");
+                } else if (containerData.get("idNavire") instanceof Number) {
+                    navireId = containerData.get("idNavire").toString();
+                } else {
+                    return new ResponseEntity<>(Map.of("error", "Invalid ship ID format"), HttpStatus.BAD_REQUEST);
+                }
+                
+                if (navireId != null && !navireId.isEmpty()) {
                     Optional<Navire> navire = navireService.getNavireById(navireId);
                     if (navire.isPresent()) {
                         conteneure.setNavire(navire.get());
                         // Force type ID 2 when a navire is specified
                         conteneure.setId_type(2);
+                    } else {
+                        return new ResponseEntity<>(Map.of("error", "Ship not found with ID: " + navireId), HttpStatus.NOT_FOUND);
                     }
                 }
             }
             
             // Save the container
             Conteneure _conteneure = conteneureService.saveConteneure(conteneure);
-            return new ResponseEntity<>(_conteneure, HttpStatus.CREATED);
-        } catch (Exception e) {
+            return new ResponseEntity<>(_conteneure, HttpStatus.CREATED);        } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            
+            // Check if this is a duplicate key error
+            if (e.getMessage().contains("Duplicate entry") && e.getMessage().contains("PRIMARY")) {
+                return new ResponseEntity<>(Map.of(
+                    "error", "Container ID conflict detected",
+                    "message", "A container with this ID already exists. The system will retry with a new ID.",
+                    "action", "Please try again, the system will generate a new unique ID"
+                ), HttpStatus.CONFLICT);
+            }
+            
+            return new ResponseEntity<>(Map.of(
+                "error", "Failed to create container", 
+                "message", e.getMessage(),
+                "cause", e.getCause() != null ? e.getCause().toString() : "Unknown"
+            ), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -42,6 +42,7 @@ import UserList from "./components/list/UserList";
 import UserForm from "./components/form/UserForm";
 import UserRoleTest from "./components/debug/UserRoleTest";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
+import UserDashboard from "./components/dashboard/UserDashboard";
 import SystemSettings from "./components/settings/SystemSettings";
 import AnalyticsDashboard from "./components/dashboard/AnalyticsDashboard";
 import EscaleApiTester from "./components/debug/EscaleApiTester";
@@ -118,7 +119,7 @@ const DashboardRedirect = ({ userRole }) => {
       if (userRole === "ADMIN") {
         navigate("/admin-dashboard", { replace: true });
       } else {
-        navigate("/operations", { replace: true });
+        navigate("/user-dashboard", { replace: true });
       }
     }
   }, [navigate, userRole, location]);
@@ -210,6 +211,14 @@ function App() {
             element={
               <PrivateRoute requiredRole="ADMIN">
                 <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/user-dashboard"
+            element={
+              <PrivateRoute>
+                <UserDashboard />
               </PrivateRoute>
             }
           />

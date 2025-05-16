@@ -837,37 +837,7 @@ const PerformanceMonitor = () => {
         </Grid>
       </Grid>
 
-      {/* Charts section */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Response Time Trend
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <ResponseTimeChart />
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              System Load
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <SystemLoadChart />
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Endpoint performance */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Endpoint Performance
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <EndpointPerformanceChart />
-      </Paper>
+     
 
       {/* Error rates table */}
       <Paper elevation={2} sx={{ p: 2 }}>

@@ -25,15 +25,34 @@ public class ConteneureService {
 
     public Optional<Conteneure> getConteneureById(String id) {
         return conteneureRepository.findById(id);
-    }
-
-    @Transactional
+    }    @Transactional
     public Conteneure saveConteneure(Conteneure conteneure) {
         // If this is a new container (no ID), set the date added
         if (conteneure.getId_conteneure() == null) {
             conteneure.setDateAjout(new Date());
         }
-        return conteneureRepository.save(conteneure);
+        
+        // Handle potential duplicate key issues with retries
+        int maxRetries = 3;
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                return conteneureRepository.save(conteneure);
+            } catch (Exception e) {
+                if (e.getMessage().contains("Duplicate entry") && 
+                    e.getMessage().contains("PRIMARY") && 
+                    attempt < maxRetries - 1) {
+                    // ID conflict, clear the ID to let the generator create a new one
+                    System.out.println("Duplicate container ID detected, retrying with a new ID (attempt " + (attempt + 1) + ")");
+                    conteneure.setId_conteneure(null);
+                    continue;
+                }
+                throw e; // Re-throw if it's not a duplicate key or we've exhausted retries
+            }
+        }
+        
+        // This line won't be reached due to the return or throw above,
+        // but is needed for compilation
+        return null;
     }
 
     @Transactional

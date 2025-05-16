@@ -53,8 +53,7 @@ public class SecurityConfig {
                 
                 // User endpoints - do not restrict here, let method-level security handle it
                 .requestMatchers("/api/users/**").authenticated()
-                  // Endpoints accessible to both ADMIN and USER roles
-                .requestMatchers("/api/operations/**").authenticated()
+                  // Endpoints accessible to both ADMIN and USER roles                .requestMatchers("/api/operations/**").authenticated()
                 .requestMatchers("/api/escales/**").authenticated()
                 .requestMatchers("/api/equipes/**").authenticated()
                 .requestMatchers("/api/shifts/**").authenticated()
@@ -64,6 +63,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/personnel/**").authenticated()
                 .requestMatchers("/api/analytics/**").authenticated()
                 .requestMatchers("/api/navires/**").authenticated()
+                .requestMatchers("/api/monitoring/**").authenticated() // Allow all authenticated users to access monitoring endpoints
                 
                 // Admin bypass - give admins access to all remaining endpoints
                 // This must be after the specific rules
