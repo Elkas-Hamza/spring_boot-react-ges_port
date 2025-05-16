@@ -261,6 +261,11 @@ const clearPerformanceData = () => {
   }
 };
 
+// Get default settings
+const getDefaultSettings = async () => {
+  return DEFAULT_SETTINGS;
+};
+
 const SettingsService = {
   getSettings,
   saveSettings,
@@ -271,6 +276,7 @@ const SettingsService = {
   initPerformanceMonitoring,
   updatePerformanceSettings,
   clearPerformanceData,
+  getDefaultSettings,
 };
 
 export default SettingsService;

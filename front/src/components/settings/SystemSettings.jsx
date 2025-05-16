@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -23,8 +23,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
-} from '@mui/material';
+  DialogActions,
+} from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
   Save as SaveIcon,
@@ -34,42 +34,114 @@ import {
   Email as EmailIcon,
   Storage as StorageIcon,
   Notifications as NotificationsIcon,
-} from '@mui/icons-material';
-import SettingsService from '../../services/SettingsService';
+} from "@mui/icons-material";
+import SettingsService from "../../services/SettingsService";
 
 const SystemSettings = () => {
-  const [settings, setSettings] = useState(null);
+  // Initialize with empty structure to prevent "undefined" errors
+  const [settings, setSettings] = useState({
+    general: {
+      siteName: "",
+      adminEmail: "",
+      timezone: "",
+      language: "",
+      dateFormat: "",
+      timeFormat: "",
+    },
+    security: {
+      passwordMinLength: 8,
+      passwordRequireUppercase: false,
+      passwordRequireNumbers: false,
+      passwordRequireSymbols: false,
+      sessionTimeout: 30,
+      loginAttempts: 3,
+      twoFactorAuth: false,
+    },
+    email: {
+      smtpServer: "",
+      smtpPort: 587,
+      smtpUsername: "",
+      smtpSecure: false,
+      senderName: "",
+      senderEmail: "",
+    },
+    notifications: {
+      emailNotifications: false,
+      operationCreated: false,
+      operationUpdated: false,
+      escaleCreated: false,
+      userAccountCreated: false,
+      systemErrors: false,
+    },
+    backup: {
+      autoBackup: false,
+      backupFrequency: "daily",
+      backupTime: "00:00",
+      retentionDays: 7,
+      backupLocation: "",
+    },
+    performance: {
+      enableMonitoring: false,
+      autoStartMonitoring: false,
+      dataRetentionDays: 7,
+      maxDataPoints: 100,
+      monitoringRefreshInterval: 5000,
+      alertOnSlowResponses: false,
+      slowResponseThreshold: 5000,
+    },
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [testEmailAddress, setTestEmailAddress] = useState("");
   const [testEmailDialogOpen, setTestEmailDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-  const [confirmTitle, setConfirmTitle] = useState('');
-  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
   const [actionInProgress, setActionInProgress] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success'
+    message: "",
+    severity: "success",
   });
-  
-  const initialSettings = useRef(null);
 
+  const initialSettings = useRef(null);
   // Load settings on component mount
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
         const data = await SettingsService.getSettings();
+
+        // Ensure all required setting categories exist to prevent "undefined" errors
+        const requiredCategories = [
+          "general",
+          "security",
+          "email",
+          "notifications",
+          "backup",
+          "performance",
+        ];
+        const defaultSettings = await SettingsService.getDefaultSettings();
+
+        // For any missing category, use the defaults
+        requiredCategories.forEach((category) => {
+          if (!data[category]) {
+            console.warn(
+              `Missing settings category: ${category}, using defaults`
+            );
+            data[category] = defaultSettings[category];
+          }
+        });
+
         setSettings(data);
         initialSettings.current = JSON.parse(JSON.stringify(data)); // Deep copy for reset
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error("Error loading settings:", error);
         setSnackbar({
           open: true,
-          message: 'Error loading settings. Please try again.',
-          severity: 'error'
+          message: "Error loading settings. Please try again.",
+          severity: "error",
         });
       } finally {
         setLoading(false);
@@ -80,12 +152,12 @@ const SystemSettings = () => {
   }, []);
 
   const handleSettingsChange = (category, setting, value) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       [category]: {
         ...prev[category],
-        [setting]: value
-      }
+        [setting]: value,
+      },
     }));
   };
 
@@ -96,28 +168,28 @@ const SystemSettings = () => {
       initialSettings.current = JSON.parse(JSON.stringify(settings)); // Update reset point
       setSnackbar({
         open: true,
-        message: 'Settings saved successfully.',
-        severity: 'success'
+        message: "Settings saved successfully.",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
       setSnackbar({
         open: true,
-        message: 'Error saving settings. Please try again.',
-        severity: 'error'
+        message: "Error saving settings. Please try again.",
+        severity: "error",
       });
     } finally {
       setSaving(false);
     }
   };
-  
+
   const handleResetSettings = () => {
     if (initialSettings.current) {
       setSettings(JSON.parse(JSON.stringify(initialSettings.current)));
       setSnackbar({
         open: true,
-        message: 'Settings reset to last saved state.',
-        severity: 'info'
+        message: "Settings reset to last saved state.",
+        severity: "info",
       });
     }
   };
@@ -131,11 +203,11 @@ const SystemSettings = () => {
   };
 
   const handleSendTestEmail = async () => {
-    if (!testEmailAddress || !testEmailAddress.includes('@')) {
+    if (!testEmailAddress || !testEmailAddress.includes("@")) {
       setSnackbar({
         open: true,
-        message: 'Please enter a valid email address.',
-        severity: 'warning'
+        message: "Please enter a valid email address.",
+        severity: "warning",
       });
       return;
     }
@@ -147,14 +219,14 @@ const SystemSettings = () => {
       setSnackbar({
         open: true,
         message: `Test email sent to ${testEmailAddress}`,
-        severity: 'success'
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error sending test email:', error);
+      console.error("Error sending test email:", error);
       setSnackbar({
         open: true,
-        message: 'Failed to send test email. Please check SMTP settings.',
-        severity: 'error'
+        message: "Failed to send test email. Please check SMTP settings.",
+        severity: "error",
       });
     } finally {
       setActionInProgress(false);
@@ -170,21 +242,21 @@ const SystemSettings = () => {
 
   const handleConfirmAction = async () => {
     if (!confirmAction) return;
-    
+
     setActionInProgress(true);
     try {
       await confirmAction();
       setSnackbar({
         open: true,
-        message: 'Operation completed successfully.',
-        severity: 'success'
+        message: "Operation completed successfully.",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error executing action:', error);
+      console.error("Error executing action:", error);
       setSnackbar({
         open: true,
-        message: 'Failed to complete operation. Please try again.',
-        severity: 'error'
+        message: "Failed to complete operation. Please try again.",
+        severity: "error",
       });
     } finally {
       setActionInProgress(false);
@@ -195,34 +267,39 @@ const SystemSettings = () => {
   const handleCreateBackup = () => {
     openConfirmDialog(
       SettingsService.createBackup,
-      'Create System Backup',
-      'This will create a complete backup of the system. It might take a few minutes. Do you want to continue?'
+      "Create System Backup",
+      "This will create a complete backup of the system. It might take a few minutes. Do you want to continue?"
     );
   };
 
   const handleOptimizeDatabase = () => {
     openConfirmDialog(
       SettingsService.optimizeDatabase,
-      'Optimize Database',
-      'This will optimize the database tables. The system might be slower during this operation. Do you want to continue?'
+      "Optimize Database",
+      "This will optimize the database tables. The system might be slower during this operation. Do you want to continue?"
     );
   };
 
   const handleClearCache = () => {
     openConfirmDialog(
       SettingsService.clearCache,
-      'Clear System Cache',
-      'This will clear all temporary files and caches. This might temporarily affect system performance. Continue?'
+      "Clear System Cache",
+      "This will clear all temporary files and caches. This might temporarily affect system performance. Continue?"
     );
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -230,24 +307,29 @@ const SystemSettings = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <Typography variant="h4">System Settings</Typography>
         <Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<RefreshIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
             sx={{ mr: 2 }}
             onClick={handleResetSettings}
           >
             Reset
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<SaveIcon />}
             onClick={handleSaveSettings}
             disabled={saving}
           >
-            {saving ? 'Saving...' : 'Save Settings'}
+            {saving ? "Saving..." : "Save Settings"}
           </Button>
         </Box>
       </Box>
@@ -266,7 +348,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="System Name"
                     value={settings.general.siteName}
-                    onChange={(e) => handleSettingsChange('general', 'siteName', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "general",
+                        "siteName",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -274,7 +362,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="Admin Email"
                     value={settings.general.adminEmail}
-                    onChange={(e) => handleSettingsChange('general', 'adminEmail', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "general",
+                        "adminEmail",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -283,9 +377,17 @@ const SystemSettings = () => {
                     <Select
                       value={settings.general.timezone}
                       label="Timezone"
-                      onChange={(e) => handleSettingsChange('general', 'timezone', e.target.value)}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "general",
+                          "timezone",
+                          e.target.value
+                        )
+                      }
                     >
-                      <MenuItem value="Africa/Casablanca">Africa/Casablanca</MenuItem>
+                      <MenuItem value="Africa/Casablanca">
+                        Africa/Casablanca
+                      </MenuItem>
                       <MenuItem value="Europe/Paris">Europe/Paris</MenuItem>
                       <MenuItem value="UTC">UTC</MenuItem>
                     </Select>
@@ -297,7 +399,13 @@ const SystemSettings = () => {
                     <Select
                       value={settings.general.language}
                       label="Language"
-                      onChange={(e) => handleSettingsChange('general', 'language', e.target.value)}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "general",
+                          "language",
+                          e.target.value
+                        )
+                      }
                     >
                       <MenuItem value="fr">Français</MenuItem>
                       <MenuItem value="en">English</MenuItem>
@@ -311,7 +419,13 @@ const SystemSettings = () => {
                     <Select
                       value={settings.general.dateFormat}
                       label="Date Format"
-                      onChange={(e) => handleSettingsChange('general', 'dateFormat', e.target.value)}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "general",
+                          "dateFormat",
+                          e.target.value
+                        )
+                      }
                     >
                       <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
                       <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
@@ -325,7 +439,13 @@ const SystemSettings = () => {
                     <Select
                       value={settings.general.timeFormat}
                       label="Time Format"
-                      onChange={(e) => handleSettingsChange('general', 'timeFormat', e.target.value)}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "general",
+                          "timeFormat",
+                          e.target.value
+                        )
+                      }
                     >
                       <MenuItem value="24h">24-hour (14:30)</MenuItem>
                       <MenuItem value="12h">12-hour (2:30 PM)</MenuItem>
@@ -354,7 +474,13 @@ const SystemSettings = () => {
                     type="number"
                     label="Minimum Password Length"
                     value={settings.security.passwordMinLength}
-                    onChange={(e) => handleSettingsChange('security', 'passwordMinLength', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "security",
+                        "passwordMinLength",
+                        parseInt(e.target.value)
+                      )
+                    }
                     InputProps={{ inputProps: { min: 6, max: 32 } }}
                   />
                 </Grid>
@@ -364,7 +490,13 @@ const SystemSettings = () => {
                     type="number"
                     label="Session Timeout (minutes)"
                     value={settings.security.sessionTimeout}
-                    onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "security",
+                        "sessionTimeout",
+                        parseInt(e.target.value)
+                      )
+                    }
                     InputProps={{ inputProps: { min: 5, max: 1440 } }}
                     helperText="Set to 0 for no timeout"
                   />
@@ -375,7 +507,13 @@ const SystemSettings = () => {
                     type="number"
                     label="Maximum Login Attempts"
                     value={settings.security.loginAttempts}
-                    onChange={(e) => handleSettingsChange('security', 'loginAttempts', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "security",
+                        "loginAttempts",
+                        parseInt(e.target.value)
+                      )
+                    }
                     InputProps={{ inputProps: { min: 3, max: 10 } }}
                   />
                 </Grid>
@@ -384,7 +522,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.security.passwordRequireUppercase}
-                        onChange={(e) => handleSettingsChange('security', 'passwordRequireUppercase', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "security",
+                            "passwordRequireUppercase",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Require Uppercase Letters in Passwords"
@@ -395,7 +539,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.security.passwordRequireNumbers}
-                        onChange={(e) => handleSettingsChange('security', 'passwordRequireNumbers', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "security",
+                            "passwordRequireNumbers",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Require Numbers in Passwords"
@@ -406,7 +556,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.security.passwordRequireSymbols}
-                        onChange={(e) => handleSettingsChange('security', 'passwordRequireSymbols', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "security",
+                            "passwordRequireSymbols",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Require Special Characters in Passwords"
@@ -417,7 +573,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.security.twoFactorAuth}
-                        onChange={(e) => handleSettingsChange('security', 'twoFactorAuth', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "security",
+                            "twoFactorAuth",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Enable Two-Factor Authentication"
@@ -444,7 +606,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="SMTP Server"
                     value={settings.email.smtpServer}
-                    onChange={(e) => handleSettingsChange('email', 'smtpServer', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "smtpServer",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -453,7 +621,13 @@ const SystemSettings = () => {
                     type="number"
                     label="SMTP Port"
                     value={settings.email.smtpPort}
-                    onChange={(e) => handleSettingsChange('email', 'smtpPort', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "smtpPort",
+                        parseInt(e.target.value)
+                      )
+                    }
                     InputProps={{ inputProps: { min: 1, max: 65535 } }}
                   />
                 </Grid>
@@ -462,7 +636,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="SMTP Username"
                     value={settings.email.smtpUsername}
-                    onChange={(e) => handleSettingsChange('email', 'smtpUsername', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "smtpUsername",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -471,7 +651,13 @@ const SystemSettings = () => {
                     type="password"
                     label="SMTP Password"
                     value="********" // For security reasons, don't show the actual password
-                    onChange={(e) => handleSettingsChange('email', 'smtpPassword', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "smtpPassword",
+                        e.target.value
+                      )
+                    }
                     helperText="Leave as is to keep current password"
                   />
                 </Grid>
@@ -480,7 +666,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="Sender Name"
                     value={settings.email.senderName}
-                    onChange={(e) => handleSettingsChange('email', 'senderName', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "senderName",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -488,7 +680,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="Sender Email"
                     value={settings.email.senderEmail}
-                    onChange={(e) => handleSettingsChange('email', 'senderEmail', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "senderEmail",
+                        e.target.value
+                      )
+                    }
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -496,15 +694,21 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.email.smtpSecure}
-                        onChange={(e) => handleSettingsChange('email', 'smtpSecure', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "email",
+                            "smtpSecure",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Use SSL/TLS for SMTP"
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     color="primary"
                     onClick={handleTestEmail}
                   >
@@ -532,7 +736,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.emailNotifications}
-                        onChange={(e) => handleSettingsChange('notifications', 'emailNotifications', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "emailNotifications",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Enable Email Notifications"
@@ -548,7 +758,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.operationCreated}
-                        onChange={(e) => handleSettingsChange('notifications', 'operationCreated', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "operationCreated",
+                            e.target.checked
+                          )
+                        }
                         disabled={!settings.notifications.emailNotifications}
                       />
                     }
@@ -560,7 +776,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.operationUpdated}
-                        onChange={(e) => handleSettingsChange('notifications', 'operationUpdated', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "operationUpdated",
+                            e.target.checked
+                          )
+                        }
                         disabled={!settings.notifications.emailNotifications}
                       />
                     }
@@ -572,7 +794,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.escaleCreated}
-                        onChange={(e) => handleSettingsChange('notifications', 'escaleCreated', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "escaleCreated",
+                            e.target.checked
+                          )
+                        }
                         disabled={!settings.notifications.emailNotifications}
                       />
                     }
@@ -584,7 +812,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.userAccountCreated}
-                        onChange={(e) => handleSettingsChange('notifications', 'userAccountCreated', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "userAccountCreated",
+                            e.target.checked
+                          )
+                        }
                         disabled={!settings.notifications.emailNotifications}
                       />
                     }
@@ -596,7 +830,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.notifications.systemErrors}
-                        onChange={(e) => handleSettingsChange('notifications', 'systemErrors', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "notifications",
+                            "systemErrors",
+                            e.target.checked
+                          )
+                        }
                         disabled={!settings.notifications.emailNotifications}
                       />
                     }
@@ -624,7 +864,13 @@ const SystemSettings = () => {
                     control={
                       <Switch
                         checked={settings.backup.autoBackup}
-                        onChange={(e) => handleSettingsChange('backup', 'autoBackup', e.target.checked)}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "backup",
+                            "autoBackup",
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label="Enable Automatic Backups"
@@ -636,7 +882,13 @@ const SystemSettings = () => {
                     <Select
                       value={settings.backup.backupFrequency}
                       label="Backup Frequency"
-                      onChange={(e) => handleSettingsChange('backup', 'backupFrequency', e.target.value)}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "backup",
+                          "backupFrequency",
+                          e.target.value
+                        )
+                      }
                     >
                       <MenuItem value="daily">Daily</MenuItem>
                       <MenuItem value="weekly">Weekly</MenuItem>
@@ -650,7 +902,13 @@ const SystemSettings = () => {
                     label="Backup Time"
                     type="time"
                     value={settings.backup.backupTime}
-                    onChange={(e) => handleSettingsChange('backup', 'backupTime', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "backup",
+                        "backupTime",
+                        e.target.value
+                      )
+                    }
                     disabled={!settings.backup.autoBackup}
                     InputLabelProps={{
                       shrink: true,
@@ -663,7 +921,13 @@ const SystemSettings = () => {
                     type="number"
                     label="Retention Period (days)"
                     value={settings.backup.retentionDays}
-                    onChange={(e) => handleSettingsChange('backup', 'retentionDays', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "backup",
+                        "retentionDays",
+                        parseInt(e.target.value)
+                      )
+                    }
                     disabled={!settings.backup.autoBackup}
                     InputProps={{ inputProps: { min: 1, max: 365 } }}
                   />
@@ -673,7 +937,13 @@ const SystemSettings = () => {
                     fullWidth
                     label="Backup Storage Location"
                     value={settings.backup.backupLocation}
-                    onChange={(e) => handleSettingsChange('backup', 'backupLocation', e.target.value)}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "backup",
+                        "backupLocation",
+                        e.target.value
+                      )
+                    }
                     disabled={!settings.backup.autoBackup}
                   />
                 </Grid>
@@ -682,23 +952,25 @@ const SystemSettings = () => {
                   <Typography variant="subtitle1" gutterBottom>
                     Manual Backup & Maintenance
                   </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    <Button 
-                      variant="outlined" 
+                  <Box
+                    sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 2 }}
+                  >
+                    <Button
+                      variant="outlined"
                       startIcon={<SystemUpdateIcon />}
                       onClick={handleCreateBackup}
                     >
                       Create Backup Now
                     </Button>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       color="warning"
                       onClick={handleOptimizeDatabase}
                     >
                       Optimize Database
                     </Button>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       color="error"
                       onClick={handleClearCache}
                     >
@@ -713,7 +985,10 @@ const SystemSettings = () => {
       </Grid>
 
       {/* Test Email Dialog */}
-      <Dialog open={testEmailDialogOpen} onClose={() => setTestEmailDialogOpen(false)}>
+      <Dialog
+        open={testEmailDialogOpen}
+        onClose={() => setTestEmailDialogOpen(false)}
+      >
         <DialogTitle>Send Test Email</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -733,43 +1008,44 @@ const SystemSettings = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTestEmailDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleSendTestEmail} 
-            variant="contained" 
+          <Button
+            onClick={handleSendTestEmail}
+            variant="contained"
             color="primary"
             disabled={actionInProgress}
           >
-            {actionInProgress ? 'Sending...' : 'Send Test Email'}
+            {actionInProgress ? "Sending..." : "Send Test Email"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+      >
         <DialogTitle>{confirmTitle}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            {confirmMessage}
-          </DialogContentText>
+          <DialogContentText>{confirmMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleConfirmAction} 
-            variant="contained" 
+          <Button
+            onClick={handleConfirmAction}
+            variant="contained"
             color="primary"
             disabled={actionInProgress}
           >
-            {actionInProgress ? 'Processing...' : 'Confirm'}
+            {actionInProgress ? "Processing..." : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
           {snackbar.message}
@@ -779,4 +1055,4 @@ const SystemSettings = () => {
   );
 };
 
-export default SystemSettings; 
+export default SystemSettings;

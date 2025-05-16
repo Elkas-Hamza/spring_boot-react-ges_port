@@ -21,10 +21,11 @@ const UserForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    nom: "",
+    prenom: "",
     role: "USER",
   });
 
@@ -37,12 +38,6 @@ const UserForm = () => {
     message: "",
     severity: "success",
   });
-
-  useEffect(() => {
-    if (isEditMode) {
-      fetchUser();
-    }
-  }, [isEditMode, id, fetchUser]);
   const fetchUser = useCallback(async () => {
     setInitialLoading(true);
     setError(null);
@@ -51,6 +46,8 @@ const UserForm = () => {
       setFormData({
         email: response.data.email,
         role: response.data.role,
+        nom: response.data.nom || "",
+        prenom: response.data.prenom || "",
         password: "", // Password is not returned from API
       });
     } catch (err) {
@@ -65,6 +62,11 @@ const UserForm = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (isEditMode) {
+      fetchUser();
+    }
+  }, [isEditMode, id, fetchUser]);
   const validateForm = () => {
     const newErrors = {};
 
@@ -78,6 +80,14 @@ const UserForm = () => {
       newErrors.password = "Password is required";
     } else if (!isEditMode && formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!formData.nom) {
+      newErrors.nom = "First Name (Nom) is required";
+    }
+
+    if (!formData.prenom) {
+      newErrors.prenom = "Last Name (Prenom) is required";
     }
 
     if (!formData.role) {
@@ -106,6 +116,8 @@ const UserForm = () => {
         // For edit, only send the changed fields
         const updateData = {
           email: formData.email,
+          nom: formData.nom,
+          prenom: formData.prenom,
           role: formData.role,
         };
 
@@ -126,12 +138,12 @@ const UserForm = () => {
           open: true,
           message: "User created successfully",
           severity: "success",
-        });
-
-        // Reset form after successful creation
+        }); // Reset form after successful creation
         setFormData({
           email: "",
           password: "",
+          nom: "",
+          prenom: "",
           role: "USER",
         });
       }
@@ -169,18 +181,61 @@ const UserForm = () => {
   if (error) {
     return <ErrorHandler message={error} onRetry={fetchUser} />;
   }
-
   return (
-    <div className="p-6">
-      <Typography variant="h4" gutterBottom>
-        {isEditMode ? "Edit User" : "Create New User"}
-      </Typography>
+    <Box
+      sx={{
+        p: 4,
+        maxWidth: 800,
+        mx: "auto",
+        animation: "fadeIn 0.5s ease-in-out",
+        "@keyframes fadeIn": {
+          "0%": { opacity: 0, transform: "translateY(10px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 4,
+          pb: 2,
+          borderBottom: "1px solid rgba(0,0,0,0.1)",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 600,
+            color: "#1976d2",
+            flexGrow: 1,
+          }}
+        >
+          {isEditMode ? "Edit User Account" : "Create New User Account"}
+        </Typography>
+      </Box>
 
-      <Paper elevation={3} className="p-6 mt-4">
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          borderRadius: 2,
+          backgroundColor: "#ffffff",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        }}
+      >
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-6">
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{ mb: 3, fontWeight: 500 }}
+            >
+              Account Information
+            </Typography>
+
             <TextField
-              label="Email"
+              label="Email Address"
               name="email"
               value={formData.email}
               onChange={handleChange}
@@ -190,7 +245,60 @@ const UserForm = () => {
               required
               type="email"
               autoComplete="email"
+              sx={{ mb: 3 }}
+              InputProps={{
+                sx: { borderRadius: 1.5 },
+              }}
             />
+
+            <Box
+              sx={{
+                display: "flex",
+                gap: 3,
+                mb: 3,
+                flexDirection: { xs: "column", sm: "row" },
+              }}
+            >
+              <TextField
+                label="First Name"
+                name="nom"
+                value={formData.nom}
+                onChange={handleChange}
+                fullWidth
+                error={!!errors.nom}
+                helperText={errors.nom}
+                required
+                autoComplete="given-name"
+                InputProps={{
+                  sx: { borderRadius: 1.5 },
+                }}
+              />
+
+              <TextField
+                label="Last Name"
+                name="prenom"
+                value={formData.prenom}
+                onChange={handleChange}
+                fullWidth
+                error={!!errors.prenom}
+                helperText={errors.prenom}
+                required
+                autoComplete="family-name"
+                InputProps={{
+                  sx: { borderRadius: 1.5 },
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{ mb: 3, fontWeight: 500 }}
+            >
+              Security
+            </Typography>
 
             <TextField
               label={
@@ -203,23 +311,31 @@ const UserForm = () => {
               onChange={handleChange}
               fullWidth
               error={!!errors.password}
-              helperText={errors.password}
+              helperText={
+                errors.password || "Must be at least 6 characters long"
+              }
               required={!isEditMode}
               type="password"
               autoComplete={isEditMode ? "new-password" : "current-password"}
+              sx={{ mb: 3 }}
+              InputProps={{
+                sx: { borderRadius: 1.5 },
+              }}
             />
 
-            <FormControl fullWidth error={!!errors.role}>
-              <InputLabel id="role-label">Role</InputLabel>
+            <FormControl fullWidth error={!!errors.role} sx={{ mb: 1 }}>
+              <InputLabel id="role-label">User Role</InputLabel>
               <Select
                 labelId="role-label"
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                label="Role"
+                label="User Role"
                 required
+                sx={{ borderRadius: 1.5 }}
               >
-                <MenuItem value="USER">User</MenuItem>
+                <MenuItem value="USER">Standard User</MenuItem>
+                <MenuItem value="ADMIN">Administrator</MenuItem>
               </Select>
               {errors.role && (
                 <Box
@@ -230,14 +346,32 @@ const UserForm = () => {
                 </Box>
               )}
             </FormControl>
-          </div>
+            <Typography variant="caption" color="text.secondary">
+              Set appropriate permissions level for this user account
+            </Typography>
+          </Box>
 
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              mt: 4,
+              pt: 3,
+              display: "flex",
+              justifyContent: "space-between",
+              borderTop: "1px solid rgba(0,0,0,0.1)",
+            }}
+          >
             <Button
               component={Link}
               to="/users"
               variant="outlined"
               color="secondary"
+              sx={{
+                px: 4,
+                py: 1.2,
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
             >
               Cancel
             </Button>
@@ -246,11 +380,19 @@ const UserForm = () => {
               variant="contained"
               color="primary"
               disabled={loading}
+              sx={{
+                px: 4,
+                py: 1.2,
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                boxShadow: 2,
+              }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : isEditMode ? (
-                "Update User"
+                "Save Changes"
               ) : (
                 "Create User"
               )}
@@ -263,17 +405,33 @@ const UserForm = () => {
         open={notification.open}
         autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: 2,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          },
+        }}
       >
         <Alert
           onClose={handleCloseNotification}
           severity={notification.severity}
           variant="filled"
+          sx={{
+            width: "100%",
+            alignItems: "center",
+            "& .MuiAlert-icon": {
+              fontSize: "1.5rem",
+            },
+            "& .MuiAlert-message": {
+              fontSize: "0.95rem",
+            },
+          }}
         >
           {notification.message}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 };
 
