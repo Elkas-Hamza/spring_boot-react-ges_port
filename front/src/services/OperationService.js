@@ -1,4 +1,4 @@
-import axiosInstance from './AxiosConfig';
+import axiosInstance from "./AxiosConfig";
 
 const ENDPOINT = "/operations";
 
@@ -6,9 +6,18 @@ class OperationService {
   getAllOperations() {
     return axiosInstance.get(ENDPOINT);
   }
-
   getAllOperationsWithDetails() {
-    return axiosInstance.get(`${ENDPOINT}/with-details`);
+    console.log("Fetching operations with details...");
+    return axiosInstance
+      .get(`${ENDPOINT}/with-details`)
+      .then((response) => {
+        console.log("Operations API response:", response);
+        return response;
+      })
+      .catch((error) => {
+        console.error("Error fetching operations:", error);
+        throw error;
+      });
   }
 
   getOperationById(id) {

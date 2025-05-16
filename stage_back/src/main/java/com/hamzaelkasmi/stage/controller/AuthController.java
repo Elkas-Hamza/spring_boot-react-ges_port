@@ -29,16 +29,16 @@ public class AuthController {
 
         String email = loginRequest.get("email");
         String password = loginRequest.get("password");
-        
-        try {
-            String token = authService.authenticate(email, password);
+          try {            String token = authService.authenticate(email, password);
             User user = userService.getUserByEmail(email);
             return ResponseEntity.ok().body(Map.of(
                 "token", token,
                 "user", Map.of(
                     "id", user.getId(),
                     "email", user.getEmail(),
-                    "role", user.getRole()
+                    "role", user.getRole(),
+                    "nom", user.getNom(),
+                    "prenom", user.getPrenom()
                 )
             ));
         } catch (RuntimeException e) {

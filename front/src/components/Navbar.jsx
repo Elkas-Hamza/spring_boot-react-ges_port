@@ -17,6 +17,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  Chip,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import AuthService from "../services/AuthService";
@@ -37,6 +38,11 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import LogoutIcon from "@mui/icons-material/Logout";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import CodeIcon from "@mui/icons-material/Code";
+import UserService from "../services/UserService";
 import "./Navbar.css";
 
 const COLLAPSED_WIDTH = 61;
@@ -51,27 +57,68 @@ const Navbar = () => {
   const [openSubMenu, setOpenSubMenu] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
-  const email = localStorage.getItem("email") || "user";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [user, setUser] = useState({
+    email: localStorage.getItem("email") || "user",
+    nom:
+      localStorage.getItem("userName") ||
+      localStorage.getItem("email")?.split("@")[0] ||
+      "User",
+    prenom: localStorage.getItem("userLastName") || "",
+    role: localStorage.getItem("userRole") || "USER",
+  });
 
   useEffect(() => {
     setDrawerOpen(!isMobile);
     setCollapsed(!isMobile);
   }, [isMobile]);
+  const fetchUserDetails = async () => {
+    console.log("Fetching user details from database...");
+    try {
+      const userData = await UserService.getCurrentUserDetails();
+      if (userData) {
+        console.log("User data fetched successfully:", userData);
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          nom: userData.nom || userData.email.split("@")[0],
+          prenom: userData.prenom || "",
+          role: userData.role,
+        });
+        console.log("User state updated with database values");
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      console.log("Using localStorage values as fallback");
+      // Keep using localStorage values as fallback (already set in useState)
+    }
+  };
 
   useEffect(() => {
-    const user = AuthService.getCurrentUser();
-    if (user && user.token) {
-      setIsAuthenticated(true);
-      setUserRole(user.role);
-    }
+    fetchUserDetails();
   }, []);
 
+  useEffect(() => {
+    const currentUser = AuthService.getCurrentUser();
+    if (currentUser && currentUser.token) {
+      setIsAuthenticated(true);
+      setUserRole(currentUser.role);
+
+      // Re-fetch user details when the component mounts
+      fetchUserDetails();
+    }
+  }, []);
   const handleLogout = () => {
     AuthService.logout();
     setIsAuthenticated(false);
     setUserRole(null);
+    setUser({
+      email: "",
+      nom: "",
+      prenom: "",
+      role: "",
+    });
     setAnchorEl(null);
     window.location.href = "/";
   };
@@ -83,10 +130,15 @@ const Navbar = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
   const handleChangePassword = () => {
     handleMenuClose();
     navigate("/change-password");
+  };
+
+  const handleDebugUserData = () => {
+    handleMenuClose();
+    UserService.debugUserData();
+    fetchUserDetails();
   };
 
   const toggleCollapse = () => {
@@ -274,12 +326,16 @@ const Navbar = () => {
           minHeight: 100,
         }}
       >
+        {" "}
         <Avatar sx={{ width: 40, height: 40, mb: 1, bgcolor: "primary.main" }}>
-          {email.charAt(0).toUpperCase()}
+          {user.nom.charAt(0).toUpperCase()}
+          {user.prenom ? user.prenom.charAt(0).toUpperCase() : ""}
         </Avatar>
         {!collapsed && (
           <>
-            <Typography>{email}</Typography>
+            <Typography>
+              {user.prenom ? `${user.nom} ${user.prenom}` : user.nom}
+            </Typography>
             <Typography variant="body2" color="textSecondary">
               {userRole === "ADMIN" ? "Administrator" : "User"}
             </Typography>
@@ -456,6 +512,7 @@ const Navbar = () => {
 
   return (
     <>
+      {" "}
       <AppBar
         position="fixed"
         sx={{
@@ -476,18 +533,68 @@ const Navbar = () => {
             Port Management
           </Typography>
           <IconButton color="inherit" onClick={handleProfileClick}>
+            {" "}
             <Avatar sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}>
-              {email.charAt(0).toUpperCase()}
+              {user.nom.charAt(0).toUpperCase()}
+              {user.prenom ? user.prenom.charAt(0).toUpperCase() : ""}
             </Avatar>
-          </IconButton>
+          </IconButton>{" "}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
+            PaperProps={{
+              sx: { width: 220, maxWidth: "100%" },
+            }}
           >
-            <MenuItem disabled>{email}</MenuItem>
-            <MenuItem onClick={handleChangePassword}>Change Password</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            <Box sx={{ px: 2, py: 1 }}>
+              {" "}
+              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                {user.prenom ? `${user.nom} ${user.prenom}` : user.nom}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {user.email}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
+                <Chip
+                  label={user.role}
+                  color={user.role === "ADMIN" ? "error" : "primary"}
+                  size="small"
+                  variant="outlined"
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="caption" color="textSecondary">
+                  ID: {user.id || localStorage.getItem("userId")}
+                </Typography>
+              </Box>
+            </Box>
+            <Divider />
+            <MenuItem onClick={handleChangePassword}>
+              <ListItemIcon>
+                <VpnKeyIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Change Password" />
+            </MenuItem>{" "}
+            <MenuItem onClick={() => fetchUserDetails()}>
+              <ListItemIcon>
+                <RefreshIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Refresh User Data" />
+            </MenuItem>
+            {process.env.NODE_ENV === "development" && (
+              <MenuItem onClick={handleDebugUserData}>
+                <ListItemIcon>
+                  <CodeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Debug User Data" />
+              </MenuItem>
+            )}
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon sx={{ color: "error.main" }}>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>

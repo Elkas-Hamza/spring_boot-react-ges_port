@@ -8,12 +8,43 @@ const OperationItem = ({ operation, onDelete }) => {
   const hasCheckedArretsRef = useRef(false);
   const isMounted = useRef(true);
 
+  // Function to check for active arrêts - defined before it's used in useEffect
+  const checkForActiveArrets = useCallback(async () => {
+    try {
+      const activeArrets = await ArretService.getActiveArretsForOperation(
+        operation.id_operation
+      );
+
+      // Only update state if component still mounted
+      if (isMounted.current) {
+        // If there are active arrêts, set status to "En pause"
+        if (activeArrets && activeArrets.length > 0) {
+          setDisplayStatus("En pause");
+        } else {
+          // Otherwise, use operation's status or default to "En cours"
+          setDisplayStatus(operation.status || "En cours");
+        }
+
+        // Mark that we've checked
+        hasCheckedArretsRef.current = true;
+      }
+    } catch (error) {
+      // Only update state if component still mounted
+      if (isMounted.current) {
+        console.error("Error checking for active arrêts:", error);
+        setDisplayStatus(operation.status || "En cours");
+        hasCheckedArretsRef.current = true;
+      }
+    }
+  }, [operation.id_operation, operation.status]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
+
   // Determine initial status based on dates when component mounts
   useEffect(() => {
     // Reset check status when operation changes
@@ -64,35 +95,6 @@ const OperationItem = ({ operation, onDelete }) => {
       determineStatus();
     }
   }, [operation, checkForActiveArrets]);
-  // Function to check for active arrêts
-  const checkForActiveArrets = useCallback(async () => {
-    try {
-      const activeArrets = await ArretService.getActiveArretsForOperation(
-        operation.id_operation
-      );
-
-      // Only update state if component still mounted
-      if (isMounted.current) {
-        // If there are active arrêts, set status to "En pause"
-        if (activeArrets && activeArrets.length > 0) {
-          setDisplayStatus("En pause");
-        } else {
-          // Otherwise, use operation's status or default to "En cours"
-          setDisplayStatus(operation.status || "En cours");
-        }
-
-        // Mark that we've checked
-        hasCheckedArretsRef.current = true;
-      }
-    } catch (error) {
-      // Only update state if component still mounted
-      if (isMounted.current) {
-        console.error("Error checking for active arrêts:", error); // Set default status and mark checked
-        setDisplayStatus(operation.status || "En cours");
-        hasCheckedArretsRef.current = true;
-      }
-    }
-  }, [operation.id_operation, operation.status]);
 
   // Format date strings to readable format
   const formatDateTime = (dateTimeStr) => {
@@ -119,6 +121,12 @@ const OperationItem = ({ operation, onDelete }) => {
     }
   };
 
+  // Safety check to prevent render errors with incomplete data
+  if (!operation || !operation.id_operation) {
+    console.error("Invalid operation data:", operation);
+    return null; // Don't render anything if data is invalid
+  }
+  
   // Show a default status if displayStatus is empty
   const status = displayStatus || operation.status || "En cours";
 
@@ -159,3 +167,4 @@ const OperationItem = ({ operation, onDelete }) => {
 };
 
 export default OperationItem;
+
