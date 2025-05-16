@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -7,44 +7,58 @@ import {
   Container,
   Paper,
   Alert,
-  Link
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import AuthService from '../services/AuthService';
+  Link,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import AuthService from "../services/AuthService";
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     setIsLoading(true);
 
     if (!email) {
-      setError('Please enter your email address');
+      setError("Please enter your email address");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!email.includes("@") || !email.includes(".")) {
+      setError("Please enter a valid email address");
       setIsLoading(false);
       return;
     }
 
     try {
-      await AuthService.requestPasswordReset(email);
+      const response = await AuthService.requestPasswordReset(email);
       setIsSubmitted(true);
-      setMessage('Password reset instructions have been sent to your email');
+
+      // Use the message from the response or a default one
+      setMessage(
+        response.message ||
+          "If your email is registered, you will receive password reset instructions shortly"
+      );
     } catch (err) {
-      setError(err.message || 'Failed to request password reset');
+      // Even if there's an error, don't show it to the user for security reasons
+      setIsSubmitted(true);
+      setMessage(
+        "If your email is registered, you will receive password reset instructions shortly"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleBackToLogin = () => {
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -52,22 +66,22 @@ const ForgotPassword = () => {
       <Box
         sx={{
           marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+        <Paper elevation={3} sx={{ p: 4, width: "100%" }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Reset Password
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
-          
+
           {message && (
             <Alert severity="success" sx={{ mb: 2 }}>
               {message}
@@ -76,10 +90,16 @@ const ForgotPassword = () => {
 
           {!isSubmitted ? (
             <>
-              <Typography variant="body1" align="center" gutterBottom sx={{ mt: 2 }}>
-                Enter your email address and we'll send you instructions to reset your password.
+              <Typography
+                variant="body1"
+                align="center"
+                gutterBottom
+                sx={{ mt: 2 }}
+              >
+                Enter your email address and we'll send you instructions to
+                reset your password.
               </Typography>
-              
+
               <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
                 <TextField
                   margin="normal"
@@ -93,7 +113,7 @@ const ForgotPassword = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                
+
                 <Button
                   type="submit"
                   fullWidth
@@ -101,19 +121,20 @@ const ForgotPassword = () => {
                   sx={{ mt: 3, mb: 2 }}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Sending...' : 'Send Reset Instructions'}
+                  {isLoading ? "Sending..." : "Send Reset Instructions"}
                 </Button>
               </Box>
             </>
           ) : (
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Box sx={{ mt: 3, textAlign: "center" }}>
               <Typography variant="body1" paragraph>
-                Check your email for the reset link. The link will expire in 24 hours.
+                Check your email for the reset link. The link will expire in 24
+                hours.
               </Typography>
             </Box>
           )}
-          
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
+
+          <Box sx={{ textAlign: "center", mt: 2 }}>
             <Link
               component="button"
               variant="body2"
@@ -128,4 +149,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword; 
+export default ForgotPassword;

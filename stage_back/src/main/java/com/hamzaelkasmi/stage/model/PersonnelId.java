@@ -2,12 +2,16 @@ package com.hamzaelkasmi.stage.model;
 
 import java.io.Serializable;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Composite key class for Personnel entity
  */
 public class PersonnelId implements Serializable {
+    @JsonProperty("id_personnel")
     private Integer ID_personnel;
+    
+    @JsonProperty("matricule_personnel")
     private String MATRICULE_personnel;
     
     public PersonnelId() {

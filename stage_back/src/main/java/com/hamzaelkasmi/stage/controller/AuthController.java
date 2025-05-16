@@ -62,20 +62,32 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-    }
-
-    @PostMapping("/reset-password-request")
+    }    @PostMapping("/reset-password-request")
     public ResponseEntity<?> requestPasswordReset(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        if (email == null) {
+        if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
         }
 
         try {
+            // Log the request
+            System.out.println("Password reset requested for email: " + email);
+            
+            // Call service method
             userService.requestPasswordReset(email);
-            return ResponseEntity.ok().body(Map.of("message", "Password reset instructions sent to your email"));
+            
+            // For security reasons, always return success even if email doesn't exist
+            return ResponseEntity.ok().body(Map.of(
+                "message", "If your email is registered, you will receive password reset instructions shortly"
+            ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            // Log the error
+            System.err.println("Error in password reset request: " + e.getMessage());
+            
+            // For security reasons, don't expose specific errors
+            return ResponseEntity.ok().body(Map.of(
+                "message", "If your email is registered, you will receive password reset instructions shortly"
+            ));
         }
     }
 

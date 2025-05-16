@@ -380,14 +380,17 @@ const EquipeDetails = () => {
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
           <Button
-            onClick={() => window.location.href = `/equipes/edit/${id}`}
+            onClick={() => (window.location.href = `/equipes/edit/${id}`)}
             variant="contained"
             color="primary"
             sx={{ mr: 1 }}
           >
             Modifier
           </Button>
-          <Button onClick={() => window.location.href = "/equipes"} variant="outlined">
+          <Button
+            onClick={() => (window.location.href = "/equipes")}
+            variant="outlined"
+          >
             Retour à la liste
           </Button>
         </Box>
@@ -533,12 +536,13 @@ const EquipeDetails = () => {
               {(equipe.personnel || []).length > 0 ? (
                 equipe.personnel.map((person) => (
                   <TableRow key={person.matricule_personnel}>
+                    {" "}
                     <TableCell>{person.matricule_personnel}</TableCell>
                     <TableCell>{person.nom_personnel}</TableCell>
                     <TableCell>{person.prenom_personnel}</TableCell>
                     <TableCell>{person.fonction_personnel}</TableCell>
                     <TableCell>
-                      {person.CONTACT_personnel || "Non spécifié"}
+                      {person.contact_personnel || "Non spécifié"}
                     </TableCell>
                     <TableCell>
                       <Button

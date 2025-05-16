@@ -19,13 +19,14 @@ public class Equipe {
     private String id_equipe;
 
     @Column(name = "NOM_equipe", nullable = false, length = 100)
-    private String nom_equipe;
-
-    @ManyToMany
+    private String nom_equipe;    @ManyToMany
     @JoinTable(
         name = "equipe_has_personnel",
         joinColumns = @JoinColumn(name = "equipe_ID_equipe"),
-        inverseJoinColumns = @JoinColumn(name = "personnel_MATRICULE_personnel", referencedColumnName = "MATRICULE_personnel")
+        inverseJoinColumns = {
+            @JoinColumn(name = "personnel_ID_personnel", referencedColumnName = "ID_personnel"),
+            @JoinColumn(name = "personnel_MATRICULE_personnel", referencedColumnName = "MATRICULE_personnel")
+        }
     )
     private Set<Personnel> personnel = new HashSet<>();
 

@@ -28,9 +28,7 @@ public class EquipeService {
 
     public List<Equipe> getAllEquipes() {
         return equipeRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
+    }    @Transactional(readOnly = true)
     public Optional<Equipe> getEquipeById(String id) {
         Optional<Equipe> equipeOpt = equipeRepository.findByEquipeId(id);
         
@@ -46,6 +44,11 @@ public class EquipeService {
         });
         
         return equipeOpt;
+    }
+    
+    @Transactional(readOnly = true)
+    public Optional<Personnel> getPersonnelByMatricule(String matricule) {
+        return personnelRepository.findByMatricule(matricule);
     }
     
     public List<Equipe> searchEquipesByName(String name) {
@@ -79,15 +82,14 @@ public class EquipeService {
     @Transactional
     public void deleteEquipe(String id) {
         equipeRepository.deleteById(id);
-    }
-    
-    @Transactional
+    }    @Transactional
     public Equipe addPersonnelToEquipe(String equipeId, String personnelId) {
         Equipe equipe = getEquipeById(equipeId)
                 .orElseThrow(() -> new RuntimeException("Equipe not found with id: " + equipeId));
                 
-        Personnel personnel = personnelRepository.findById(personnelId)
-                .orElseThrow(() -> new RuntimeException("Personnel not found with id: " + personnelId));
+        // Find personnel by MATRICULE_personnel instead of the composite key
+        Personnel personnel = personnelRepository.findByMatricule(personnelId)
+                .orElseThrow(() -> new RuntimeException("Personnel not found with matricule: " + personnelId));
         
         try {
             // Get the EntityManager from the repository
@@ -111,45 +113,14 @@ public class EquipeService {
                 // Continue with insertion attempt
             }
             
-            // Get schema information to check column type
-            try {
-                // Try to directly insert using a numeric value for the ID column
-                // Extract numeric part if possible, or use a default
-                int numericId = 0;
-                try {
-                    // Try to extract numeric part from personnelId if it's in format like "MARMA-001"
-                    String[] parts = personnelId.split("-");
-                    if (parts.length > 1) {
-                        numericId = Integer.parseInt(parts[parts.length-1]);
-                    }
-                } catch (Exception ex) {
-                    // If extraction fails, use a random number
-                    numericId = (int)(Math.random() * 10000);
-                }
-                
-                String sql = "INSERT INTO equipe_has_personnel (equipe_ID_equipe, personnel_MATRICULE_personnel, personnel_ID_personnel) VALUES (?, ?, ?)";
-                entityManager.createNativeQuery(sql)
-                    .setParameter(1, equipeId)
-                    .setParameter(2, personnelId)
-                    .setParameter(3, numericId)
-                    .executeUpdate();
-                System.out.println("Successfully added personnel to equipe using numeric ID: " + numericId);
-            } catch (Exception e) {
-                System.out.println("Error with integer ID insert: " + e.getMessage());
-                
-                // Try one more approach - use a direct SQL statement with explicit type casting
-                try {
-                    String directSql = "INSERT INTO equipe_has_personnel (equipe_ID_equipe, personnel_MATRICULE_personnel, personnel_ID_personnel) " +
-                                       "VALUES ('" + equipeId + "', '" + personnelId + "', 1)";
-                    entityManager.createNativeQuery(directSql).executeUpdate();
-                    System.out.println("Successfully added personnel to equipe using direct SQL with hardcoded ID");
-                } catch (Exception e3) {
-                    throw new RuntimeException("Failed to add personnel to equipe: " + e3.getMessage(), e3);
-                }
-            }
-                
+            // Simply use JPA's association management instead of raw SQL
+            equipe.addPersonnel(personnel);
+            equipeRepository.save(equipe);
+            
             // Refresh the equipe entity to reflect the changes
             entityManager.refresh(equipe);
+            
+            System.out.println("Successfully added personnel to equipe using JPA relationships");
             
             return equipe;
         } catch (Exception e) {

@@ -76,6 +76,17 @@ const ShiftForm = () => {
       return;
     }
 
+    // Make sure time values are in the correct format (HH:mm)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(shift.heure_debut) || !timeRegex.test(shift.heure_fin)) {
+      setNotification({
+        open: true,
+        message: "Les heures doivent être au format HH:mm",
+        severity: "error",
+      });
+      return;
+    }
+
     // Validate times
     // if (shift.heure_debut >= shift.heure_fin) {
     //   setNotification({
@@ -103,13 +114,20 @@ const ShiftForm = () => {
           severity: "success",
         });
       }
-      // Redirect after a short delay - fixed the route to match App.js configuration
       setTimeout(() => navigate("/shifts"), 1500);
     } catch (error) {
       console.error("Error saving shift:", error);
+      let errorMessage = "Erreur lors de l'enregistrement";
+      
+      if (error.response) {
+        if (error.response.data && error.response.data.message) {
+          errorMessage += `: ${error.response.data.message}`;
+        }
+      }
+      
       setNotification({
         open: true,
-        message: "Erreur lors de l'enregistrement",
+        message: errorMessage,
         severity: "error",
       });
     } finally {
@@ -158,6 +176,7 @@ const ShiftForm = () => {
             fullWidth
             margin="normal"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ step: 300 }} // 5 min steps
             required
           />
 
@@ -170,6 +189,7 @@ const ShiftForm = () => {
             fullWidth
             margin="normal"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ step: 300 }} // 5 min steps
             required
           />
 
@@ -204,6 +224,7 @@ const ShiftForm = () => {
           onClose={handleCloseNotification}
           severity={notification.severity}
           variant="filled"
+          sx={{ width: '100%' }}
         >
           {notification.message}
         </Alert>

@@ -192,7 +192,7 @@ public class ConteneureController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @GetMapping("/ship/{shipId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<List<Conteneure>> getShipContainers(@PathVariable("shipId") String shipId) {
@@ -201,7 +201,7 @@ public class ConteneureController {
             if (!navire.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            
+
             List<Conteneure> shipContainers = conteneureService.getShipConteneures(navire.get());
             return new ResponseEntity<>(shipContainers, HttpStatus.OK);
         } catch (Exception e) {

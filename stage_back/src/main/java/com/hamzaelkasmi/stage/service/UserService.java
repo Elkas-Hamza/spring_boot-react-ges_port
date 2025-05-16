@@ -102,23 +102,45 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-    }
+    }    public void requestPasswordReset(String email) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (!userOptional.isPresent()) {
+                // For security reasons, don't reveal whether email exists or not
+                // but log the error for debugging
+                System.out.println("Password reset requested for non-existent email: " + email);
+                return; // Return silently without throwing exception
+            }
+            
+            User user = userOptional.get();
+            String token = UUID.randomUUID().toString();
+            user.setResetToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
+            userRepository.save(user);
 
-    public void requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-
-        String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
-        userRepository.save(user);
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("Password Reset Request");
-        message.setText("To reset your password, click the following link: "
-                + "http://localhost:3000/reset-password?token=" + token);
-        mailSender.send(message);
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(email);
+                message.setFrom("marsamaroc.system@gmail.com");
+                message.setSubject("Password Reset Request - Système de Management des Ports");
+                message.setText("Dear User,\n\n"
+                        + "You have requested to reset your password. Please click on the link below to reset your password:\n\n"
+                        + "http://localhost:3000/reset-password?token=" + token + "\n\n"
+                        + "This link will expire in 24 hours. If you did not request a password reset, please ignore this email.\n\n"
+                        + "Thank you,\nThe Management");
+                
+                System.out.println("Attempting to send email to " + email + " with token: " + token);
+                mailSender.send(message);
+                System.out.println("Email sent successfully");
+            } catch (Exception e) {
+                // Log the email sending failure but don't throw error to the client
+                System.err.println("Failed to send password reset email: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Failed to send password reset email. Please contact support.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error processing password reset request: " + e.getMessage());
+        }
     }
 
     public void resetPassword(String token, String newPassword) {

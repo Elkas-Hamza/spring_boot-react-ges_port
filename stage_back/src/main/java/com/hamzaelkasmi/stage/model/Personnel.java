@@ -2,26 +2,39 @@ package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "personnel")
+@IdClass(PersonnelId.class)
 public class Personnel {
     @Id
+    @Column(name = "ID_personnel", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id_personnel")
+    private Integer ID_personnel;
+    
+    @Id
     @Column(name = "MATRICULE_personnel", nullable = false)
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
+    @GeneratedValue(generator = "personnel-id-generator")
+    @GenericGenerator(name = "personnel-id-generator", strategy = "com.hamzaelkasmi.stage.generateure.PersonnelIdGenerator")
+    @JsonProperty("matricule_personnel")
     private String MATRICULE_personnel;
 
     @Column(name = "NOM_personnel", nullable = false, length = 45)
+    @JsonProperty("nom_personnel")
     private String NOM_personnel;
 
     @Column(name = "PRENOM_personnel", nullable = false, length = 45)
+    @JsonProperty("prenom_personnel")
     private String PRENOM_personnel;
 
     @Column(name = "FONCTION_personnel", nullable = false, length = 45)
+    @JsonProperty("fonction_personnel")
     private String FONCTION_personnel;
     
     @Column(name = "CONTACT_personnel", length = 45)
+    @JsonProperty("contact_personnel")
     private String CONTACT_personnel;
 
     // Constructors
@@ -35,9 +48,15 @@ public class Personnel {
         this.PRENOM_personnel = PRENOM_personnel;
         this.FONCTION_personnel = FONCTION_personnel;
         this.CONTACT_personnel = CONTACT_personnel;
+    }    // Getters and Setters
+    public Integer getID_personnel() {
+        return ID_personnel;
     }
-
-    // Getters and Setters
+    
+    public void setID_personnel(Integer ID_personnel) {
+        this.ID_personnel = ID_personnel;
+    }
+    
     public String getMATRICULE_personnel() {
         return MATRICULE_personnel;
     }
@@ -76,13 +95,12 @@ public class Personnel {
     
     public void setCONTACT_personnel(String CONTACT_personnel) {
         this.CONTACT_personnel = CONTACT_personnel;
-    }
-
-    // toString method
+    }    // toString method
     @Override
     public String toString() {
         return "Personnel{" +
-                "MATRICULE_personnel='" + MATRICULE_personnel + '\'' +
+                "ID_personnel=" + ID_personnel +
+                ", MATRICULE_personnel='" + MATRICULE_personnel + '\'' +
                 ", NOM_personnel='" + NOM_personnel + '\'' +
                 ", PRENOM_personnel='" + PRENOM_personnel + '\'' +
                 ", FONCTION_personnel='" + FONCTION_personnel + '\'' +

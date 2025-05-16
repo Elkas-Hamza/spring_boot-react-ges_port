@@ -19,11 +19,9 @@ public class PersonnelController {
     @GetMapping
     public List<Personnel> getAllPersonnel() {
         return personnelService.getAllPersonnel();
-    }
-
-    @GetMapping("/{matricule}")
+    }    @GetMapping("/{matricule}")
     public ResponseEntity<Personnel> getPersonnelById(@PathVariable("matricule") String matricule) {
-        return personnelService.getPersonnelById(matricule)
+        return personnelService.getPersonnelByMatricule(matricule)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -46,25 +44,23 @@ public class PersonnelController {
         // Save personnel
         Personnel savedPersonnel = personnelService.savePersonnel(personnel);
         return ResponseEntity.ok(savedPersonnel);
-    }
-
-    @PutMapping("/{matricule}")
+    }    @PutMapping("/{matricule}")
     public ResponseEntity<Personnel> updatePersonnel(@PathVariable("matricule") String matricule, @RequestBody Personnel personnel) {
         if (!isPersonnelValidForUpdate(personnel)) {
             return ResponseEntity.badRequest().build();
         }
 
-        return personnelService.getPersonnelById(matricule)
+        return personnelService.getPersonnelByMatricule(matricule)
                 .map(existing -> {
+                    // Copy ID_personnel from existing entity to maintain the composite key
+                    personnel.setID_personnel(existing.getID_personnel());
                     personnel.setMATRICULE_personnel(matricule);
                     return ResponseEntity.ok(personnelService.savePersonnel(personnel));
                 })
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{matricule}")
+    }    @DeleteMapping("/{matricule}")
     public ResponseEntity<Void> deletePersonnel(@PathVariable("matricule") String matricule) {
-        personnelService.deletePersonnel(matricule);
+        personnelService.deletePersonnelByMatricule(matricule);
         return ResponseEntity.noContent().build();
     }
 

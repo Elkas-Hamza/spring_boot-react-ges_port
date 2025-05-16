@@ -10,8 +10,8 @@ class ShiftService {
   getShiftById(id) {
     return axiosInstance.get(`${ENDPOINT}/${id}`);
   }
-
   createShift(data) {
+    console.log("Sending shift data to server:", data);
     return axiosInstance.post(ENDPOINT, data);
   }
 

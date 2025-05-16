@@ -151,7 +151,13 @@ const NavireDetail = () => {
                     `Container ${container.id_conteneure} has no type_conteneure information, using default`
                   );
                 }
-
+                const dateValue = container.D
+    
+                // Log the date field to help debug
+                if (!dateValue) {
+                  console.warn(`Container ${container.id_conteneure} missing date field. Available fields:`, 
+                    Object.keys(container));
+                }
                 // Normalize field names to match what the UI expects
                 return {
                   id_conteneure: container.id_conteneure,
@@ -828,7 +834,6 @@ const NavireDetail = () => {
                 <TableCell>Nom</TableCell>
                 <TableCell>Type de conteneur</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Date d'ajout</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -880,11 +885,7 @@ const NavireDetail = () => {
                         </Box>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {container.dateAjout
-                        ? new Date(container.dateAjout).toLocaleDateString()
-                        : "Non spécifiée"}
-                    </TableCell>
+
                     <TableCell>
                       <Tooltip title="Voir détails">
                         <IconButton

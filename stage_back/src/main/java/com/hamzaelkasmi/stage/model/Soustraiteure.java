@@ -5,11 +5,10 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "Soustraiteure")
-public class Soustraiteure {
-    @Id
+public class Soustraiteure {    @Id
     @Column(name = "MATRICULE_soustraiteure", nullable = false)
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
+    @GeneratedValue(generator = "soustraiteure-id-generator")
+    @GenericGenerator(name = "soustraiteure-id-generator", strategy = "com.hamzaelkasmi.stage.generateure.SoustraiteureIdGenerator")
     private String MATRICULE_soustraiteure;
 
     @Column(name = "NOM_soustraiteure", nullable = false, length = 45)

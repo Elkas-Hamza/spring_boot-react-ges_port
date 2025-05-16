@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,15 +33,30 @@ public class ShiftController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-    }
-
-    @PostMapping
-    public ResponseEntity<Shift> createShift(@RequestBody Shift shift) {
+    }    @PostMapping
+    public ResponseEntity<Object> createShift(@RequestBody Shift shift) {
         try {
+            System.out.println("Received shift data: " + shift);
+            System.out.println("Received time values - debut: " + shift.getHeure_debut() + ", fin: " + shift.getHeure_fin());
+            
+            if (shift.getHeure_debut() == null || shift.getHeure_fin() == null) {
+                System.err.println("Warning: Null time values detected!");
+                return new ResponseEntity<>(
+                    Map.of("error", "Invalid time format", "message", "Time values cannot be null"),
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+            
             Shift _shift = shiftService.saveShift(shift);
             return new ResponseEntity<>(_shift, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            System.err.println("Error creating shift: " + e.getMessage());
+            System.err.println("Exception type: " + e.getClass().getName());
+            e.printStackTrace();
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to create shift", "message", e.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 

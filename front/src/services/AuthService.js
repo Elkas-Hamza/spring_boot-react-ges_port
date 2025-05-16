@@ -184,6 +184,13 @@ const verifyToken = async () => {
 
 const requestPasswordReset = async (email) => {
   try {
+    // Client-side validation
+    if (!email || !email.includes("@")) {
+      throw new Error("Please provide a valid email address");
+    }
+
+    console.log("Sending password reset request for:", email);
+
     const response = await fetch(`${API_URL}/reset-password-request`, {
       method: "POST",
       headers: {
@@ -204,22 +211,38 @@ const requestPasswordReset = async (email) => {
         // If parsing fails, use text or status
         errorMessage = errorText || `Error: ${response.status}`;
       }
-      throw new Error(errorMessage);
+
+      console.error("Password reset server error:", errorMessage);
+
+      // For security reasons, don't reveal whether email exists or not
+      // Return a generic message instead
+      return {
+        message:
+          "If your email is registered, you will receive password reset instructions shortly",
+      };
     }
 
     // Check for empty response
     const responseText = await response.text();
     if (!responseText || responseText.trim() === "") {
-      return { message: "Password reset instructions sent" };
+      return {
+        message:
+          "If your email is registered, you will receive password reset instructions shortly",
+      };
     }
 
     // Parse JSON
     const data = JSON.parse(responseText);
-
     return data;
   } catch (error) {
     console.error("Password reset request error:", error);
-    throw error;
+
+    // Return a user-friendly message instead of throwing
+    return {
+      message:
+        "If your email is registered, you will receive password reset instructions shortly",
+      isSuccess: true,
+    };
   }
 };
 
