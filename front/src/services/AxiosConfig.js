@@ -1,8 +1,21 @@
 import axios from "axios";
 
+// Determine the base URL based on the environment
+const getBaseUrl = () => {
+  // When deployed to Vercel, use the backend URL
+  if (
+    window.location.origin === "https://spring-boot-react-ges-port.vercel.app"
+  ) {
+    // Use your backend URL - wherever it's deployed
+    return "https://6551-102-96-241-88.ngrok-free.app/api"; // Replace with your actual backend server URL/IP
+  }
+  // For local development
+  return "http://localhost:8080/api";
+};
+
 // Create axios instance with default config
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: getBaseUrl(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

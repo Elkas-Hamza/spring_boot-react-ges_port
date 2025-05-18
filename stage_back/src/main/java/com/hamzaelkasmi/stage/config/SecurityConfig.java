@@ -95,7 +95,7 @@ public class SecurityConfig {
     }    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count"));
         configuration.setExposedHeaders(Arrays.asList("X-Retry-Count", "x-retry-count"));
