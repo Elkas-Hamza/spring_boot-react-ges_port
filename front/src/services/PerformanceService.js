@@ -165,9 +165,9 @@ class PerformanceService {
       const response = await axiosInstance.get("/monitoring/system-metrics", {
         // Add timeout to avoid long waits
         timeout: 5000,
-        // Add retry identifier to help debug repeat calls
+        // Re-add the retry header since it's now properly configured on the backend
         headers: {
-          "X-Retry-Count": retryCount,
+          "X-Retry-Count": retryCount.toString(),
         },
       });
 
@@ -182,12 +182,33 @@ class PerformanceService {
 
       if (!hasExpectedData) {
         console.warn("Server returned empty or invalid metrics data");
+      } // Validate structure and normalize data with safety checks
+      const cpu = data.cpu !== undefined ? data.cpu : 0;
+      const memory = data.memory !== undefined ? data.memory : 0;
+
+      // Validate CPU value (should be between 0-100)
+      let normalizedCpu = cpu;
+      if (cpu < 0) {
+        console.warn("Backend returned negative CPU value:", cpu);
+        normalizedCpu = Math.abs(cpu % 100); // Convert negative value to positive and ensure it's in 0-100 range
+      } else if (cpu > 100) {
+        console.warn("Backend returned CPU value > 100%:", cpu);
+        normalizedCpu = 100; // Cap at 100%
       }
 
-      // Validate structure and provide defaults for missing data
+      // Validate Memory value (should be between 0-100)
+      let normalizedMemory = memory;
+      if (memory < 0) {
+        console.warn("Backend returned negative Memory value:", memory);
+        normalizedMemory = 25; // Use reasonable default
+      } else if (memory > 100) {
+        console.warn("Backend returned Memory value > 100%:", memory);
+        normalizedMemory = 100; // Cap at 100%
+      }
+
       return {
-        cpu: data.cpu !== undefined ? data.cpu : 0,
-        memory: data.memory !== undefined ? data.memory : 0,
+        cpu: normalizedCpu,
+        memory: normalizedMemory,
         diskSpace: data.diskSpace || {
           total: 100000, // Default values
           used: 0,

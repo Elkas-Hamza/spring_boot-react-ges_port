@@ -30,7 +30,6 @@ import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import ChangePassword from "./components/ChangePassword";
 import { Container, CircularProgress } from "@mui/material";
-import EscaleDetail from "./components/detail/EscaleDetail";
 import AddArretToEscale from "./components/detail/AddArret";
 import SoustraiteureList from "./components/list/SoustraiteureList";
 import SoustraiteureForm from "./components/form/SoustraiteureForm";
@@ -308,15 +307,6 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/escale/:id"
-            element={
-              <PrivateRoute>
-                <EscaleDetail />
-              </PrivateRoute>
-            }
-          />
-
           {/* Personnel Routes */}
           <Route
             path="/personnel"

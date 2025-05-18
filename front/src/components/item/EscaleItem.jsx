@@ -25,28 +25,13 @@ const EscaleItem = ({ escale, onDelete }) => {
       <TableCell>
         <Button
           component={Link}
-          to={`/escale/${escaleId}`}
-          color="primary"
-          sx={{ mr: 1 }}
-        >
-          Detail
-        </Button>
-        <Button
-          component={Link}
           to={`/escale/edit/${escale.num_escale}`}
           color="primary"
           sx={{ mr: 1 }}
         >
           Modifier
         </Button>
-        {/* <Button
-          component={Link}
-          to={`/arret/create/${escale.num_escale}`}
-          color="secondary"
-          sx={{ mr: 1 }}
-        >
-          Ajouter Arrêt
-        </Button> */}
+
         <Button color="error" onClick={() => onDelete(escale)}>
           Supprimer
         </Button>

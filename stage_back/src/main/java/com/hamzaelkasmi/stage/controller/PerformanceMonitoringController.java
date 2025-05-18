@@ -22,6 +22,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/monitoring")
+@CrossOrigin(origins = "http://localhost:3000")
 public class PerformanceMonitoringController {
     private static final Logger logger = LoggerFactory.getLogger(PerformanceMonitoringController.class);
     
@@ -135,12 +136,15 @@ public class PerformanceMonitoringController {
         cpuInfo.put("availableProcessors", osBean.getAvailableProcessors());
         cpuInfo.put("systemLoadAverage", osBean.getSystemLoadAverage());
         healthInfo.put("cpu", cpuInfo);
-        
-        // Disk space information (simplified)
+          // Disk space information (get real values from monitoring service)
+        SystemMetrics metrics = monitoringService.getSystemMetrics();
+        SystemMetrics.DiskSpace diskSpace = metrics.getDiskSpace();
         Map<String, Object> diskInfo = new HashMap<>();
-        diskInfo.put("free", 10000000000L); // Example values
-        diskInfo.put("total", 50000000000L);
-        diskInfo.put("usagePercentage", 80.0);
+        diskInfo.put("total", diskSpace.getTotal());
+        diskInfo.put("used", diskSpace.getUsed());
+        diskInfo.put("free", diskSpace.getFree());
+        double diskUsagePercentage = (double) diskSpace.getUsed() / Math.max(1, diskSpace.getTotal()) * 100.0;
+        diskInfo.put("usagePercentage", Math.round(diskUsagePercentage * 100.0) / 100.0);
         healthInfo.put("disk", diskInfo);
         
         return ResponseEntity.ok(healthInfo);
