@@ -30,7 +30,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-            .cors().and()
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
@@ -97,7 +97,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count", "cache-control", "pragma"));
         configuration.setExposedHeaders(Arrays.asList("X-Retry-Count", "x-retry-count"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

@@ -1,6 +1,6 @@
 # Performance Monitoring System Setup Guide
 
-This guide explains how to set up and use the performance monitoring system in your application.
+This guide explains how to set up and use the performance monitoring system in your application. The system has been enhanced to show real-time server performance metrics.
 
 ## Backend Setup
 
@@ -92,3 +92,39 @@ This monitoring system exposes detailed system information. Ensure:
 1. All monitoring endpoints are protected by proper authentication
 2. Only administrators have access to the monitoring UI
 3. Sensitive system information isn't logged or exposed publicly
+
+## Real-Time Server Metrics
+
+The system now displays real-time server metrics including:
+
+### Backend Enhancements
+
+1. **Active Connection Tracking**: The system now tracks HTTP connections in real-time
+   - Connection counts are tracked via the `PerformanceInterceptor` 
+   - Both active and total connections are monitored
+
+2. **System Resource Monitoring**:
+   - CPU usage percentage (real-time)
+   - Memory utilization percentage
+   - Disk space usage
+   - Server uptime
+
+### Frontend Display
+
+- **Auto-Refreshing Metrics**: Server metrics are automatically fetched every 3 seconds
+- **Manual Refresh**: You can force a refresh with the "Refresh Metrics" button
+- **Visual Status Indicators**: Connection status is visually indicated
+- **Resource Usage Bars**: CPU, memory and disk usage shown with color-coded progress bars
+
+### Cross-Origin Access
+
+The monitoring system has been configured to allow access from:
+- Local development (http://localhost:3000)
+- Deployed Vercel frontend (https://spring-boot-react-ges-port.vercel.app)
+
+### Using the Real-Time Monitoring
+
+1. Navigate to the Performance Monitoring page
+2. View the "Real-Time Server Metrics" panel at the bottom
+3. Monitor system resource usage as your application runs
+4. Check connection status for remote deployments

@@ -109,22 +109,21 @@ axiosInstance.interceptors.response.use(
         // Special handling for monitoring endpoints
         if (error.config.url.includes("/monitoring/")) {
           console.info(
-            "Monitoring permission issue detected, will try to use fallback data"
+            "Monitoring permission issue detected - endpoint requires higher privileges"
           );
-
-          // For system metrics, we can return a mock response
-          if (error.config.url.includes("system-metrics")) {
-            return Promise.resolve({
+          
+          // Instead of using mock data, we'll let the error propagate so the UI can show
+          // the appropriate error state and prompt for authentication
+          return Promise.reject({
+            ...error,
+            response: {
+              ...error.response,
               data: {
-                cpu: 15.5, // Provide reasonable default values
-                memory: 25.3,
-                status: "permission-fallback",
-                uptime: 3600,
-                activeConnections: 2,
-                diskSpace: { total: 100000, used: 20000, free: 80000 },
+                status: "permission-error",
+                errorMessage: "Insufficient permissions to access monitoring data",
               },
-            });
-          }
+            },
+          });
         }
       } else if (error.response.status === 500) {
         // Log server errors with more details

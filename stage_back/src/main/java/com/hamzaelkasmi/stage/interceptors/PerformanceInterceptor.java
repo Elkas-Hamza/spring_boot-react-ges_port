@@ -26,9 +26,11 @@ public class PerformanceInterceptor implements HandlerInterceptor {
     public PerformanceInterceptor(PerformanceMonitoringService performanceService) {
         this.performanceService = performanceService;
     }
-    
-    @Override
+      @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // Track connection start regardless of monitoring status
+        performanceService.connectionStarted();
+        
         if (!performanceService.isMonitoringEnabled()) {
             return true;
         }
@@ -41,9 +43,11 @@ public class PerformanceInterceptor implements HandlerInterceptor {
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
         // No action needed here
     }
-    
-    @Override
+      @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        // Always track connection end regardless of monitoring status
+        performanceService.connectionEnded();
+        
         if (!performanceService.isMonitoringEnabled()) {
             return;
         }

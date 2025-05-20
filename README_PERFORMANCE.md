@@ -9,6 +9,8 @@ The application includes a comprehensive performance monitoring dashboard that p
 - API response times
 - Error rates by endpoint
 - System resource usage (CPU, memory, disk)
+- Real-time server metrics with live updates
+- Active connection tracking
 - Real-time alerts for slow responses
 - Historical performance trends
 
@@ -69,3 +71,50 @@ The monitoring system is designed to have minimal impact on application performa
 ## Security Considerations
 
 Access to the monitoring endpoints should be restricted to authorized users only.
+
+## Real-Time Server Metrics
+
+The application now features a robust real-time server monitoring system:
+
+### System Metrics
+
+The following metrics are collected and displayed in real-time:
+
+- **CPU Usage**: Current processor utilization as a percentage
+- **Memory Usage**: Current memory utilization as a percentage
+- **Disk Usage**: Storage space utilization with used/total values
+- **Active Connections**: Real-time count of active HTTP connections
+- **Server Uptime**: Duration since application startup
+
+### How It Works
+
+1. **Backend Collection**: 
+   - Uses Java Management Extensions (JMX) to collect CPU and memory metrics
+   - Tracks file system information for disk space metrics
+   - Intercepts HTTP requests to count active connections
+
+2. **Periodic Updates**:
+   - Frontend polls the backend every 3 seconds for the latest metrics
+   - Values are displayed with visual indicators (progress bars, status chips)
+   - Historical data is stored for trend analysis
+
+3. **Cross-Origin Support**:
+   - Configured to work with both local development and production deployments
+   - Supports HTTPS connections from the Vercel-hosted frontend
+
+### User Interface
+
+The monitoring dashboard provides:
+
+- Visual progress bars for CPU, memory, and disk usage
+- Color-coded indicators based on usage thresholds (green, orange, red)
+- Connection status indicators
+- Manual refresh option for immediate updates
+- Last updated timestamp
+
+### Implementation
+
+The monitoring is implemented using:
+- Backend: Spring Boot's actuator framework with custom metrics
+- Frontend: React with Material-UI components
+- Data fetching: Axios with interceptors for connection tracking

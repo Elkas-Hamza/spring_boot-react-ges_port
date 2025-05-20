@@ -13,9 +13,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Primary;
 import java.util.List;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Service for monitoring system performance.
@@ -27,6 +38,11 @@ import java.nio.file.FileSystems;
 @Primary
 public class PerformanceMonitoringService {
     private static final Logger logger = LoggerFactory.getLogger(PerformanceMonitoringService.class);
+    
+    // Track active HTTP connections
+    private final AtomicInteger activeConnections = new AtomicInteger(0);
+    // Track total connections since startup
+    private final AtomicInteger totalConnections = new AtomicInteger(0);
 
     public PerformanceMonitoringService() {
         logger.info("Performance Monitoring Service initialized");
@@ -77,11 +93,10 @@ public class PerformanceMonitoringService {
     public PerformanceMetrics getPerformanceMetrics() {
         // Implement real logic here
         return new PerformanceMetrics();
-    }
-
-    /**
+    }    /**
      * Get system metrics
-     */    public SystemMetrics getSystemMetrics() {
+     */
+    public SystemMetrics getSystemMetrics() {
         SystemMetrics metrics = new SystemMetrics();
         try {
             // Get operating system bean for CPU information
@@ -89,39 +104,22 @@ public class PerformanceMonitoringService {
             double cpu = getSystemCpuLoad(osBean);
             metrics.setCpu(cpu);
             
-            // Get memory usage with safety checks
+            // Get memory usage
             Runtime runtime = Runtime.getRuntime();
             long maxMemory = runtime.maxMemory();
             long totalMemory = runtime.totalMemory();
             long freeMemory = runtime.freeMemory();
             
-            // If maxMemory is Long.MAX_VALUE, the JVM doesn't have a memory limit
-            if (maxMemory == Long.MAX_VALUE) {
-                // Use total memory as a baseline instead
-                maxMemory = totalMemory;
-            }
-            
-            // Calculate used memory and ensure it's never negative
+            long maxUsableMemory = maxMemory == Long.MAX_VALUE ? totalMemory : maxMemory;
             long usedMemory = totalMemory - freeMemory;
+            double memoryUsage = Math.min(((double)usedMemory / maxUsableMemory) * 100, 100.0);
+            metrics.setMemory(memoryUsage);
             
-            // Sanity check - if calculations are invalid, provide reasonable defaults
-            if (maxMemory <= 0 || usedMemory < 0) {
-                logger.warn("Invalid memory measurements detected. Using default values.");
-                metrics.setMemory(25.0); // Reasonable default memory usage
-            } else {
-                double memoryUsage = ((double)usedMemory / maxMemory) * 100;
-                // Cap at 100% as a safeguard
-                if (memoryUsage > 100) {
-                    memoryUsage = 99.5;
-                }
-                metrics.setMemory(memoryUsage);
-            }
-            
-            // Set disk space
+            // Set real disk space metrics
             metrics.setDiskSpace(getDiskSpaceInfo());
             
-            // Set active connections (simulate with a reasonable number)
-            metrics.setActiveConnections(5); // Simulated count of active connections
+            // Set real active connections count
+            metrics.setActiveConnections(getActiveConnectionCount());
             
             // Set uptime from JVM runtime
             long uptime = java.lang.management.ManagementFactory.getRuntimeMXBean().getUptime() / 1000; // convert to seconds
@@ -154,85 +152,341 @@ public class PerformanceMonitoringService {
     private SystemMetrics convertSystemMetrics(com.hamzaelkasmi.stage.model.SystemMetrics source) {
         SystemMetrics result = new SystemMetrics();
         return result;
-    }
-
-    private double getSystemCpuLoad(OperatingSystemMXBean osBean) {
+    }    private double getSystemCpuLoad(OperatingSystemMXBean osBean) {
         try {
-            java.lang.reflect.Method method = osBean.getClass().getDeclaredMethod("getCpuLoad");
-            method.setAccessible(true);
-            double cpuLoad = (double) method.invoke(osBean);
+            double cpuLoad = -1.0;
             
-            if (cpuLoad >= 0.0) {
-                return cpuLoad * 100; 
-            }
-            
-            try {
-                method = osBean.getClass().getDeclaredMethod("getSystemCpuLoad");
-                method.setAccessible(true);
-                cpuLoad = (double) method.invoke(osBean);
-                if (cpuLoad >= 0.0) {
-                    return cpuLoad * 100; 
+            // First try using the modern com.sun.management API if available
+            if (osBean instanceof com.sun.management.OperatingSystemMXBean) {
+                try {
+                    java.lang.reflect.Method method = com.sun.management.OperatingSystemMXBean.class.getDeclaredMethod("getProcessCpuLoad");
+                    method.setAccessible(true);
+                    double value = (double) method.invoke(osBean);
+                    if (value >= 0.0) {
+                        cpuLoad = value;
+                    }
+                } catch (Exception ex) {
+                    logger.debug("Failed to get CPU load using getProcessCpuLoad: {}", ex.getMessage());
                 }
-            } catch (Exception ex) {
-               
             }
             
-            // If both methods failed, try with getProcessCpuLoad
-            try {
-                method = osBean.getClass().getDeclaredMethod("getProcessCpuLoad");
-                method.setAccessible(true);
-                cpuLoad = (double) method.invoke(osBean);
-                if (cpuLoad >= 0.0) {
-                    return cpuLoad * 100; 
+            // If that didn't work, try other methods
+            if (cpuLoad < 0.0) {
+                double systemLoadAvg = osBean.getSystemLoadAverage();
+                if (systemLoadAvg >= 0) {
+                    int processors = osBean.getAvailableProcessors();
+                    cpuLoad = systemLoadAvg / processors;
                 }
-            } catch (Exception ex) {
-                logger.warn("Failed to get CPU load using getProcessCpuLoad: " + ex.getMessage());
             }
             
-            double systemLoadAvg = osBean.getSystemLoadAverage();
-            if (systemLoadAvg >= 0) {
-                int processors = osBean.getAvailableProcessors();
-                return (systemLoadAvg / processors) * 100;
+            // If still no valid data, try platform-specific solutions
+            if (cpuLoad < 0.0) {
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.contains("linux")) {
+                    cpuLoad = getLinuxCpuLoad();
+                } else if (osName.contains("win")) {
+                    long[] prevCpuTime = new long[1];
+                    long[] prevUpTime = new long[1];
+                    cpuLoad = getWindowsCpuLoad(prevCpuTime, prevUpTime);
+                }
             }
             
-            return 15.0;
+            // Convert to percentage and ensure it's between 0-100
+            return cpuLoad < 0 ? 15.0 : Math.min(cpuLoad * 100, 100.0);
+            
         } catch (Exception e) {
-            logger.warn("Failed to get CPU load: " + e.getMessage());
+            logger.warn("Failed to get CPU load: {}", e.getMessage());
             return 15.0;
         }
+    }
+      private double getLinuxCpuLoad() throws Exception {
+        try {
+            // First try reading from /proc/stat for most accurate CPU usage
+            try (BufferedReader reader = new BufferedReader(new FileReader("/proc/stat"))) {
+                String line = reader.readLine();
+                if (line != null && line.startsWith("cpu ")) {
+                    String[] values = line.split("\\s+");
+                    if (values.length >= 8) {
+                        long user = Long.parseLong(values[1]);
+                        long nice = Long.parseLong(values[2]);
+                        long system = Long.parseLong(values[3]);
+                        long idle = Long.parseLong(values[4]);
+                        long iowait = Long.parseLong(values[5]);
+                        long irq = Long.parseLong(values[6]);
+                        long softirq = Long.parseLong(values[7]);
+                        
+                        long totalCpu = user + nice + system + idle + iowait + irq + softirq;
+                        long totalIdle = idle + iowait;
+                        
+                        return ((double)(totalCpu - totalIdle) / totalCpu) * 100.0;
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("Could not read /proc/stat: {}", e.getMessage());
+            }
+            
+            // Fallback to top command
+            Process p = Runtime.getRuntime().exec("top -bn1");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("%Cpu(s):")) {
+                        String[] parts = line.split(",");
+                        for (String part : parts) {
+                            if (part.contains("id")) {
+                                double idle = Double.parseDouble(part.trim().split("\\s+")[0]);
+                                return 100.0 - idle; // Convert idle percentage to usage percentage
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If top fails, try mpstat
+            Process mpstat = Runtime.getRuntime().exec("mpstat 1 1");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mpstat.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains("all")) {
+                        String[] parts = line.trim().split("\\s+");
+                        if (parts.length > 12) {
+                            double idle = Double.parseDouble(parts[12]);
+                            return 100.0 - idle;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("mpstat not available: {}", e.getMessage());
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to get Linux CPU load: {}", e.getMessage());
+        }
+        return -1.0;
+    }
+      private double getWindowsCpuLoad(long[] prevCpuTime, long[] prevUpTime) {
+        try {
+            // First try using wmic for instantaneous CPU load
+            try {
+                Process p = Runtime.getRuntime().exec("wmic cpu get loadpercentage");
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                    String line;
+                    reader.readLine(); // Skip header
+                    if ((line = reader.readLine()) != null) {
+                        double load = Double.parseDouble(line.trim());
+                        if (load >= 0 && load <= 100) {
+                            return load / 100.0;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("WMIC method failed: {}", e.getMessage());
+            }
+
+            // Fallback to Performance Counter method
+            try {
+                Process p = Runtime.getRuntime().exec(
+                    "powershell \"Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 1 | Select-Object -ExpandProperty CounterSamples | Select-Object -ExpandProperty CookedValue\""
+                );
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                    String line = reader.readLine();
+                    if (line != null) {
+                        double load = Double.parseDouble(line.trim());
+                        if (load >= 0 && load <= 100) {
+                            return load / 100.0;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("Performance Counter method failed: {}", e.getMessage());
+            }
+
+            // Last resort: use process time deltas
+            com.sun.management.OperatingSystemMXBean sunOsBean = 
+                (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            long systemTime = sunOsBean.getProcessCpuTime();
+            long upTime = ManagementFactory.getRuntimeMXBean().getUptime();
+            
+            if (prevCpuTime[0] == 0) {
+                prevCpuTime[0] = systemTime;
+                prevUpTime[0] = upTime;
+                return -1.0;
+            }
+
+            long timeDiff = systemTime - prevCpuTime[0];
+            long upDiff = upTime - prevUpTime[0];
+            
+            prevCpuTime[0] = systemTime;
+            prevUpTime[0] = upTime;            if (upDiff > 0) {
+                return ((double) timeDiff / (upDiff * 10000000L));
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to get Windows CPU load: {}", e.getMessage());
+        }
+        return -1.0;
     }
 
     private SystemMetrics.DiskSpace getDiskSpaceInfo() {
         SystemMetrics.DiskSpace diskSpace = new SystemMetrics.DiskSpace();
+        String osName = System.getProperty("os.name").toLowerCase();
+        
         try {
-            FileStore store = FileSystems.getDefault().getFileStores().iterator().next();
-            long total = store.getTotalSpace() / (1024 * 1024); // Convert to MB
-            long free = store.getUsableSpace() / (1024 * 1024);
-            long used = total - free;
+            if (osName.contains("linux")) {
+                // On Linux, try df command first for most accurate filesystem info
+                try {
+                    Process p = Runtime.getRuntime().exec("df -k /");
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                        reader.readLine(); // Skip header
+                        String line = reader.readLine();
+                        if (line != null) {
+                            String[] parts = line.trim().split("\\s+");
+                            if (parts.length >= 4) {
+                                long total = Long.parseLong(parts[1]); // KB
+                                long used = Long.parseLong(parts[2]);  // KB
+                                long free = Long.parseLong(parts[3]);  // KB
+                                
+                                // Convert to MB
+                                diskSpace.setTotal(total / 1024);
+                                diskSpace.setUsed(used / 1024);
+                                diskSpace.setFree(free / 1024);
+                                return diskSpace;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("df command failed: {}", e.getMessage());
+                }
+            } else if (osName.contains("win")) {
+                // On Windows, try using WMI first
+                try {
+                    Process p = Runtime.getRuntime().exec(
+                        "wmic logicaldisk get size,freespace,caption"
+                    );
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                        String line;
+                        reader.readLine(); // Skip header
+                        long total = 0;
+                        long free = 0;
+                        while ((line = reader.readLine()) != null) {
+                            line = line.trim();
+                            if (!line.isEmpty()) {
+                                String[] parts = line.split("\\s+");
+                                if (parts.length >= 3) {
+                                    try {
+                                        total += Long.parseLong(parts[1]);
+                                        free += Long.parseLong(parts[0]);
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                            }
+                        }
+                        if (total > 0) {
+                            diskSpace.setTotal(total / (1024 * 1024));
+                            diskSpace.setFree(free / (1024 * 1024));
+                            diskSpace.setUsed((total - free) / (1024 * 1024));
+                            return diskSpace;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("WMI disk space check failed: {}", e.getMessage());
+                }
+            }
 
-            diskSpace.setTotal(total);
-            diskSpace.setUsed(used);
-            diskSpace.setFree(free);
+            // Fallback to Java NIO
+            long totalSpace = 0;
+            long freeSpace = 0;
+            long usableSpace = 0;
+            
+            for (Path root : FileSystems.getDefault().getRootDirectories()) {
+                try {
+                    FileStore store = Files.getFileStore(root);
+                    if (!store.isReadOnly()) {
+                        totalSpace += store.getTotalSpace();
+                        freeSpace += store.getUnallocatedSpace();
+                        usableSpace += store.getUsableSpace();
+                    }
+                } catch (Exception e) {
+                    logger.debug("Could not get space info for root {}: {}", root, e.getMessage());
+                }
+            }
+            
+            if (totalSpace > 0) {
+                // Convert to MB
+                diskSpace.setTotal(totalSpace / (1024 * 1024));
+                diskSpace.setFree(usableSpace / (1024 * 1024));
+                diskSpace.setUsed((totalSpace - freeSpace) / (1024 * 1024));
+                return diskSpace;
+            }
+
+            // Last resort - try legacy File API
+            long total = 0;
+            long free = 0;
+            for (File root : File.listRoots()) {
+                total += root.getTotalSpace();
+                free += root.getUsableSpace();
+            }
+            
+            if (total > 0) {
+                diskSpace.setTotal(total / (1024 * 1024));
+                diskSpace.setFree(free / (1024 * 1024));
+                diskSpace.setUsed((total - free) / (1024 * 1024));
+                return diskSpace;
+            }
+
+            logger.warn("All disk space detection methods failed, using defaults");
+            diskSpace.setTotal(100000); // 100GB
+            diskSpace.setUsed(50000);   // 50GB
+            diskSpace.setFree(50000);   // 50GB
+            
         } catch (Exception e) {
-            logger.error("Error getting disk space info", e);
-            diskSpace.setTotal(500000);
-            diskSpace.setUsed(250000);
-            diskSpace.setFree(250000);
+            logger.error("Error getting disk space info: {}", e.getMessage());
+            diskSpace.setTotal(100000);
+            diskSpace.setUsed(50000);
+            diskSpace.setFree(50000);
         }
+        
         return diskSpace;
     }
 
     private String formatMs(double ms) {
         if (ms < 1000) return String.format("%.0f ms", ms);
         return String.format("%.2f s", ms / 1000);
-    }
-
-    @Scheduled(fixedRate = 3000000) // Every minute
+    }    @Scheduled(fixedRate = 3000000) // Every minute
     public void checkAndCleanupOldData() {
         if (!isMonitoringEnabled()) return;
 
         // Clean up old data that's beyond our retention window
         // This would be more sophisticated in a production environment
         logger.debug("Running scheduled cleanup of old performance data");
+    }
+    
+    /**
+     * Track when a new HTTP connection is made
+     */
+    public void connectionStarted() {
+        activeConnections.incrementAndGet();
+        totalConnections.incrementAndGet();
+        logger.debug("New connection started. Active connections: {}, Total: {}", 
+                    activeConnections.get(), totalConnections.get());
+    }
+    
+    /**
+     * Track when an HTTP connection ends
+     */
+    public void connectionEnded() {
+        activeConnections.decrementAndGet();
+        logger.debug("Connection ended. Active connections: {}", activeConnections.get());
+    }
+    
+    /**
+     * Get the current count of active connections
+     */
+    public int getActiveConnectionCount() {
+        return activeConnections.get();
+    }
+    
+    /**
+     * Get the total connections since startup
+     */
+    public int getTotalConnectionCount() {
+        return totalConnections.get();
     }
 }

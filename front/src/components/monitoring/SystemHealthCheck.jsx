@@ -190,9 +190,10 @@ const SystemHealthCheck = () => {
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Box width="100%" mr={1}>
+                    {" "}
                     <LinearProgress
                       variant="determinate"
-                      value={healthData?.cpu || 0}
+                      value={healthData?.cpu ?? 0}
                       sx={{
                         height: 10,
                         borderRadius: 5,
@@ -207,8 +208,9 @@ const SystemHealthCheck = () => {
                     />
                   </Box>
                   <Box minWidth={35}>
+                    {" "}
                     <Typography variant="body2" color="textSecondary">
-                      {healthData?.cpu?.toFixed(1) || 0}%
+                      {parseFloat(healthData?.cpu ?? 0).toFixed(1)}%
                     </Typography>
                   </Box>
                 </Box>
@@ -220,9 +222,10 @@ const SystemHealthCheck = () => {
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Box width="100%" mr={1}>
+                    {" "}
                     <LinearProgress
                       variant="determinate"
-                      value={healthData?.memory || 0}
+                      value={healthData?.memory ?? 0}
                       sx={{
                         height: 10,
                         borderRadius: 5,
@@ -237,8 +240,9 @@ const SystemHealthCheck = () => {
                     />
                   </Box>
                   <Box minWidth={35}>
+                    {" "}
                     <Typography variant="body2" color="textSecondary">
-                      {healthData?.memory?.toFixed(1) || 0}%
+                      {parseFloat(healthData?.memory ?? 0).toFixed(1)}%
                     </Typography>
                   </Box>
                 </Box>

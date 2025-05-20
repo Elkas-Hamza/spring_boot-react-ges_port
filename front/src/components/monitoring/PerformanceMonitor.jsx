@@ -54,6 +54,79 @@ const PerformanceMonitor = () => {
     useState(null);
   const [connectionError, setConnectionError] = useState(null);
 
+  // Define fetchServerMetrics first using useCallback to maintain stable reference
+  const fetchServerMetrics = useCallback(async () => {
+    try {
+      const metrics = await performanceService.fetchServerMetrics();
+      setServerMetrics(metrics);
+      setServerMetricsLastUpdated(new Date());
+
+      // Update system load with this metric data if possible
+      if (
+        metrics &&
+        (metrics.status === "online" ||
+          metrics.status === "permission-fallback") &&
+        metrics.cpu !== undefined
+      ) {
+        // Update the global metrics state to include this server data
+        setMetrics((prevMetrics) => {
+          if (!prevMetrics) return prevMetrics;
+
+          const systemLoadItem = {
+            timestamp: new Date(),
+            memory: metrics.memory !== undefined ? metrics.memory : 0,
+            cpu: metrics.cpu !== undefined ? metrics.cpu : 0,
+            diskSpace: metrics.diskSpace || { used: 0, total: 100000 },
+            activeConnections: metrics.activeConnections || 0,
+          };
+
+          // Add to system load if needed
+          const systemLoad = [...(prevMetrics.systemLoad || [])];
+          systemLoad.push(systemLoadItem);
+
+          // Keep only the most recent entries
+          if (systemLoad.length > 10) {
+            systemLoad.shift();
+          }
+
+          return {
+            ...prevMetrics,
+            systemLoad,
+          };
+        });
+      }
+
+      // Update connection status based on server response
+      if (
+        metrics.status === "online" ||
+        metrics.status === "permission-fallback"
+      ) {
+        setConnectionError(null);
+      } else if (metrics.status === "connection-error") {
+        setConnectionError(metrics.errorMessage || "Connection error");
+      } else if (metrics.status === "error") {
+        setConnectionError("Server returned an error. Check server logs.");
+      }
+
+      // If we still have no data for CPU or memory, show a warning in console
+      if (metrics.cpu === 0 && metrics.memory === 0) {
+        console.warn(
+          "Server returned zeros for both CPU and memory - possible configuration issue"
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch server metrics:", error);
+      setConnectionError(
+        `Failed to connect to the monitoring service: ${error.message}`
+      );
+    }
+  }, []);
+
+  // Manual refresh of server metrics
+  const handleRefreshServerMetrics = () => {
+    fetchServerMetrics();
+  };
+
   // On mount, fetch all metrics once
   useEffect(() => {
     performanceService.enableMonitoring();
@@ -61,12 +134,13 @@ const PerformanceMonitor = () => {
     fetchServerMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Set up interval to fetch only server metrics (CPU, memory, etc.)
+  
+  // Set up interval to fetch only server metrics every 3 seconds
   useEffect(() => {
-    const intervalId = setInterval(fetchServerMetrics, 5000);
+    const intervalId = setInterval(fetchServerMetrics, 3000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchServerMetrics]);
+
   // Calculate metrics locally
   const calculateMetrics = (apiCalls) => {
     if (!apiCalls || apiCalls.length === 0) {
@@ -167,74 +241,7 @@ const PerformanceMonitor = () => {
         slowestEndpoint: null,
       });
       setAlerts([]);
-    }
-  }; // Fetch server metrics - wrapped in useCallback to maintain stable reference
-  const fetchServerMetrics = useCallback(async () => {
-    try {
-      const metrics = await performanceService.fetchServerMetrics();
-      setServerMetrics(metrics);
-      setServerMetricsLastUpdated(new Date());
-
-      // Update system load with this metric data if possible
-      if (
-        metrics &&
-        (metrics.status === "online" ||
-          metrics.status === "permission-fallback") &&
-        metrics.cpu !== undefined
-      ) {
-        // Update the global metrics state to include this server data
-        setMetrics((prevMetrics) => {
-          if (!prevMetrics) return prevMetrics;
-
-          const systemLoadItem = {
-            timestamp: new Date(),
-            memory: metrics.memory !== undefined ? metrics.memory : 0,
-            cpu: metrics.cpu !== undefined ? metrics.cpu : 0,
-            diskSpace: metrics.diskSpace || { used: 0, total: 100000 },
-            activeConnections: metrics.activeConnections || 0,
-          };
-
-          // Add to system load if needed
-          const systemLoad = [...(prevMetrics.systemLoad || [])];
-          systemLoad.push(systemLoadItem);
-
-          // Keep only the most recent entries
-          if (systemLoad.length > 10) {
-            systemLoad.shift();
-          }
-
-          return {
-            ...prevMetrics,
-            systemLoad,
-          };
-        });
-      }
-
-      // Update connection status based on server response
-      if (
-        metrics.status === "online" ||
-        metrics.status === "permission-fallback"
-      ) {
-        setConnectionError(null);
-      } else if (metrics.status === "connection-error") {
-        setConnectionError(metrics.errorMessage || "Connection error");
-      } else if (metrics.status === "error") {
-        setConnectionError("Server returned an error. Check server logs.");
-      }
-
-      // If we still have no data for CPU or memory, show a warning in console
-      if (metrics.cpu === 0 && metrics.memory === 0) {
-        console.warn(
-          "Server returned zeros for both CPU and memory - possible configuration issue"
-        );
-      }
-    } catch (error) {
-      console.error("Failed to fetch server metrics:", error);
-      setConnectionError(
-        `Failed to connect to the monitoring service: ${error.message}`
-      );
-    }
-  }, []);
+    }  };
 
   // Reset metrics
   const handleResetMetrics = () => {
@@ -618,7 +625,7 @@ const PerformanceMonitor = () => {
                 </Box>
                 <Box minWidth={35}>
                   <Typography variant="body2" color="textSecondary">
-                    {(serverMetrics.cpu || 0).toFixed(1)}%
+                    {(serverMetrics?.cpu ?? 0).toFixed(1)}%
                   </Typography>
                 </Box>
               </Box>
@@ -651,7 +658,7 @@ const PerformanceMonitor = () => {
                 </Box>
                 <Box minWidth={35}>
                   <Typography variant="body2" color="textSecondary">
-                    {(serverMetrics.memory || 0).toFixed(1)}%
+                    {(serverMetrics?.memory ?? 0).toFixed(1)}%
                   </Typography>
                 </Box>
               </Box>
@@ -678,7 +685,7 @@ const PerformanceMonitor = () => {
                 </Box>
                 <Box minWidth={35}>
                   <Typography variant="body2" color="textSecondary">
-                    {(diskUsagePercent || 0).toFixed(1)}%
+                    {(diskUsagePercent ?? 0).toFixed(1)}%
                   </Typography>
                 </Box>
               </Box>
@@ -997,16 +1004,15 @@ const PerformanceMonitor = () => {
               >
                 {" "}
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h5" component="div">
-                    {metrics.systemLoad &&
+                  <Typography variant="h5" component="div">                    {metrics.systemLoad &&
                     metrics.systemLoad.length > 0 &&
                     metrics.systemLoad[metrics.systemLoad.length - 1] &&
-                    metrics.systemLoad[metrics.systemLoad.length - 1].memory !==
-                      undefined
+                    metrics.systemLoad[metrics.systemLoad.length - 1].memory !== undefined &&
+                    metrics.systemLoad[metrics.systemLoad.length - 1].memory !== null
                       ? `${metrics.systemLoad[
                           metrics.systemLoad.length - 1
                         ].memory.toFixed(1)}%`
-                      : serverMetrics && serverMetrics.memory !== undefined
+                      : serverMetrics && serverMetrics.memory !== undefined && serverMetrics.memory !== null
                       ? `${serverMetrics.memory.toFixed(1)}%`
                       : "0.0%"}
                   </Typography>
@@ -1025,16 +1031,15 @@ const PerformanceMonitor = () => {
                   )}
                 </Box>
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h5" component="div">
-                    {metrics.systemLoad &&
+                  <Typography variant="h5" component="div">                    {metrics.systemLoad &&
                     metrics.systemLoad.length > 0 &&
                     metrics.systemLoad[metrics.systemLoad.length - 1] &&
-                    metrics.systemLoad[metrics.systemLoad.length - 1].cpu !==
-                      undefined
+                    metrics.systemLoad[metrics.systemLoad.length - 1].cpu !== undefined &&
+                    metrics.systemLoad[metrics.systemLoad.length - 1].cpu !== null
                       ? `${metrics.systemLoad[
                           metrics.systemLoad.length - 1
                         ].cpu.toFixed(1)}%`
-                      : serverMetrics && serverMetrics.cpu !== undefined
+                      : serverMetrics && serverMetrics.cpu !== undefined && serverMetrics.cpu !== null
                       ? `${serverMetrics.cpu.toFixed(1)}%`
                       : "0.0%"}
                   </Typography>
@@ -1186,25 +1191,39 @@ const PerformanceMonitor = () => {
             No performance alerts detected
           </Typography>
         )}
-      </Paper>
-
-      {/* Server Metrics */}
+      </Paper>      {/* Server Metrics */}
       <Paper elevation={2} sx={{ p: 2, mt: 3 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6" gutterBottom>
-            Server Metrics
-          </Typography>
-          <Button onClick={fetchServerMetrics} variant="outlined" size="small">
-            Force Server Metrics Refresh
+          <Box display="flex" alignItems="center">
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+              <MemoryIcon sx={{ mr: 1, color: 'primary.main' }} />
+              Real-Time Server Metrics
+            </Typography>
+            {serverMetricsLastUpdated && (
+              <Chip 
+                size="small" 
+                label={`Updated: ${serverMetricsLastUpdated.toLocaleTimeString()}`} 
+                color="primary" 
+                variant="outlined"
+                sx={{ ml: 2 }}
+              />
+            )}
+          </Box>
+          <Button 
+            onClick={fetchServerMetrics} 
+            variant="contained" 
+            size="small"
+            startIcon={<RefreshIcon />}
+            color="primary"
+          >
+            Refresh Metrics
           </Button>
         </Box>
-        {serverMetricsLastUpdated && (
-          <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
-            Last server metrics update:{" "}
-            {serverMetricsLastUpdated.toLocaleTimeString()}
-          </Typography>
-        )}
-        <Divider sx={{ mb: 2 }} /> <ServerMetricsDisplay />
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 2 }}>
+          Live data from the server showing current resource utilization and performance.
+        </Typography>
+        <Divider sx={{ mb: 2 }} /> 
+        <ServerMetricsDisplay />
         <Box display="flex" alignItems="center" justifyContent="center" mt={2}>
           <Typography variant="body2" color="textSecondary" mr={1}>
             Server Connection Status:

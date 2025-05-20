@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/monitoring")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"})
 public class PerformanceMonitoringController {
     private static final Logger logger = LoggerFactory.getLogger(PerformanceMonitoringController.class);
     

@@ -23,9 +23,8 @@ public class CustomCorsFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         
         response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        response.setHeader("Access-Control-Allow-Headers", 
-            "Authorization, Content-Type, Accept, X-Retry-Count, x-retry-count");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");        response.setHeader("Access-Control-Allow-Headers", 
+            "Authorization, Content-Type, Accept, X-Retry-Count, x-retry-count, cache-control, pragma");
         response.setHeader("Access-Control-Expose-Headers", "X-Retry-Count, x-retry-count");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Max-Age", "3600");

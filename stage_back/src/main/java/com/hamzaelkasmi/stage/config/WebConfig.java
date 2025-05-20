@@ -18,7 +18,7 @@ public class WebConfig {
                 registry.addMapping("/**")
                     .allowedOrigins("http://localhost:3000")
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count")
+                    .allowedHeaders("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count", "cache-control", "pragma")
                     .exposedHeaders("X-Retry-Count", "x-retry-count")
                     .allowCredentials(true)
                     .maxAge(3600);

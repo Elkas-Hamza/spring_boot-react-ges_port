@@ -7,30 +7,32 @@ const formatMs = (ms) => {
 };
 
 class PerformanceService {
-  // Store metrics in memory
-  metrics = {
-    apiCalls: [],
-    responseTimeAverage: 0,
-    slowestEndpoint: null,
-    fastestEndpoint: null,
-    errorRates: {},
-    systemLoad: [],
-  };
+  constructor() {
+    // Store metrics in memory
+    this.metrics = {
+      apiCalls: [],
+      responseTimeAverage: 0,
+      slowestEndpoint: null,
+      fastestEndpoint: null,
+      errorRates: {},
+      systemLoad: [],
+    };
 
-  // Maximum number of data points to keep for charts
-  maxDataPoints = 100;
+    // Maximum number of data points to keep for charts
+    this.maxDataPoints = 100;
 
-  // Track if monitoring is enabled
-  isMonitoringEnabled = false;
+    // Track if monitoring is enabled
+    this.isMonitoringEnabled = false;
 
-  // Interceptor IDs
-  requestInterceptorId = null;
-  responseInterceptorId = null;
+    // Interceptor IDs
+    this.requestInterceptorId = null;
+    this.responseInterceptorId = null;
 
-  // Alert settings
-  alertThreshold = 5000; // Default 5 seconds
-  alertsEnabled = true;
-  alertLog = [];
+    // Alert settings
+    this.alertThreshold = 5000; // Default 5 seconds
+    this.alertsEnabled = true;
+    this.alertLog = [];
+  }
   // Enable performance monitoring
   async enableMonitoring() {
     try {
@@ -121,34 +123,53 @@ class PerformanceService {
 
   // Sample system performance metrics
   systemLoadIntervalId = null;
-
   startSystemLoadSampling() {
     // Clear existing interval if any
     if (this.systemLoadIntervalId) {
       clearInterval(this.systemLoadIntervalId);
     }
 
-    // Sample every 5 seconds
+    // Sample every 3 seconds for more responsive metrics
     this.systemLoadIntervalId = setInterval(async () => {
-      // Fetch real server metrics
-      const serverMetrics = await this.fetchServerMetrics();
+      try {
+        // Fetch real server metrics
+        const serverMetrics = await this.fetchServerMetrics();
 
-      if (serverMetrics) {
-        this.metrics.systemLoad.push({
-          timestamp: new Date(),
-          memory: serverMetrics.memory,
-          cpu: serverMetrics.cpu,
-          diskSpace: serverMetrics.diskSpace,
-          activeConnections: serverMetrics.activeConnections,
-          uptime: serverMetrics.uptime,
-        });
+        // Only update metrics if we got valid online data
+        if (serverMetrics && serverMetrics.status === "online") {
+          // Validate metrics before adding them
+          const validatedMetrics = {
+            timestamp: new Date(),
+            memory: this.validateMetricValue(serverMetrics.memory, 0, 100),
+            cpu: this.validateMetricValue(serverMetrics.cpu, 0, 100),
+            diskSpace: serverMetrics.diskSpace || { used: 0, total: 100000, free: 100000 },
+            activeConnections: Math.max(0, serverMetrics.activeConnections || 0),
+            uptime: Math.max(0, serverMetrics.uptime || 0),
+          };
 
-        // Limit the number of data points
-        if (this.metrics.systemLoad.length > this.maxDataPoints) {
-          this.metrics.systemLoad.shift();
+          this.metrics.systemLoad.push(validatedMetrics);
+
+          // Limit the number of data points
+          if (this.metrics.systemLoad.length > this.maxDataPoints) {
+            this.metrics.systemLoad.shift();
+          }
+        } else if (serverMetrics && serverMetrics.status === "permission-error") {
+          console.warn("Permission error fetching metrics:", serverMetrics.errorMessage);
+        } else if (serverMetrics && serverMetrics.status === "connection-error") {
+          console.warn("Connection error fetching metrics:", serverMetrics.errorMessage);
         }
+      } catch (error) {
+        console.error("Error sampling system load:", error);
       }
-    }, 5000);
+    }, 3000);
+  }
+
+  // Helper to validate metric values
+  validateMetricValue(value, min, max) {
+    if (typeof value !== 'number' || isNaN(value)) {
+      return min;
+    }
+    return Math.max(min, Math.min(max, value));
   }
 
   stopSystemLoadSampling() {
@@ -160,103 +181,70 @@ class PerformanceService {
   // Fetch real system metrics from backend server
   async fetchServerMetrics(retryCount = 0) {
     try {
-      // Use the real backend API for server metrics
-      // Note: baseURL is already set to "http://localhost:8080/api" in axiosInstance
+      const token = localStorage.getItem("token");
+      
       const response = await axiosInstance.get("/monitoring/system-metrics", {
-        // Add timeout to avoid long waits
-        timeout: 5000,
-        // Re-add the retry header since it's now properly configured on the backend
+        timeout: 8000,
         headers: {
-          "X-Retry-Count": retryCount.toString(),
+          "Authorization": token ? `Bearer ${token}` : "",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+          "X-Requested-With": "XMLHttpRequest"
         },
+        params: {
+          _t: new Date().getTime()
+        }
       });
 
-      // Make sure response data is valid
-      const data = response.data || {};
-
-      // Check if data has any of the expected properties
-      const hasExpectedData =
-        data.cpu !== undefined ||
-        data.memory !== undefined ||
-        data.uptime !== undefined;
-
-      if (!hasExpectedData) {
-        console.warn("Server returned empty or invalid metrics data");
-      } // Validate structure and normalize data with safety checks
-      const cpu = data.cpu !== undefined ? data.cpu : 0;
-      const memory = data.memory !== undefined ? data.memory : 0;
-
-      // Validate CPU value (should be between 0-100)
-      let normalizedCpu = cpu;
-      if (cpu < 0) {
-        console.warn("Backend returned negative CPU value:", cpu);
-        normalizedCpu = Math.abs(cpu % 100); // Convert negative value to positive and ensure it's in 0-100 range
-      } else if (cpu > 100) {
-        console.warn("Backend returned CPU value > 100%:", cpu);
-        normalizedCpu = 100; // Cap at 100%
+      const data = response.data;
+      
+      // Validate the response data
+      if (!data || (data.cpu === undefined && data.memory === undefined && data.uptime === undefined)) {
+        throw new Error("Invalid server metrics response");
       }
 
-      // Validate Memory value (should be between 0-100)
-      let normalizedMemory = memory;
-      if (memory < 0) {
-        console.warn("Backend returned negative Memory value:", memory);
-        normalizedMemory = 25; // Use reasonable default
-      } else if (memory > 100) {
-        console.warn("Backend returned Memory value > 100%:", memory);
-        normalizedMemory = 100; // Cap at 100%
-      }
-
+      // Return the validated metrics
       return {
-        cpu: normalizedCpu,
-        memory: normalizedMemory,
-        diskSpace: data.diskSpace || {
-          total: 100000, // Default values
-          used: 0,
-          free: 100000,
-        },
-        activeConnections:
-          data.activeConnections !== undefined ? data.activeConnections : 0,
-        uptime: data.uptime !== undefined ? data.uptime : 0,
-        status: "online",
+        cpu: this.validateMetricValue(data.cpu, 0, 100),
+        memory: this.validateMetricValue(data.memory, 0, 100),
+        diskSpace: data.diskSpace || null,
+        activeConnections: data.activeConnections !== undefined ? Math.max(0, data.activeConnections) : 0,
+        uptime: data.uptime !== undefined ? Math.max(0, data.uptime) : 0,
+        status: "online"
       };
     } catch (error) {
-      console.error("Failed to fetch server metrics:", error);
+      // Enhanced error handling
+      const isConnectionError = !error.response || error.code === "ECONNREFUSED" || 
+                              error.message.includes("Network Error");
+      const isPermissionError = error.response?.status === 403;
+      const isServerError = error.response?.status >= 500;
 
-      // Check if it's a connection error
-      const isConnectionError =
-        error.code === "ECONNREFUSED" ||
-        error.message.includes("Network Error") ||
-        !error.response;
-
-      // Check if it's a permission error
-      const isPermissionError = error.response && error.response.status === 403;
-
-      // Retry logic for connection issues (but not for permission issues)
-      if (isConnectionError && retryCount < 2) {
-        console.log(`Retrying connection (attempt ${retryCount + 1})...`);
-        // Wait with exponential backoff
+      // Retry for connection and server errors
+      if ((isConnectionError || isServerError) && retryCount < 2) {
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        console.log(`Retrying server metrics request in ${delay}ms...`);
+        
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve(this.fetchServerMetrics(retryCount + 1));
-          }, 1000 * Math.pow(2, retryCount));
+          }, delay);
         });
       }
 
-      // Return default structure with status indicating the error
       return {
-        cpu: 0,
-        memory: 0,
-        diskSpace: {
-          total: 100000,
-          used: 0,
-          free: 100000,
-        },
-        activeConnections: 0,
-        uptime: 0,
-        status: isConnectionError ? "connection-error" : "error",
-        errorMessage: isConnectionError
-          ? "Cannot connect to server. Please check if the backend server is running."
-          : error.message || "Unknown error occurred",
+        cpu: null,
+        memory: null,
+        diskSpace: null,
+        activeConnections: null,
+        uptime: null,
+        status: isPermissionError ? "permission-error" : 
+                isConnectionError ? "connection-error" : "error",
+        errorMessage: isPermissionError 
+          ? "Insufficient permissions to view system metrics" 
+          : isConnectionError
+            ? "Cannot connect to monitoring service"
+            : "Error fetching system metrics"
       };
     }
   }
@@ -375,16 +363,13 @@ class PerformanceService {
 
     this.metrics.slowestEndpoint = slowestEndpoint;
     this.metrics.fastestEndpoint = fastestEndpoint;
-  } // Get the current metrics
+  }
+  // Get the current metrics
   async getMetrics() {
-    // Always fetch metrics, monitoring is always enabled
     try {
       // Try to fetch server metrics first to ensure we have the latest data
       const serverMetricsPromise = this.fetchServerMetrics().catch((err) => {
-        console.warn(
-          "Failed to fetch server metrics during getMetrics call:",
-          err
-        );
+        console.warn("Failed to fetch server metrics during getMetrics call:", err);
         return null;
       });
 
@@ -416,87 +401,47 @@ class PerformanceService {
         isMonitoringEnabled: true,
       };
 
-      // Calculate metrics if they're missing but we have API calls data
-      if (
-        mergedData.apiCalls.length > 0 &&
-        (!mergedData.responseTimeAverage || !mergedData.slowestEndpoint)
-      ) {
-        this.calculateMetrics(); // Recalculate local metrics
-        mergedData.responseTimeAverage = this.metrics.responseTimeAverage;
-        mergedData.slowestEndpoint = this.metrics.slowestEndpoint;
-      }
-
-      // If we got server metrics, incorporate them into system load
+      // If we got server metrics, always use them as they are real-time
       if (serverMetrics && serverMetrics.status === "online") {
         const latestSystemLoad = {
           timestamp: new Date(),
-          memory: serverMetrics.memory !== undefined ? serverMetrics.memory : 0,
-          cpu: serverMetrics.cpu !== undefined ? serverMetrics.cpu : 0,
-          diskSpace: serverMetrics.diskSpace || { used: 0, total: 100000 },
-          activeConnections: serverMetrics.activeConnections || 0,
+          memory: serverMetrics.memory,
+          cpu: serverMetrics.cpu,
+          diskSpace: serverMetrics.diskSpace,
+          activeConnections: serverMetrics.activeConnections,
+          uptime: serverMetrics.uptime,
         };
 
-        // Add to system load data
-        if (!mergedData.systemLoad || mergedData.systemLoad.length === 0) {
-          mergedData.systemLoad = [latestSystemLoad];
-        } else {
-          // Add latest data while ensuring we don't exceed the maximum data points
-          mergedData.systemLoad.push(latestSystemLoad);
-          if (mergedData.systemLoad.length > this.maxDataPoints) {
-            mergedData.systemLoad.shift();
-          }
-        }
+        // Always use real server metrics data
+        mergedData.systemLoad = [latestSystemLoad];
+      } else if (serverMetrics && serverMetrics.status === "permission-error") {
+        // Handle permission errors by propagating the status
+        return {
+          ...mergedData,
+          status: "permission-error",
+          errorMessage: serverMetrics.errorMessage,
+        };
+      } else if (serverMetrics && serverMetrics.status === "connection-error") {
+        // Handle connection errors
+        return {
+          ...mergedData,
+          status: "connection-error",
+          errorMessage: serverMetrics.errorMessage,
+        };
       }
 
-      // Ensure system load has default values for display
-      if (mergedData.systemLoad && mergedData.systemLoad.length > 0) {
-        mergedData.systemLoad = mergedData.systemLoad.map((item) => ({
-          timestamp: item.timestamp || new Date(),
-          memory: item.memory !== undefined ? item.memory : 0,
-          cpu: item.cpu !== undefined ? item.cpu : 0,
-          diskSpace: item.diskSpace || { used: 0, total: 100000 },
-          activeConnections: item.activeConnections || 0,
-        }));
-      }
-
+      // Return the merged metrics with real server data
       return mergedData;
     } catch (error) {
       console.error("Error fetching metrics from API:", error);
+      return {
+        apiCalls: [],
+        systemLoad: [],
+        errorRates: {},
+        status: "error",
+        errorMessage: "Failed to fetch metrics from server"
+      };
     }
-
-    // Fallback to local metrics with safe defaults
-    const safeMetrics = { ...this.metrics };
-    if (!safeMetrics.apiCalls) safeMetrics.apiCalls = [];
-    if (!safeMetrics.systemLoad) safeMetrics.systemLoad = [];
-    if (!safeMetrics.errorRates) safeMetrics.errorRates = {};
-
-    // Calculate local metrics if we have API calls but no calculated metrics
-    if (
-      safeMetrics.apiCalls.length > 0 &&
-      (!safeMetrics.responseTimeAverage || !safeMetrics.slowestEndpoint)
-    ) {
-      this.calculateMetrics();
-      safeMetrics.responseTimeAverage = this.metrics.responseTimeAverage;
-      safeMetrics.slowestEndpoint = this.metrics.slowestEndpoint;
-    }
-
-    // Add dummy system load data if empty
-    if (!safeMetrics.systemLoad || safeMetrics.systemLoad.length === 0) {
-      safeMetrics.systemLoad = [
-        {
-          timestamp: new Date(),
-          memory: 0,
-          cpu: 0,
-          diskSpace: { used: 0, total: 100000 },
-          activeConnections: 0,
-        },
-      ];
-    }
-
-    return {
-      ...safeMetrics,
-      isMonitoringEnabled: true,
-    };
   }
 
   // Get a snapshot of response times by endpoint
@@ -600,7 +545,8 @@ class PerformanceService {
     }
 
     return null;
-  } // Get current alerts
+  }
+  // Get current alerts
   async getAlerts() {
     // Always fetch alerts, monitoring is always enabled
     try {
