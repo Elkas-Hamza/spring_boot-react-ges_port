@@ -1,4 +1,4 @@
-package com.hamzaelkasmi.stage.controller;
+package com.hamzaelkasmi.stage.controllers;
 
 import com.hamzaelkasmi.stage.model.SystemMetrics;
 import com.hamzaelkasmi.stage.service.PerformanceMonitoringService;

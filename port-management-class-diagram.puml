@@ -1,0 +1,190 @@
+@startuml Système de Gestion Portuaire - Diagramme de Classes UML
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 9
+skinparam packageFontSize 11
+skinparam backgroundColor #FAFAFA
+skinparam classBackgroundColor white
+skinparam classBorderColor #333333
+skinparam packageBorderColor #666666
+skinparam arrowColor #0066CC
+
+title <size:16><b>Système de Gestion Portuaire</b></size>\n<size:12>Diagramme de Classes UML</size>
+
+class Utilisateur {
+    -id: VARCHAR(10)
+    -email: VARCHAR(255)
+    -motDePasse: VARCHAR(255)
+    -role: ENUM
+    -dateCreation: TIMESTAMP
+    -derniereConnexion: TIMESTAMP
+    -compteVerrouille: BOOLEAN
+    --
+    +seConnecter(): boolean
+    +seDeconnecter(): void
+    +reinitialiserMotDePasse(): void
+    +verrouillerCompte(): void
+    +deverrouillerCompte(): void
+}
+
+class Navire {
+    -idNavire: VARCHAR(45)
+    -nomNavire: VARCHAR(256)
+    -matriculeNavire: VARCHAR(45)
+    --
+    +ajouterNavire(): void
+    +modifierNavire(): void
+    +supprimerNavire(): void
+    +obtenirNavireParId(): Navire
+    +obtenirTousLesNavires(): List<Navire>
+}
+
+class Escale {
+    -numeroEscale: VARCHAR(45)
+    -nomNavire: VARCHAR(256)
+    -matriculeNavire: VARCHAR(45)
+    -dateAccostage: DATETIME
+    -dateSortie: DATETIME
+    --
+    +creerEscale(): void
+    +modifierEscale(): void
+    +obtenirEscalesParNavire(): List<Escale>
+    +calculerDuree(): int
+}
+
+class Conteneur {
+    -idConteneur: VARCHAR(45)
+    -nomConteneur: VARCHAR(45)
+    -typeConteneur: VARCHAR(45)
+    -idType: INT
+    -idNavire: VARCHAR(45)
+    -dateAjout: TIMESTAMP
+    --
+    +ajouterConteneur(): void
+    +modifierConteneur(): void
+    +obtenirConteneursParNavire(): List<Conteneur>
+    +definirDerniereOperation(): void
+}
+
+class Operation {
+    -idOperation: VARCHAR(45)
+    -typeOperation: VARCHAR(45)
+    -idShift: VARCHAR(45)
+    -idEscale: VARCHAR(45)
+    -idEquipe: VARCHAR(45)
+    -dateDebut: DATETIME
+    -dateFin: DATETIME
+    -statut: VARCHAR(45)
+    --
+    +creerOperation(): void
+    +mettreAJourStatut(): void
+    +calculerDuree(): int
+    +assignerEquipe(): void
+    +assignerShift(): void
+}
+
+class Personnel {
+    -idPersonnel: INT
+    -matriculePersonnel: VARCHAR(45)
+    -nomPersonnel: VARCHAR(45)
+    -prenomPersonnel: VARCHAR(45)
+    -fonctionPersonnel: VARCHAR(45)
+    -contactPersonnel: VARCHAR(45)
+    --
+    +ajouterPersonnel(): void
+    +modifierPersonnel(): void
+    +assignerAEquipe(): void
+    +obtenirNomComplet(): String
+}
+
+class Equipe {
+    -idEquipe: VARCHAR(45)
+    -nomEquipe: VARCHAR(100)
+    --
+    +creerEquipe(): void
+    +ajouterMembre(): void
+    +supprimerMembre(): void
+    +obtenirMembres(): List<Personnel>
+    +assignerOperation(): void
+}
+
+class Engin {
+    -idEngin: VARCHAR(45)
+    -nomEngin: VARCHAR(45)
+    -typeEngin: VARCHAR(45)
+    --
+    +ajouterEngin(): void
+    +modifierEngin(): void
+    +assignerAOperation(): void
+    +verifierDisponibilite(): boolean
+}
+
+class Shift {
+    -idShift: VARCHAR(45)
+    -nomShift: VARCHAR(45)
+    -heureDebut: TIME
+    -heureFin: TIME
+    --
+    +creerShift(): void
+    +modifierShift(): void
+    +calculerDuree(): int
+    +estActif(): boolean
+}
+
+class Arret {
+    -idArret: VARCHAR(45)
+    -idOperation: VARCHAR(45)
+    -numeroEscale: VARCHAR(45)
+    -motifArret: VARCHAR(256)
+    -dureeArret: INT
+    -dateDebutArret: DATETIME
+    -dateFinArret: DATETIME
+    --
+    +creerArret(): void
+    +modifierArret(): void
+    +calculerTempsArret(): int
+    +resoudreArret(): void
+}
+
+class SousTraitant {
+    -idSousTraitant: INT
+    -matriculeSousTraitant: VARCHAR(45)
+    -nomSousTraitant: VARCHAR(45)
+    -prenomSousTraitant: VARCHAR(45)
+    -fonctionSousTraitant: VARCHAR(45)
+    -entrepriseSousTraitant: VARCHAR(100)
+    --
+    +ajouterSousTraitant(): void
+    +modifierSousTraitant(): void
+    +assignerAEquipe(): void
+    +obtenirInfoEntreprise(): String
+}
+
+' ============= RELATIONS =============
+
+' L'utilisateur crée et gère les entités
+Utilisateur "1" *-- "0..*" Navire : crée/gère
+Utilisateur "1" *-- "0..*" Escale : planifie
+Utilisateur "1" *-- "0..*" Operation : supervise
+
+' Flux principal des opérations portuaires
+Navire "1" o-- "0..*" Escale : visite
+Navire "1" o-- "0..*" Conteneur : transporte
+Escale "1" *-- "0..*" Operation : contient
+Operation "0..*" o-- "1" Shift : programmée_dans
+Operation "0..*" o-- "1" Equipe : assignée_à
+Operation "0..1" -- "0..*" Conteneur : dernière_opération
+
+' Pannes et maintenance
+Operation "1" o-- "0..*" Arret : peut_avoir
+Escale "1" o-- "0..*" Arret : subit
+
+' Composition d'équipe (plusieurs-à-plusieurs via classes d'association)
+Equipe "1" o-- "0..*" Personnel : inclut
+Equipe "1" o-- "0..*" SousTraitant : sous-traite
+
+' Utilisation d'équipement
+Operation "0..*" -- "0..*" Engin : utilise
+
+@enduml

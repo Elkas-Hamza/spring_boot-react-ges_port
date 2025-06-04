@@ -2,7 +2,6 @@ package com.hamzaelkasmi.stage.service;
 
 import com.hamzaelkasmi.stage.model.Equipe;
 import com.hamzaelkasmi.stage.model.Personnel;
-import com.hamzaelkasmi.stage.model.Soustraiteure;
 import com.hamzaelkasmi.stage.repository.EquipeRepository;
 import com.hamzaelkasmi.stage.repository.PersonnelRepository;
 import com.hamzaelkasmi.stage.repository.SoustraiteureRepository;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class EquipeService {
@@ -161,7 +159,8 @@ public class EquipeService {
         Equipe equipe = getEquipeById(equipeId)
                 .orElseThrow(() -> new RuntimeException("Equipe not found with id: " + equipeId));
                 
-        Soustraiteure soustraiteur = soustraiteureRepository.findById(soustraiteurId)
+        // Verify soustraiteur exists before proceeding
+        soustraiteureRepository.findById(soustraiteurId)
                 .orElseThrow(() -> new RuntimeException("Soustraiteur not found with id: " + soustraiteurId));
         
         // Get the EntityManager from the repository

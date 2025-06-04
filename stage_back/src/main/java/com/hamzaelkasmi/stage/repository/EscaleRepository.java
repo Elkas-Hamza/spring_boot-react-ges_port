@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.hamzaelkasmi.stage.model.Escale;
 import java.util.List;
-import java.time.LocalDateTime;
 
 @Repository
 public interface EscaleRepository extends JpaRepository<Escale, String> {

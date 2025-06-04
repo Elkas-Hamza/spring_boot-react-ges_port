@@ -7,7 +7,6 @@ import com.hamzaelkasmi.stage.service.ArretService;
 import com.hamzaelkasmi.stage.model.Arret;
 
 import java.util.List;
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/arrets")

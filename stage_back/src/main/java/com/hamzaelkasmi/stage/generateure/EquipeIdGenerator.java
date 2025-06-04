@@ -2,18 +2,12 @@ package com.hamzaelkasmi.stage.generateure;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class EquipeIdGenerator implements IdentifierGenerator {
-
-    private DataSource dataSource;
 
     public EquipeIdGenerator() {
     }

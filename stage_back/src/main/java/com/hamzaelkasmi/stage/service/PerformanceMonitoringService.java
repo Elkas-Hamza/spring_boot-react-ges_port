@@ -6,8 +6,6 @@ import com.hamzaelkasmi.stage.model.PerformanceMetrics;
 import com.hamzaelkasmi.stage.model.SystemMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Primary;
@@ -23,10 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
-import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Service for monitoring system performance.
@@ -149,10 +144,8 @@ public class PerformanceMonitoringService {
 
     public void clearAlerts() {
     }
-    private SystemMetrics convertSystemMetrics(com.hamzaelkasmi.stage.model.SystemMetrics source) {
-        SystemMetrics result = new SystemMetrics();
-        return result;
-    }    private double getSystemCpuLoad(OperatingSystemMXBean osBean) {
+    
+    private double getSystemCpuLoad(OperatingSystemMXBean osBean) {
         try {
             double cpuLoad = -1.0;
             
@@ -446,10 +439,7 @@ public class PerformanceMonitoringService {
         return diskSpace;
     }
 
-    private String formatMs(double ms) {
-        if (ms < 1000) return String.format("%.0f ms", ms);
-        return String.format("%.2f s", ms / 1000);
-    }    @Scheduled(fixedRate = 3000000) // Every minute
+    @Scheduled(fixedRate = 3000000) // Every minute
     public void checkAndCleanupOldData() {
         if (!isMonitoringEnabled()) return;
 

@@ -2,7 +2,6 @@ package com.hamzaelkasmi.stage.service;
 
 import com.hamzaelkasmi.stage.model.Conteneure;
 import com.hamzaelkasmi.stage.model.Navire;
-import com.hamzaelkasmi.stage.model.Operation;
 import com.hamzaelkasmi.stage.repository.ConteneureRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

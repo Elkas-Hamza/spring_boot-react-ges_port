@@ -3,7 +3,6 @@ package com.hamzaelkasmi.stage.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 
 @Entity
