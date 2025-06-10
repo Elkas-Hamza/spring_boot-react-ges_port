@@ -218,20 +218,7 @@ const EquipeForm = () => {
           </Box>
         </Box>
 
-        {/* Debug information - only in development */}
-        {process.env.NODE_ENV !== "production" && (
-          <Paper elevation={1} sx={{ p: 2, mt: 3, backgroundColor: "#f5f5f5" }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Debug Info:
-            </Typography>
-            <Box
-              component="pre"
-              sx={{ whiteSpace: "pre-wrap", fontSize: "0.8rem" }}
-            >
-              {debugInfo}
-            </Box>
-          </Paper>
-        )}
+        
       </Paper>
 
       <Snackbar

@@ -49,6 +49,25 @@ public class OperationService {
         operationRepository.deleteById(id);
     }
 
+    public boolean updateOperationStatus(String operationId, String status) {
+        try {
+            Optional<Operation> operationOpt = operationRepository.findById(operationId);
+            if (operationOpt.isPresent()) {
+                Operation operation = operationOpt.get();
+                operation.setStatus(status);
+                operationRepository.save(operation);
+                System.out.println("Updated operation " + operationId + " status to: " + status);
+                return true;
+            } else {
+                System.out.println("Operation not found with ID: " + operationId);
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating operation status: " + e.getMessage());
+            return false;
+        }
+    }
+
     public List<OperationWithDetailsDTO> getAllOperationsWithDetails() {
         List<Object[]> results = operationRepository.findAllWithShiftDetails();
         List<OperationWithDetailsDTO> dtos = new ArrayList<>();

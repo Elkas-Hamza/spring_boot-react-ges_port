@@ -44,31 +44,36 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/conteneurs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
-
-                        // Secured admin-only endpoints - use hasAuthority with ROLE_ prefix
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // User endpoints - do not restrict
-                                                                                     // here, let method-level security
-                                                                                     // handle it
-                        .requestMatchers("/api/users/**").authenticated()
-                        // Endpoints accessible to both ADMIN and USER roles
-                        .requestMatchers("/api/operations/**").authenticated()
-                        .requestMatchers("/api/escales/**").authenticated()
-                        .requestMatchers("/api/equipes/**").authenticated()
-                        .requestMatchers("/api/shifts/**").authenticated()
-                        .requestMatchers("/api/engins/**").authenticated()
-                        .requestMatchers("/api/arrets/**").authenticated() // Add arrets endpoint
-                        .requestMatchers("/api/soustraitants/**").authenticated()
-                        .requestMatchers("/api/soustraiteurs/**").authenticated() // Added correct endpoint with 'e'
-                        .requestMatchers("/api/personnel/**").authenticated().requestMatchers("/api/analytics/**")
-                        .authenticated()
-                        .requestMatchers("/api/navires/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN") // Secured
+                                                                                                             // admin-only
+                                                                                                             // endpoints
+                                                                                                             // - use
+                                                                                                             // hasAuthority
+                                                                                                             // with
+                                                                                                             // ROLE_
+                                                                                                             // prefix
+                                                                                                             // .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                                                                                                             // // User
+                                                                                                             // endpoints
+                                                                                                             // - do not
+                                                                                                             // restrict
+                        // here, let method-level security
+                        // handle it .requestMatchers("/api/users/**").authenticated()
+                        // Endpoints accessible to both ADMIN and USER roles - temporarily using
+                        // permitAll for debugging
+                        .requestMatchers("/api/operations/**").permitAll()
+                        .requestMatchers("/api/escales/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/equipes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/shifts/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/engins/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/arrets/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/soustraitants/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/soustraiteurs/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/personnel/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                        .requestMatchers("/api/navires/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                         .requestMatchers("/api/monitoring/**").hasAuthority("ROLE_ADMIN") // Restrict monitoring to
                                                                                           // ADMIN only
-
-                        // Admin bypass - give admins access to all remaining endpoints
-                        // This must be after the specific rules
-                        .requestMatchers("/**").hasAuthority("ROLE_ADMIN")
 
                         // Any other endpoint requires authentication
                         .anyRequest().authenticated())

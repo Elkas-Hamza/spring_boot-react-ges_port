@@ -284,7 +284,16 @@ const ArretForm = () => {
         });
       }
       // Redirect after a short delay
-      setTimeout(() => navigate("/arrets"), 1000);
+      setTimeout(() => {
+        navigate("/arrets", {
+          state: {
+            message: id
+              ? "Arrêt modifié avec succès"
+              : "Arrêt créé avec succès",
+            severity: "success",
+          },
+        });
+      }, 1000);
     } catch (error) {
       setLoading(false);
       console.error("Error saving arret:", error);

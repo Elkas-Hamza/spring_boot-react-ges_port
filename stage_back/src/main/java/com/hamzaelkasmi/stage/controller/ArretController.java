@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.hamzaelkasmi.stage.service.ArretService;
+import com.hamzaelkasmi.stage.service.OperationService;
 import com.hamzaelkasmi.stage.model.Arret;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public class ArretController {
 
     @Autowired
     private ArretService arretService;
+
+    @Autowired
+    private OperationService operationService;
 
     /**
      * Retrieve all arrets from the database.
@@ -70,10 +74,24 @@ public class ArretController {
                 System.out.println("Validation failed for arret");
                 return ResponseEntity.badRequest().body(null);
             }
-
             System.out.println("Validation passed, attempting to save...");
             Arret savedArret = arretService.saveArret(arret);
             System.out.println("Arret saved successfully: " + savedArret.getID_arret());
+
+            // If arrêt has an operation ID, update the operation status to "En pause"
+            if (savedArret.getID_operation() != null && !savedArret.getID_operation().trim().isEmpty()) {
+                System.out.println(
+                        "Updating operation status to 'En pause' for operation: " + savedArret.getID_operation());
+                boolean statusUpdated = operationService.updateOperationStatus(savedArret.getID_operation(),
+                        "En pause");
+                if (statusUpdated) {
+                    System.out.println("Operation status updated successfully");
+                } else {
+                    System.out
+                            .println("Warning: Failed to update operation status, but arrêt was created successfully");
+                }
+            }
+
             return ResponseEntity.ok(savedArret);
         } catch (Exception e) {
             // Log the detailed exception for debugging

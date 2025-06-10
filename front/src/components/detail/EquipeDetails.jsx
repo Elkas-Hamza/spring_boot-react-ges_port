@@ -25,6 +25,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Chip,
 } from "@mui/material";
 import { ArrowBack, Delete, Add } from "@mui/icons-material";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -32,11 +33,13 @@ import EquipeService from "../../services/EquipeService";
 import OperationService from "../../services/OperationService";
 import PersonnelService from "../../services/PersonnelService";
 import SoustraiteureService from "../../services/SoustraiteureService";
+import ArretService from "../../services/ArretService";
 
 const EquipeDetails = () => {
   const [equipe, setEquipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [operations, setOperations] = useState([]);
+  const [operationStatuses, setOperationStatuses] = useState({});
   const [availablePersonnel, setAvailablePersonnel] = useState([]);
   const [availableSoustraiteurs, setAvailableSoustraiteurs] = useState([]);
   const [selectedPersonnel, setSelectedPersonnel] = useState("");
@@ -79,10 +82,60 @@ const EquipeDetails = () => {
     }
   }, [id]);
 
+  // Function to determine operation status considering active arrêts
+  const getOperationStatusWithArrets = useCallback(async (operation) => {
+    try {
+      // Check for active arrêts first
+      const activeArrets = await ArretService.getActiveArretsForOperation(
+        operation.id_operation
+      );
+
+      // If there are active arrêts, status is "En pause"
+      if (activeArrets && activeArrets.length > 0) {
+        return "En pause";
+      }
+
+      // Otherwise, determine status based on dates
+      const now = new Date();
+      const startDate = operation.date_debut
+        ? new Date(operation.date_debut)
+        : null;
+      const endDate = operation.date_fin ? new Date(operation.date_fin) : null;
+
+      if (startDate && now < startDate) {
+        return "Planifié";
+      } else if (endDate && now > endDate) {
+        return "Terminé";
+      } else {
+        return operation.status || "En cours";
+      }
+    } catch (error) {
+      console.error("Error determining operation status:", error);
+      return operation.status || "En cours";
+    }
+  }, []);
+
   const fetchOperations = useCallback(async () => {
     try {
       const response = await OperationService.getOperationsByEquipeId(id);
-      setOperations(response.data || []);
+      const operationsData = response.data || [];
+      setOperations(operationsData);
+
+      // Fetch status for each operation
+      const statusesMap = {};
+      for (const operation of operationsData) {
+        try {
+          const status = await getOperationStatusWithArrets(operation);
+          statusesMap[operation.id_operation] = status;
+        } catch (error) {
+          console.error(
+            `Error getting status for operation ${operation.id_operation}:`,
+            error
+          );
+          statusesMap[operation.id_operation] = operation.status || "En cours";
+        }
+      }
+      setOperationStatuses(statusesMap);
     } catch (error) {
       console.error("Error fetching operations:", error);
       setNotification({
@@ -91,7 +144,7 @@ const EquipeDetails = () => {
         severity: "error",
       });
     }
-  }, [id]);
+  }, [id, getOperationStatusWithArrets]);
 
   const fetchPersonnel = useCallback(async () => {
     try {
@@ -296,7 +349,6 @@ const EquipeDetails = () => {
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
-
   const formatDate = (dateString) => {
     if (!dateString) return "Non spécifié";
     try {
@@ -304,6 +356,24 @@ const EquipeDetails = () => {
     } catch (error) {
       console.error("Error formatting date:", error);
       return "Date invalide";
+    }
+  };
+
+  // Get status color based on status
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Planifié":
+        return "info";
+      case "En cours":
+        return "primary";
+      case "Terminé":
+        return "success";
+      case "En pause":
+        return "warning";
+      case "Annulé":
+        return "error";
+      default:
+        return "default";
     }
   };
 
@@ -410,6 +480,7 @@ const EquipeDetails = () => {
 
       <TableContainer component={Paper} elevation={3} sx={{ mb: 4 }}>
         <Table>
+          {" "}
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
@@ -419,6 +490,7 @@ const EquipeDetails = () => {
               <TableCell>Engin</TableCell>
               <TableCell>Date Début</TableCell>
               <TableCell>Date Fin</TableCell>
+              <TableCell>Statut</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -433,6 +505,21 @@ const EquipeDetails = () => {
                   <TableCell>{operation.id_engin}</TableCell>
                   <TableCell>{formatDate(operation.date_debut)}</TableCell>
                   <TableCell>{formatDate(operation.date_fin)}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={
+                        operationStatuses[operation.id_operation] ||
+                        operation.status ||
+                        "En cours"
+                      }
+                      size="small"
+                      color={getStatusColor(
+                        operationStatuses[operation.id_operation] ||
+                          operation.status ||
+                          "En cours"
+                      )}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Button
                       component={Link}
@@ -455,7 +542,7 @@ const EquipeDetails = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={9} align="center">
                   Aucune opération trouvée pour cette équipe
                 </TableCell>
               </TableRow>
