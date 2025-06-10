@@ -12,10 +12,18 @@ import java.util.List;
 public interface EscaleRepository extends JpaRepository<Escale, String> {
     // Analytics methods
     @Query("SELECT COUNT(e) FROM Escale e WHERE " +
-           "(:status = 'EN_COURS' AND e.DATE_sortie > CURRENT_TIMESTAMP) OR " +
-           "(:status = 'TERMINEE' AND e.DATE_sortie <= CURRENT_TIMESTAMP)")
+            "(:status = 'EN_COURS' AND e.DATE_sortie > CURRENT_TIMESTAMP) OR " +
+            "(:status = 'TERMINEE' AND e.DATE_sortie <= CURRENT_TIMESTAMP)")
     long countByStatus(@Param("status") String status);
-    
+
     @Query("SELECT e FROM Escale e ORDER BY e.DATE_accostage DESC")
     List<Escale> findRecentEscales(Pageable pageable);
+
+    // Find escales where departure date has passed (ships should be deleted)
+    @Query("SELECT e FROM Escale e WHERE e.DATE_sortie <= CURRENT_TIMESTAMP")
+    List<Escale> findExpiredEscales();
+
+    // Find escales by ship matricule
+    @Query("SELECT e FROM Escale e WHERE e.MATRICULE_navire = :matricule")
+    List<Escale> findByMatriculeNavire(@Param("matricule") String matricule);
 }

@@ -31,7 +31,7 @@ const getSummaryData = async () => {
     const response = await directAxios.get(`${API_URL}/summary`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching summary data:', error);
+    // Error handled
     throw error;
   }
 };
@@ -42,7 +42,7 @@ const getOperationsByType = async () => {
     const response = await directAxios.get(`${API_URL}/operations-by-type`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching operations by type:', error);
+    // Error handled
     throw error;
   }
 };
@@ -53,7 +53,7 @@ const getOperationsByMonth = async (year = new Date().getFullYear()) => {
     const response = await directAxios.get(`${API_URL}/operations-by-month?year=${year}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching operations by month:', error);
+    // Error handled
     throw error;
   }
 };
@@ -64,7 +64,7 @@ const getOperationDurations = async () => {
     const response = await directAxios.get(`${API_URL}/operation-durations`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching operation durations:', error);
+    // Error handled
     throw error;
   }
 };
@@ -75,7 +75,7 @@ const getTopEquipes = async () => {
     const response = await directAxios.get(`${API_URL}/top-equipes`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching top equipes:', error);
+    // Error handled
     throw error;
   }
 };
@@ -86,7 +86,7 @@ const getPersonnelUtilization = async () => {
     const response = await directAxios.get(`${API_URL}/personnel-utilization`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching personnel utilization:', error);
+    // Error handled
     throw error;
   }
 };
@@ -97,7 +97,7 @@ const getArretsByReason = async () => {
     const response = await directAxios.get(`${API_URL}/arrets-by-reason`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching arrets by reason:', error);
+    // Error handled
     throw error;
   }
 };
@@ -108,7 +108,7 @@ const getPortUtilization = async () => {
     const response = await directAxios.get(`${API_URL}/port-utilization`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching port utilization:', error);
+    // Error handled
     throw error;
   }
 };
@@ -119,7 +119,7 @@ const getRecentEscales = async () => {
     const response = await directAxios.get(`${API_URL}/recent-escales`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching recent escales:', error);
+    // Error handled
     throw error;
   }
 };
@@ -130,7 +130,7 @@ const getAllAnalytics = async () => {
     const response = await directAxios.get(`${API_URL}/all`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching all analytics data:', error);
+    // Error handled
     throw error;
   }
 };
@@ -139,10 +139,10 @@ const getAllAnalytics = async () => {
 const testApiConnection = async () => {
   try {
     const response = await directAxios.get(`${API_URL}/test`);
-    console.log('API Connection Test result:', response.data);
+    // Log statement removed
     return response.data;
   } catch (error) {
-    console.error('Error testing API connection:', error);
+    // Error handled
     throw error;
   }
 };

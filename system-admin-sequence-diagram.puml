@@ -1,0 +1,190 @@
+@startuml System Admin Operations
+
+title Port Management System - System Admin Operations
+
+actor "System Admin" as SA
+participant "Login Page" as LP
+participant "Admin Dashboard" as ADB
+participant "User Management" as UM
+participant "System Settings" as SS
+participant "Performance Monitor" as PMon
+participant "Database Admin" as DBA
+participant "Security Panel" as SEC
+participant "System" as SYS
+
+== Admin Authentication ==
+
+SA -> LP: Navigate to Admin Portal
+LP -> SA: Display admin login form
+SA -> LP: Enter admin credentials
+LP -> SYS: Validate admin credentials
+
+alt Admin Authentication Success
+    SYS --> LP: Admin authentication successful
+    LP -> ADB: Redirect to admin dashboard
+    ADB -> SA: Show admin dashboard with system overview
+else Authentication Failed
+    SYS --> LP: Invalid admin credentials
+    LP -> SA: Show error message & retry option
+end
+
+note over SA: System Admin has full administrative access to all system components
+
+== System Monitoring & Performance ==
+
+SA -> PMon: Access system performance dashboard
+PMon -> SA: Display real-time metrics: CPU usage, Memory usage, Database performance, API response times, Active sessions, Error rates
+
+SA -> PMon: View system health status
+PMon -> SA: Show: Service status, Database connections, Cache performance, Queue status, Background jobs
+
+SA -> PMon: Set up performance alerts
+PMon -> SA: Show alert configuration interface
+SA -> PMon: Define alert thresholds and notifications
+PMon -> SYS: Save alert configurations
+SYS --> SA: "Performance alerts configured successfully"
+
+SA -> PMon: Review system logs
+PMon -> SA: Display: Application logs, Error logs, Security logs, Audit trails
+
+== User Management Operations ==
+
+SA -> UM: Access user management panel
+UM -> SA: Display user list with: Username, Role, Status, Last login, Created date
+
+SA -> UM: Create new user account
+UM -> SA: Show user creation form
+SA -> UM: Enter user details (username, email, role, permissions)
+UM -> SYS: Create user account
+SYS --> UM: User account created
+UM -> SA: "User created successfully - temporary password sent"
+
+SA -> UM: Modify user permissions
+UM -> SA: Show user details and current permissions
+SA -> UM: Update role and permission settings
+UM -> SYS: Update user permissions
+SYS --> SA: "User permissions updated successfully"
+
+SA -> UM: Deactivate user account
+UM -> SA: Show confirmation dialog
+SA -> UM: Confirm deactivation
+UM -> SYS: Deactivate user account
+SYS --> SA: "User account deactivated"
+
+SA -> UM: Reset user password
+UM -> SA: Show password reset options
+SA -> UM: Generate new temporary password
+UM -> SYS: Reset user password
+SYS --> SA: "Password reset - new temporary password generated"
+
+== System Configuration ==
+
+SA -> SS: Access system settings
+SS -> SA: Display configuration categories: Database settings, Security settings, API settings, Integration settings, Backup settings
+
+SA -> SS: Configure database connections
+SS -> SA: Show database configuration panel
+SA -> SS: Update connection parameters
+SS -> SYS: Test and apply database settings
+SYS --> SA: "Database configuration updated successfully"
+
+SA -> SS: Manage system parameters
+SS -> SA: Show parameter configuration
+SA -> SS: Update system parameters (timeouts, limits, thresholds)
+SS -> SYS: Apply parameter changes
+SYS --> SA: "System parameters updated"
+
+SA -> SS: Configure backup settings
+SS -> SA: Show backup configuration
+SA -> SS: Set backup schedule and retention policies
+SS -> SYS: Configure automated backups
+SYS --> SA: "Backup schedule configured"
+
+== Security Administration ==
+
+SA -> SEC: Access security panel
+SEC -> SA: Display security overview: Failed login attempts, Security alerts, Session management, API key management
+
+SA -> SEC: Review security logs
+SEC -> SA: Show: Authentication logs, Authorization failures, Suspicious activities, System access logs
+
+SA -> SEC: Manage API keys
+SEC -> SA: Display active API keys and permissions
+SA -> SEC: Generate new API key
+SEC -> SYS: Create API key with specified permissions
+SYS --> SA: "New API key generated"
+
+SA -> SEC: Configure security policies
+SEC -> SA: Show security policy settings
+SA -> SEC: Update password policies, session timeouts, access restrictions
+SEC -> SYS: Apply security configurations
+SYS --> SA: "Security policies updated"
+
+== Database Administration ==
+
+SA -> DBA: Access database admin tools
+DBA -> SA: Display database overview: Connection status, Query performance, Storage usage, Backup status
+
+SA -> DBA: Run database maintenance
+DBA -> SA: Show maintenance options
+SA -> DBA: Execute maintenance tasks (cleanup, optimization, indexing)
+DBA -> SYS: Execute database maintenance
+SYS --> SA: "Database maintenance completed"
+
+SA -> DBA: Monitor database performance
+DBA -> SA: Show: Query execution times, Connection pools, Lock status, Index usage
+
+SA -> DBA: Backup database
+DBA -> SA: Show backup options
+SA -> DBA: Initiate manual backup
+DBA -> SYS: Create database backup
+SYS --> SA: "Database backup completed successfully"
+
+== System Updates & Maintenance ==
+
+SA -> ADB: Schedule system maintenance
+ADB -> SA: Show maintenance scheduling interface
+SA -> ADB: Set maintenance window and notifications
+ADB -> SYS: Schedule maintenance tasks
+SYS --> SA: "Maintenance scheduled - users will be notified"
+
+SA -> ADB: Deploy system updates
+ADB -> SA: Show available updates and deployment options
+SA -> ADB: Approve and deploy updates
+ADB -> SYS: Execute system updates
+SYS --> SA: "System updates deployed successfully"
+
+== Error Handling & Alerts ==
+
+alt System Critical Error
+    SYS -> SA: Critical system alert notification
+    SA -> PMon: Investigate system issue
+    PMon -> SA: Display error details and system status
+    SA -> SYS: Execute recovery procedures
+else Performance Degradation
+    SYS -> SA: Performance alert notification
+    SA -> PMon: Review performance metrics
+    PMon -> SA: Show performance analysis
+    SA -> SYS: Apply performance optimizations
+else Security Breach Alert
+    SYS -> SA: Security alert notification
+    SA -> SEC: Review security incident
+    SEC -> SA: Display security analysis
+    SA -> SYS: Execute security response procedures
+end
+
+== Real-time Admin Notifications ==
+
+note over SA: Admin receives real-time system alerts and notifications
+
+SYS -> SA: System performance alerts
+SYS -> SA: Security incident notifications
+SYS -> SA: Backup completion status
+SYS -> SA: User account activity alerts
+SYS -> SA: Database maintenance notifications
+
+SA -> SYS: Acknowledge system alerts
+SA -> SYS: Respond to critical incidents
+SA -> SYS: Update system status
+
+@enduml

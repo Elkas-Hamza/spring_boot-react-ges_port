@@ -2,6 +2,7 @@ package com.hamzaelkasmi.stage.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,31 +11,33 @@ public class Arret {
 
     @Id
     @GeneratedValue(generator = "arret-id-generator")
-    @org.hibernate.annotations.GenericGenerator(
-            name = "arret-id-generator",
-            strategy = "com.hamzaelkasmi.stage.generateure.ArretIdGenerator"
-    )
+    @org.hibernate.annotations.GenericGenerator(name = "arret-id-generator", strategy = "com.hamzaelkasmi.stage.generateure.ArretIdGenerator")
     @Column(name = "ID_arret", nullable = false, unique = true)
     private String ID_arret;
-
     @Column(name = "NUM_escale", nullable = false)
+    @JsonProperty("NUM_escale")
     private String NUM_escale;
 
     @Column(name = "ID_operation")
+    @JsonProperty("ID_operation")
     private String ID_operation;
 
     @Column(name = "MOTIF_arret", nullable = false, length = 256)
+    @JsonProperty("MOTIF_arret")
     private String MOTIF_arret;
 
     @Column(name = "DURE_arret", nullable = false)
+    @JsonProperty("DURE_arret")
     private int DURE_arret;
 
     @Column(name = "DATE_DEBUT_arret", nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonProperty("DATE_DEBUT_arret")
     private LocalDateTime DATE_DEBUT_arret;
 
     @Column(name = "DATE_FIN_arret", nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonProperty("DATE_FIN_arret")
     private LocalDateTime DATE_FIN_arret;
 
     // Default constructor required by JPA/Hibernate

@@ -66,13 +66,6 @@ const Login = ({ onLogin }) => {
     }
 
     try {
-      // Log API request for debugging
-      ApiHelper.debugRequest(`${ApiHelper.API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
       const data = await AuthService.login(email, password);
 
       // Check if we have a valid token and user data
@@ -191,11 +184,9 @@ const Login = ({ onLogin }) => {
                 opacity: 0.7,
               }}
             >
-              {[...Array(3)].map((_, i) => (
-                <Typography key={i} variant="h6">
-                  PORT MANAGEMENT
-                </Typography>
-              ))}
+              <Typography variant="h6">
+                Système de Management du departement terminal conteneurs
+              </Typography>
             </Box>
           </Grid>
 
@@ -320,11 +311,6 @@ const Login = ({ onLogin }) => {
                   >
                     Forgot password?
                   </Link>
-                  <Typography variant="body2" color="text.secondary">
-                    {apiStatus?.success
-                      ? "✓ Server Connection OK"
-                      : "⚠ Server status: Checking..."}
-                  </Typography>
                 </Box>
               </Box>
             </Paper>

@@ -12,10 +12,10 @@ import com.hamzaelkasmi.stage.repository.NavireRepository;
 public class EscaleService {
     @Autowired
     private EscaleRepository escaleRepository;
-    
+
     @Autowired
     private NavireRepository navireRepository;
-    
+
     /**
      * Retrieve all escales from the database.
      */
@@ -67,5 +67,22 @@ public class EscaleService {
             throw new IllegalArgumentException("ID must not be null or empty");
         }
         escaleRepository.deleteById(id);
+    }
+
+    /**
+     * Find escales by ship matricule.
+     */
+    public List<Escale> getEscalesByMatricule(String matricule) {
+        if (matricule == null || matricule.isEmpty()) {
+            throw new IllegalArgumentException("Matricule must not be null or empty");
+        }
+        return escaleRepository.findByMatriculeNavire(matricule);
+    }
+
+    /**
+     * Find all expired escales (where departure date has passed).
+     */
+    public List<Escale> getExpiredEscales() {
+        return escaleRepository.findExpiredEscales();
     }
 }

@@ -27,9 +27,12 @@ class OperationService {
   getOperationWithDetailsById(id) {
     return axiosInstance.get(`${ENDPOINT}/${id}/with-details`);
   }
-
   getOperationsByEscaleId(escaleId) {
     return axiosInstance.get(`${ENDPOINT}/escale/${escaleId}`);
+  }
+
+  getOperationsByEscaleIdAndStatus(escaleId, status) {
+    return axiosInstance.get(`${ENDPOINT}/escale/${escaleId}/status/${status}`);
   }
 
   getOperationsByShiftId(shiftId) {

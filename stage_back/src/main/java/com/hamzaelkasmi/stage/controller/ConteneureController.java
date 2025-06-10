@@ -24,12 +24,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/conteneurs")
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}, allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST,
+        RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS }, allowCredentials = "true")
 public class ConteneureController {
 
     @Autowired
     private ConteneureService conteneureService;
-    
+
     @Autowired
     private NavireService navireService;
 
@@ -47,7 +48,7 @@ public class ConteneureController {
         if (id.contains(",")) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        
+
         Optional<Conteneure> conteneureData = conteneureService.getConteneureById(id);
         if (conteneureData.isPresent()) {
             return new ResponseEntity<>(conteneureData.get(), HttpStatus.OK);
@@ -55,29 +56,31 @@ public class ConteneureController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-    
+
     @GetMapping("/multiple/{ids}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<List<Conteneure>> getConteneursByIds(@PathVariable("ids") String ids) {
         List<String> idList = Arrays.asList(ids.split(","));
         List<Conteneure> conteneurs = new ArrayList<>();
-        
+
         for (String id : idList) {
             Optional<Conteneure> conteneur = conteneureService.getConteneureById(id.trim());
             conteneur.ifPresent(conteneurs::add);
         }
-        
+
         if (conteneurs.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
+
         return new ResponseEntity<>(conteneurs, HttpStatus.OK);
-    }    @PostMapping
+    }
+
+    @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> createConteneure(@RequestBody Map<String, Object> containerData) {
         try {
             System.out.println("Received container data: " + containerData);
-            
+
             // Create a new container with the data from the request
             Conteneure conteneure = new Conteneure();
 
@@ -87,15 +90,15 @@ public class ConteneureController {
             } else {
                 return new ResponseEntity<>(Map.of("error", "Container name is required"), HttpStatus.BAD_REQUEST);
             }
-            
+
             // Set container type if provided
             if (containerData.containsKey("type_conteneure")) {
                 conteneure.setType_conteneure((String) containerData.get("type_conteneure"));
             }
-            
+
             // Set default ID_type (1 for TERRE containers)
             conteneure.setId_type(1);
-            
+
             // Set ID_type if explicitly provided
             if (containerData.containsKey("id_type")) {
                 if (containerData.get("id_type") instanceof Number) {
@@ -109,8 +112,9 @@ public class ConteneureController {
                     }
                 }
             }
-            
-            // Set navire if specified (for containers created directly from the ship detail page)
+
+            // Set navire if specified (for containers created directly from the ship detail
+            // page)
             if (containerData.containsKey("idNavire")) {
                 String navireId;
                 if (containerData.get("idNavire") instanceof String) {
@@ -120,7 +124,7 @@ public class ConteneureController {
                 } else {
                     return new ResponseEntity<>(Map.of("error", "Invalid ship ID format"), HttpStatus.BAD_REQUEST);
                 }
-                
+
                 if (navireId != null && !navireId.isEmpty()) {
                     Optional<Navire> navire = navireService.getNavireById(navireId);
                     if (navire.isPresent()) {
@@ -128,55 +132,57 @@ public class ConteneureController {
                         // Force type ID 2 when a navire is specified
                         conteneure.setId_type(2);
                     } else {
-                        return new ResponseEntity<>(Map.of("error", "Ship not found with ID: " + navireId), HttpStatus.NOT_FOUND);
+                        return new ResponseEntity<>(Map.of("error", "Ship not found with ID: " + navireId),
+                                HttpStatus.NOT_FOUND);
                     }
                 }
             }
-            
+
             // Save the container
             Conteneure _conteneure = conteneureService.saveConteneure(conteneure);
-            return new ResponseEntity<>(_conteneure, HttpStatus.CREATED);        } catch (Exception e) {
+            return new ResponseEntity<>(_conteneure, HttpStatus.CREATED);
+        } catch (Exception e) {
             e.printStackTrace();
-            
+
             // Check if this is a duplicate key error
             if (e.getMessage().contains("Duplicate entry") && e.getMessage().contains("PRIMARY")) {
                 return new ResponseEntity<>(Map.of(
-                    "error", "Container ID conflict detected",
-                    "message", "A container with this ID already exists. The system will retry with a new ID.",
-                    "action", "Please try again, the system will generate a new unique ID"
-                ), HttpStatus.CONFLICT);
+                        "error", "Container ID conflict detected",
+                        "message", "A container with this ID already exists. The system will retry with a new ID.",
+                        "action", "Please try again, the system will generate a new unique ID"), HttpStatus.CONFLICT);
             }
-            
+
             return new ResponseEntity<>(Map.of(
-                "error", "Failed to create container", 
-                "message", e.getMessage(),
-                "cause", e.getCause() != null ? e.getCause().toString() : "Unknown"
-            ), HttpStatus.INTERNAL_SERVER_ERROR);
+                    "error", "Failed to create container",
+                    "message", e.getMessage(),
+                    "cause", e.getCause() != null ? e.getCause().toString() : "Unknown"),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Conteneure> updateConteneure(@PathVariable("id") String id, @RequestBody Map<String, Object> containerData) {
+    public ResponseEntity<Conteneure> updateConteneure(@PathVariable("id") String id,
+            @RequestBody Map<String, Object> containerData) {
         Optional<Conteneure> conteneureData = conteneureService.getConteneureById(id);
         if (conteneureData.isPresent()) {
             Conteneure _conteneure = conteneureData.get();
-            
+
             // Update container name if provided
             if (containerData.containsKey("nom_conteneure")) {
                 _conteneure.setNom_conteneure((String) containerData.get("nom_conteneure"));
             }
-            
+
             // Update container type if provided
             if (containerData.containsKey("type_conteneure")) {
                 _conteneure.setType_conteneure((String) containerData.get("type_conteneure"));
             }
-            
+
             // Update ID_type if provided
             if (containerData.containsKey("id_type") && containerData.get("id_type") instanceof Number) {
                 _conteneure.setId_type((Integer) containerData.get("id_type"));
             }
-            
+
             // Handle navire association - if present in the update
             if (containerData.containsKey("idNavire")) {
                 String navireId = containerData.get("idNavire").toString();
@@ -194,7 +200,7 @@ public class ConteneureController {
                     _conteneure.setId_type(1);
                 }
             }
-            
+
             return new ResponseEntity<>(conteneureService.saveConteneure(_conteneure), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -211,7 +217,7 @@ public class ConteneureController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     // Updated endpoints for container management
 
     @GetMapping("/port")
@@ -229,6 +235,11 @@ public class ConteneureController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<List<Conteneure>> getShipContainers(@PathVariable("shipId") String shipId) {
         try {
+            // Validate shipId parameter
+            if (shipId == null || shipId.trim().isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
             Optional<Navire> navire = navireService.getNavireById(shipId);
             if (!navire.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -240,7 +251,7 @@ public class ConteneureController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @PutMapping("/{containerId}/assign/{shipId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Conteneure> assignContainerToShip(
@@ -248,58 +259,58 @@ public class ConteneureController {
             @PathVariable("shipId") String shipId) {
         try {
             Optional<Navire> navireOpt = navireService.getNavireById(shipId);
-            
+
             if (!navireOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            
+
             Conteneure updatedContainer = conteneureService.assignConteneureToShip(containerId, navireOpt.get());
-            
+
             if (updatedContainer == null) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            
+
             return new ResponseEntity<>(updatedContainer, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @PutMapping("/{containerId}/unassign")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Conteneure> unassignContainerFromShip(
             @PathVariable("containerId") String containerId) {
         try {
             Conteneure updatedContainer = conteneureService.unassignConteneureFromShip(containerId);
-            
+
             if (updatedContainer == null) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            
+
             return new ResponseEntity<>(updatedContainer, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @GetMapping("/location/{locationType}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<List<Conteneure>> getConteneuresByLocationType(
             @PathVariable("locationType") String locationType) {
         try {
             List<Conteneure> containers;
-            
+
             // Use id_type instead of location string
             if ("TERRE".equals(locationType.toUpperCase())) {
                 containers = conteneureService.getPortConteneures();
             } else if ("NAVIRE".equals(locationType.toUpperCase())) {
                 containers = conteneureService.getAllConteneures().stream()
-                    .filter(c -> c.getNavire() != null)
-                    .collect(Collectors.toList());
+                        .filter(c -> c.getNavire() != null)
+                        .collect(Collectors.toList());
             } else {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            
+
             return new ResponseEntity<>(containers, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -309,25 +320,25 @@ public class ConteneureController {
     @GetMapping("/auth-test")
     public ResponseEntity<Map<String, Object>> testAuthForContainers() {
         Map<String, Object> response = new HashMap<>();
-        
+
         // Get authentication info
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
-        
+
         response.put("username", username);
         response.put("authenticated", auth.isAuthenticated());
         response.put("authorities", authorities.stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList()));
-            
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
         boolean hasAdminAuthority = authorities.stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         response.put("hasAdminAuthority", hasAdminAuthority);
-        
+
         // Admin users should be able to create containers
         response.put("canCreateContainers", hasAdminAuthority);
-        
+
         return ResponseEntity.ok(response);
     }
 }

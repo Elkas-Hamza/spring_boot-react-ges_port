@@ -40,25 +40,16 @@ const ConteneureList = () => {
     severity: "success",
   });
   const [searchQuery, setSearchQuery] = useState("");
-
   const fetchConteneurs = async () => {
     try {
       setLoading(true);
       const response = await ConteneureService.getAllConteneures();
-      console.log("All containers data:", response.data);
 
-      // Debug container types
       if (response.data && Array.isArray(response.data)) {
-        response.data.forEach((container) => {
-          console.log(
-            `Container ${container.id_conteneure} - Type ID: ${container.id_type?.id}, Type: ${container.id_type?.nomType}`
-          );
-        });
+        setConteneurs(response.data);
+        setFilteredConteneurs(response.data);
+        setError(null);
       }
-
-      setConteneurs(response.data);
-      setFilteredConteneurs(response.data);
-      setError(null);
     } catch (error) {
       console.error("Error fetching conteneurs:", error);
       setError("Erreur lors du chargement des conteneurs");

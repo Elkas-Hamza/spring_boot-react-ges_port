@@ -11,7 +11,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/operations")
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}, allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST,
+        RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS }, allowCredentials = "true")
 public class OperationController {
 
     @Autowired
@@ -21,7 +22,7 @@ public class OperationController {
     public List<Operation> getAllOperations() {
         return operationService.getAllOperations();
     }
-    
+
     @GetMapping("/with-details")
     public List<OperationWithDetailsDTO> getAllOperationsWithDetails() {
         return operationService.getAllOperationsWithDetails();
@@ -33,7 +34,7 @@ public class OperationController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @GetMapping("/{id}/with-details")
     public ResponseEntity<OperationWithDetailsDTO> getOperationWithDetailsById(@PathVariable("id") String id) {
         return operationService.getOperationWithDetailsById(id)
@@ -44,6 +45,14 @@ public class OperationController {
     @GetMapping("/escale/{escaleId}")
     public ResponseEntity<List<Operation>> getOperationsByEscaleId(@PathVariable("escaleId") String escaleId) {
         List<Operation> operations = operationService.getOperationsByEscaleId(escaleId);
+        return operations.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(operations);
+    }
+
+    @GetMapping("/escale/{escaleId}/status/{status}")
+    public ResponseEntity<List<Operation>> getOperationsByEscaleIdAndStatus(
+            @PathVariable("escaleId") String escaleId,
+            @PathVariable("status") String status) {
+        List<Operation> operations = operationService.getOperationsByEscaleIdAndStatus(escaleId, status);
         return operations.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(operations);
     }
 
@@ -96,4 +105,4 @@ public class OperationController {
                 operation.getDate_debut() != null &&
                 operation.getDate_fin() != null;
     }
-} 
+}

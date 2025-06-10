@@ -1,0 +1,182 @@
+@startuml Système de Gestion Portuaire - Diagramme de Cas d'Usage
+left to right direction
+
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #333333
+}
+skinparam actor {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+skinparam rectangle {
+    BackgroundColor #F5F5F5
+    BorderColor #757575
+}
+
+title Système de Gestion Portuaire - Diagramme de Cas d'Usage
+
+' Acteurs
+:Administrateur: as Admin
+:Utilisateur: as User
+:Système: as System
+:Service Email: as EmailService
+
+' Frontière du système
+rectangle "Système de Gestion Portuaire" {
+    
+    ' Package Authentification et Autorisation
+    package "Authentification et Autorisation" as AuthPackage {
+        usecase "Connexion/Déconnexion" as UC01
+        usecase "Enregistrer Utilisateurs" as UC02
+        usecase "Changer Mot de Passe" as UC03
+        usecase "Réinitialiser Mot de Passe" as UC04
+        usecase "Gérer Comptes Utilisateurs" as UC05
+        
+
+    }
+    
+    ' Package Opérations Principales
+    package "Opérations Principales" as CorePackage {
+        usecase "Voir Tableau de Bord/Analyses" as UC08
+        usecase "Gérer Navires" as UC10
+        usecase "Gérer Conteneurs" as UC11
+
+        usecase "Gérer Escales" as UC13
+        usecase "Gérer Opérations" as UC14
+        usecase "Voir Détails des Opérations" as UC15
+        usecase "Assigner Conteneurs aux Navires" as UC16
+    }
+    
+    ' Package Gestion des Ressources
+    package "Gestion des Ressources" as ResourcePackage {
+        usecase "Gérer Équipes" as UC17
+        usecase "Gérer Personnel" as UC18
+        usecase "Gérer Équipements (Engins)" as UC19
+        usecase "Gérer Sous-traiteurs" as UC20
+      
+        usecase "Gérer Arrêts/Temps d'Arrêt" as UC22
+        usecase "Voir Disponibilité des Ressources" as UC23
+    }
+    
+    ' Package Analyses et Rapports
+    package "Analyses et Rapports" as AnalyticsPackage {
+        usecase "Générer Rapports d'Analyses" as UC24
+        usecase "Voir Métriques de Performance" as UC25
+        usecase "Exporter Données" as UC26
+        usecase "Surveiller KPI Opérationnels" as UC27
+    }
+    
+    ' Package Administration Système
+    package "Administration Système" as AdminPackage {
+        usecase "Surveillance des Performances" as UC28
+        usecase "Voir Métriques Système" as UC29
+        usecase "Gérer Alertes de Performance" as UC30
+        usecase "Contrôler Statut de Surveillance" as UC31
+        usecase "Accéder Paramètres Système" as UC32
+        usecase "Opérations de Maintenance" as UC33
+        usecase "Corriger Données Système" as UC34
+        usecase "Voir Santé du Système" as UC35
+    }
+    
+    ' Package Services Système
+    package "Services Système" as ServicesPackage {
+        usecase "Verrouillage Auto Compte" as UC36
+        usecase "Surveillance Auto Performance" as UC37
+        usecase "Opérations Sauvegarde Auto" as UC38
+        usecase "Notifications Email" as UC39
+        usecase "Nettoyage Jetons" as UC40
+    }
+}
+
+' Connexions Admin - Accès complet
+Admin --> UC01
+Admin --> UC02
+Admin --> UC03
+Admin --> UC04
+Admin --> UC05
+
+
+
+Admin --> UC08
+
+Admin --> UC10
+Admin --> UC11
+
+Admin --> UC13
+Admin --> UC14
+Admin --> UC15
+Admin --> UC16
+
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+
+Admin --> UC22
+Admin --> UC23
+
+Admin --> UC24
+Admin --> UC25
+Admin --> UC26
+Admin --> UC27
+
+Admin --> UC28
+Admin --> UC29
+Admin --> UC30
+Admin --> UC31
+Admin --> UC32
+Admin --> UC33
+Admin --> UC34
+Admin --> UC35
+
+' Connexions Utilisateur - Accès limité
+User --> UC01
+User --> UC03
+User --> UC04
+
+
+User --> UC08
+User --> UC15
+User --> UC23
+
+
+' Connexions Système
+System --> UC36
+System --> UC37
+System --> UC38
+System --> UC40
+
+' Connexions Service Email
+EmailService --> UC39
+
+' Relations d'inclusion
+UC04 .> UC39 : <<include>>
+UC02 .> UC39 : <<include>>
+UC05 .> UC39 : <<include>>
+
+UC10 .> UC16 : <<include>>
+UC11 .> UC16 : <<include>>
+
+
+
+
+UC28 .> UC29 : <<include>>
+UC28 .> UC30 : <<include>>
+
+UC33 .> UC34 : <<include>>
+
+' Relations d'extension
+UC36 ..> UC01 : <<extend>>
+
+
+UC37 ..> UC28 : <<extend>>
+
+
+
+
+@enduml

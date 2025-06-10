@@ -29,6 +29,10 @@ public class OperationService {
         return operationRepository.findByEscaleId(escaleId);
     }
 
+    public List<Operation> getOperationsByEscaleIdAndStatus(String escaleId, String status) {
+        return operationRepository.findByEscaleIdAndStatus(escaleId, status);
+    }
+
     public List<Operation> getOperationsByShiftId(String shiftId) {
         return operationRepository.findByShiftId(shiftId);
     }
@@ -44,11 +48,11 @@ public class OperationService {
     public void deleteOperation(String id) {
         operationRepository.deleteById(id);
     }
-    
+
     public List<OperationWithDetailsDTO> getAllOperationsWithDetails() {
         List<Object[]> results = operationRepository.findAllWithShiftDetails();
         List<OperationWithDetailsDTO> dtos = new ArrayList<>();
-        
+
         for (Object[] result : results) {
             try {
                 OperationWithDetailsDTO dto = mapToDTO(result);
@@ -58,10 +62,10 @@ public class OperationService {
                 System.err.println("Error mapping operation to DTO: " + e.getMessage());
             }
         }
-        
+
         return dtos;
     }
-    
+
     public Optional<OperationWithDetailsDTO> getOperationWithDetailsById(String id) {
         try {
             Optional<Object[]> result = operationRepository.findByIdWithShiftDetails(id);
@@ -78,42 +82,43 @@ public class OperationService {
             return Optional.empty();
         }
     }
-    
+
     private OperationWithDetailsDTO mapToDTO(Object[] result) {
         if (result == null) {
             throw new IllegalArgumentException("Result array cannot be null");
         }
-        
+
         // Print out the result array for debugging
         System.out.println("Result array length: " + result.length);
         for (int i = 0; i < result.length; i++) {
-            System.out.println("Index " + i + ": " + (result[i] != null ? result[i].toString() : "null") + 
-                              " (Class: " + (result[i] != null ? result[i].getClass().getName() : "null") + ")");
+            System.out.println("Index " + i + ": " + (result[i] != null ? result[i].toString() : "null") +
+                    " (Class: " + (result[i] != null ? result[i].getClass().getName() : "null") + ")");
         }
-        
+
         OperationWithDetailsDTO dto = new OperationWithDetailsDTO();
-        
+
         try {
             // Map based on expected column names from the query
-            // ID_operation, TYPE_operation, ID_shift, ID_escale, ID_conteneure, ID_engin, ID_equipe, DATE_debut, DATE_fin, nom_shift
-            
+            // ID_operation, TYPE_operation, ID_shift, ID_escale, ID_conteneure, ID_engin,
+            // ID_equipe, DATE_debut, DATE_fin, nom_shift
+
             // Always get ID_operation (should be first column at index 0)
             dto.setId_operation((String) result[0]);
-            
+
             int currentIndex = 1;
-            
+
             // Check for TYPE_operation (this could be at index 1 if it exists)
             if (result.length > 9) { // Total expected is at least 10 columns with TYPE_operation
                 dto.setType_operation((String) result[currentIndex++]);
             }
-            
+
             // Get the rest of the columns in order
             dto.setId_shift((String) result[currentIndex++]);
             dto.setId_escale((String) result[currentIndex++]);
             dto.setId_conteneure((String) result[currentIndex++]);
             dto.setId_engin((String) result[currentIndex++]);
             dto.setId_equipe((String) result[currentIndex++]);
-            
+
             // Handle date columns with null checks
             if (result[currentIndex] != null) {
                 if (result[currentIndex] instanceof Timestamp) {
@@ -123,7 +128,7 @@ public class OperationService {
                 }
             }
             currentIndex++;
-            
+
             if (result[currentIndex] != null) {
                 if (result[currentIndex] instanceof Timestamp) {
                     dto.setDate_fin(((Timestamp) result[currentIndex]).toLocalDateTime());
@@ -132,17 +137,17 @@ public class OperationService {
                 }
             }
             currentIndex++;
-            
+
             // The last column should be nom_shift
             if (result.length > currentIndex) {
                 dto.setNom_shift((String) result[currentIndex]);
             }
-            
+
         } catch (Exception e) {
             System.err.println("Error during DTO mapping: " + e.getMessage());
             throw e; // Rethrow to be caught by the calling method
         }
-        
+
         return dto;
     }
-} 
+}

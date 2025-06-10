@@ -18,7 +18,7 @@ import {
   CardContent,
   Stack,
   Grid,
-  Snackbar
+  Snackbar,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
@@ -39,7 +39,8 @@ const AddArret = () => {
   const [escales, setEscales] = useState([]);
   const [operations, setOperations] = useState([]);
   const [selectedEscaleDetails, setSelectedEscaleDetails] = useState(null);
-  const [selectedOperationDetails, setSelectedOperationDetails] = useState(null);
+  const [selectedOperationDetails, setSelectedOperationDetails] =
+    useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState({
@@ -57,10 +58,13 @@ const AddArret = () => {
     { value: "Maintenance corrective", label: "Maintenance corrective" },
     { value: "Intempéries", label: "Intempéries" },
     { value: "Problème logistique", label: "Problème logistique" },
-    { value: "Défaut d'approvisionnement", label: "Défaut d'approvisionnement" },
+    {
+      value: "Défaut d'approvisionnement",
+      label: "Défaut d'approvisionnement",
+    },
     { value: "Problème administratif", label: "Problème administratif" },
     { value: "Grève", label: "Grève" },
-    { value: "Autre", label: "Autre" }
+    { value: "Autre", label: "Autre" },
   ];
 
   useEffect(() => {
@@ -80,7 +84,7 @@ const AddArret = () => {
             (e) => String(e.num_escale || e.NUM_escale) === String(escaleId)
           );
           setSelectedEscaleDetails(escaleDetail);
-          
+
           // Fetch operations for the selected escale
           if (escaleDetail) {
             fetchOperationsByEscale(escaleId);
@@ -91,11 +95,11 @@ const AddArret = () => {
         if (arretId) {
           const arretResponse = await ArretService.getArretById(arretId);
           const arretData = arretResponse.data;
-          
+
           // Check if motif starts with "Autre: "
           let motifArret = arretData.motif_arret || "";
           let motifArretAutre = "";
-          
+
           if (motifArret.startsWith("Autre: ")) {
             motifArretAutre = motifArret.substring(7); // Remove "Autre: " prefix
             motifArret = "Autre";
@@ -105,8 +109,10 @@ const AddArret = () => {
             num_escale: arretData.num_escale || "",
             id_operation: arretData.id_operation || "",
             dure_arret: arretData.dure_arret || "",
-            DATE_DEBUT_arret: arretData.date_DEBUT_arret || arretData.DATE_DEBUT_arret || "",
-            DATE_FIN_arret: arretData.date_FIN_arret || arretData.DATE_FIN_arret || "",
+            DATE_DEBUT_arret:
+              arretData.date_DEBUT_arret || arretData.DATE_DEBUT_arret || "",
+            DATE_FIN_arret:
+              arretData.date_FIN_arret || arretData.DATE_FIN_arret || "",
             motif_arret: motifArret,
             motif_arret_autre: motifArretAutre,
           });
@@ -118,7 +124,7 @@ const AddArret = () => {
               String(arretData.num_escale)
           );
           setSelectedEscaleDetails(escaleDetail);
-          
+
           // Set selected operation details if we have an operation ID
           if (arretData.id_operation) {
             fetchOperationDetails(arretData.id_operation);
@@ -176,7 +182,7 @@ const AddArret = () => {
         setNotification({
           open: true,
           message: "Erreur lors du chargement des opérations",
-          severity: "error"
+          severity: "error",
         });
       });
   };
@@ -195,7 +201,7 @@ const AddArret = () => {
         setNotification({
           open: true,
           message: "Erreur lors du chargement des détails de l'opération",
-          severity: "error"
+          severity: "error",
         });
       });
   };
@@ -211,13 +217,13 @@ const AddArret = () => {
       setSelectedEscaleDetails(escaleDetail);
       setSelectedOperationDetails(null);
       setArret((prev) => ({ ...prev, id_operation: "" }));
-      
+
       // Fetch operations for the selected escale
       if (escaleDetail) {
         fetchOperationsByEscale(value);
       }
     }
-    
+
     if (name === "id_operation") {
       if (value) {
         fetchOperationDetails(value);
@@ -264,20 +270,18 @@ const AddArret = () => {
       // Format dates for backend
       const formatDateForBackend = (dateString) => {
         const date = new Date(dateString);
-        return date.toISOString().replace('T', ' ').slice(0, 19);
+        return date.toISOString().replace("T", " ").slice(0, 19);
       };
-
       const formattedData = {
-        num_escale: arret.num_escale, // Send as string, not parseInt
+        NUM_escale: arret.num_escale, // Backend expects NUM_escale
         DATE_DEBUT_arret: formatDateForBackend(arret.DATE_DEBUT_arret),
         DATE_FIN_arret: formatDateForBackend(arret.DATE_FIN_arret),
-        date_DEBUT_arret: arret.DATE_DEBUT_arret, // Keep original format too
-        date_FIN_arret: arret.DATE_FIN_arret, // Keep original format too
-        dure_arret: parseInt(arret.dure_arret) || 1,
-        motif_arret: arret.motif_arret === "Autre" && arret.motif_arret_autre 
-          ? `Autre: ${arret.motif_arret_autre}`
-          : arret.motif_arret,
-        id_operation: arret.id_operation || null,
+        DURE_arret: parseInt(arret.dure_arret) || 1, // Backend expects DURE_arret
+        MOTIF_arret:
+          arret.motif_arret === "Autre" && arret.motif_arret_autre
+            ? `Autre: ${arret.motif_arret_autre}`
+            : arret.motif_arret, // Backend expects MOTIF_arret
+        ID_operation: arret.id_operation || null, // Backend expects ID_operation
       };
 
       console.log("Formatted data being sent to backend:", formattedData);
@@ -340,11 +344,11 @@ const AddArret = () => {
     if (!operation || !operation.date_debut || !operation.date_fin) {
       return "En cours";
     }
-    
+
     const now = new Date();
     const startDate = new Date(operation.date_debut);
     const endDate = new Date(operation.date_fin);
-    
+
     if (startDate > now) {
       return "Planifié";
     } else if (endDate < now) {
@@ -353,22 +357,22 @@ const AddArret = () => {
       return operation.status || "En cours";
     }
   };
-  
+
   // Get color for status chip
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Planifié':
-        return 'info';
-      case 'En cours':
-        return 'primary';
-      case 'Terminé':
-        return 'success';
-      case 'En pause':
-        return 'warning';
-      case 'Annulé':
-        return 'error';
+      case "Planifié":
+        return "info";
+      case "En cours":
+        return "primary";
+      case "Terminé":
+        return "success";
+      case "En pause":
+        return "warning";
+      case "Annulé":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -379,14 +383,18 @@ const AddArret = () => {
           {arretId ? "Modifier Arrêt" : "Créer un Nouvel Arrêt"}
         </Typography>
         {(escaleId || operationId) && (
-          <Typography variant="subtitle1" color="textSecondary" sx={{ mt: -1, mb: 1 }}>
+          <Typography
+            variant="subtitle1"
+            color="textSecondary"
+            sx={{ mt: -1, mb: 1 }}
+          >
             {escaleId && `Escale #${escaleId}`}
             {escaleId && operationId && " - "}
             {operationId && `Opération #${operationId}`}
           </Typography>
         )}
         <Divider sx={{ mb: 3 }} />
-        
+
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
           <TextField
             select
@@ -407,11 +415,12 @@ const AddArret = () => {
                 key={escale.num_escale || escale.NUM_escale}
                 value={escale.num_escale || escale.NUM_escale}
               >
-                {escale.num_escale || escale.NUM_escale} - {escale.nom_navire || escale.NOM_navire}
+                {escale.num_escale || escale.NUM_escale} -{" "}
+                {escale.nom_navire || escale.NOM_navire}
               </MenuItem>
             ))}
           </TextField>
-          
+
           <TextField
             select
             label="Opération liée"
@@ -432,96 +441,138 @@ const AddArret = () => {
                   key={operation.id_operation}
                   value={operation.id_operation}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    <span style={{ flexGrow: 1 }}>{operation.id_operation} - {operation.nom_operation || "Sans nom"}</span>
-                    <Chip 
-                      label={status} 
-                      size="small" 
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <span style={{ flexGrow: 1 }}>
+                      {operation.id_operation} -{" "}
+                      {operation.type_operation || "Sans nom"}
+                    </span>
+                    <Chip
+                      label={status}
+                      size="small"
                       color={getStatusColor(status)}
-                      style={{ marginLeft: '8px' }}
+                      style={{ marginLeft: "8px" }}
                     />
                   </div>
                 </MenuItem>
               );
             })}
           </TextField>
-          
+
           {/* Informations sur l'opération sélectionnée */}
           {selectedOperationDetails && (
-            <Card variant="outlined" sx={{ background: "#f5f5f5", mt: 3, mb: 3 }}>
+            <Card
+              variant="outlined"
+              sx={{ background: "#f5f5f5", mt: 3, mb: 3 }}
+            >
               <CardContent>
                 <Typography variant="h6" gutterBottom color="primary">
                   Détails de l'opération sélectionnée
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
                       <Typography variant="body2">
-                        <strong>ID:</strong> {selectedOperationDetails.id_operation}
+                        <strong>ID:</strong>{" "}
+                        {selectedOperationDetails.id_operation}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Nom:</strong> {selectedOperationDetails.nom_operation || "Non spécifié"}
+                        <strong>Nom:</strong>{" "}
+                        {selectedOperationDetails.type_operation ||
+                          "Non spécifié"}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Équipe:</strong> {selectedOperationDetails.id_equipe}
+                        <strong>Équipe:</strong>{" "}
+                        {selectedOperationDetails.id_equipe}
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mt: 1 }}
+                      >
                         <Typography variant="body2" sx={{ mr: 1 }}>
                           <strong>Statut:</strong>
                         </Typography>
-                        <Chip 
-                          label={determineOperationStatus(selectedOperationDetails)} 
-                          size="small" 
-                          color={getStatusColor(determineOperationStatus(selectedOperationDetails))}
+                        <Chip
+                          label={determineOperationStatus(
+                            selectedOperationDetails
+                          )}
+                          size="small"
+                          color={getStatusColor(
+                            determineOperationStatus(selectedOperationDetails)
+                          )}
                         />
                       </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
                       <Typography variant="body2">
-                        <strong>Début:</strong> {formatDate(selectedOperationDetails.date_debut)}
+                        <strong>Début:</strong>{" "}
+                        {formatDate(selectedOperationDetails.date_debut)}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Fin:</strong> {formatDate(selectedOperationDetails.date_fin)}
+                        <strong>Fin:</strong>{" "}
+                        {formatDate(selectedOperationDetails.date_fin)}
                       </Typography>
                     </Box>
                   </Grid>
-                  
+
                   {selectedOperationDetails.id_conteneure && (
                     <Grid item xs={12}>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Conteneurs:</strong> 
+                        <strong>Conteneurs:</strong>
                       </Typography>
-                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {selectedOperationDetails.id_conteneure.split(',').map((id) => (
-                          <Chip 
-                            key={id} 
-                            label={id.trim()} 
-                            size="small" 
-                            color="primary"
-                            sx={{ mb: 1 }}
-                          />
-                        ))}
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        {selectedOperationDetails.id_conteneure
+                          .split(",")
+                          .map((id) => (
+                            <Chip
+                              key={id}
+                              label={id.trim()}
+                              size="small"
+                              color="primary"
+                              sx={{ mb: 1 }}
+                            />
+                          ))}
                       </Stack>
                     </Grid>
                   )}
-                  
+
                   {selectedOperationDetails.id_engin && (
                     <Grid item xs={12}>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Engins:</strong> 
+                        <strong>Engins:</strong>
                       </Typography>
-                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {selectedOperationDetails.id_engin.split(',').map((id) => (
-                          <Chip 
-                            key={id} 
-                            label={id.trim()} 
-                            size="small" 
-                            color="secondary"
-                            sx={{ mb: 1 }}
-                          />
-                        ))}
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        {selectedOperationDetails.id_engin
+                          .split(",")
+                          .map((id) => (
+                            <Chip
+                              key={id}
+                              label={id.trim()}
+                              size="small"
+                              color="secondary"
+                              sx={{ mb: 1 }}
+                            />
+                          ))}
                       </Stack>
                     </Grid>
                   )}
@@ -529,11 +580,11 @@ const AddArret = () => {
               </CardContent>
             </Card>
           )}
-          
+
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Détails de l'arrêt
           </Typography>
-          
+
           <TextField
             label="Date/Heure de début"
             name="DATE_DEBUT_arret"
@@ -546,7 +597,7 @@ const AddArret = () => {
             required
             disabled={loading}
           />
-          
+
           <TextField
             label="Date/Heure de fin"
             name="DATE_FIN_arret"
@@ -559,7 +610,7 @@ const AddArret = () => {
             required
             disabled={loading}
           />
-          
+
           <TextField
             label="Durée (jours)"
             name="dure_arret"
@@ -571,7 +622,7 @@ const AddArret = () => {
             disabled={true}
             helperText="Calculée automatiquement à partir des dates"
           />
-          
+
           <FormControl fullWidth margin="normal" required disabled={loading}>
             <InputLabel id="motif-arret-label">Motif d'arrêt</InputLabel>
             <Select
@@ -591,17 +642,19 @@ const AddArret = () => {
               ))}
             </Select>
           </FormControl>
-          
+
           {arret.motif_arret === "Autre" && (
             <TextField
               label="Préciser le motif"
               name="motif_arret_autre"
               value={arret.motif_arret_autre || ""}
               onChange={(e) => {
-                setArret(prev => ({ 
-                  ...prev, 
+                setArret((prev) => ({
+                  ...prev,
                   motif_arret_autre: e.target.value,
-                  motif_arret: e.target.value ? "Autre: " + e.target.value : "Autre"
+                  motif_arret: e.target.value
+                    ? "Autre: " + e.target.value
+                    : "Autre",
                 }));
               }}
               fullWidth
@@ -611,19 +664,19 @@ const AddArret = () => {
               placeholder="Veuillez préciser le motif de l'arrêt..."
             />
           )}
-          
+
           <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-            <Button 
-              component={Link} 
-              to={operationId ? `/operations/${operationId}` : "/arrets"} 
-              variant="outlined" 
+            <Button
+              component={Link}
+              to={operationId ? `/operations/${operationId}` : "/arrets"}
+              variant="outlined"
               color="secondary"
             >
               Annuler
             </Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
+            <Button
+              type="submit"
+              variant="contained"
               color="primary"
               disabled={loading}
             >
@@ -632,14 +685,16 @@ const AddArret = () => {
                   <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
                   {arretId ? "Mise à jour..." : "Enregistrement..."}
                 </>
+              ) : arretId ? (
+                "Mettre à jour"
               ) : (
-                arretId ? "Mettre à jour" : "Enregistrer"
+                "Enregistrer"
               )}
             </Button>
           </Box>
         </Box>
       </Paper>
-      
+
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}

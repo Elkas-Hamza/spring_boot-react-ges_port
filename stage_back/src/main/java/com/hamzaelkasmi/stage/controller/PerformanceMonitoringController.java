@@ -7,6 +7,7 @@ import com.hamzaelkasmi.stage.service.PerformanceMonitoringService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.management.ManagementFactory;
@@ -19,19 +20,20 @@ import java.util.Map;
 
 /**
  * REST controller for performance monitoring endpoints
+ * All endpoints are restricted to ADMIN role only for security reasons
  */
 @RestController
 @RequestMapping("/api/monitoring")
-@CrossOrigin(origins = {"http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"})
+@CrossOrigin(origins = { "http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app" })
 public class PerformanceMonitoringController {
     private static final Logger logger = LoggerFactory.getLogger(PerformanceMonitoringController.class);
-    
+
     private final PerformanceMonitoringService monitoringService;
-    
+
     public PerformanceMonitoringController(PerformanceMonitoringService monitoringService) {
         this.monitoringService = monitoringService;
     }
-    
+
     /**
      * Get current system metrics (CPU, memory, etc.)
      */
@@ -40,7 +42,7 @@ public class PerformanceMonitoringController {
         logger.debug("API call: GET system metrics");
         return ResponseEntity.ok(monitoringService.getSystemMetrics());
     }
-    
+
     /**
      * Get performance metrics (response times, error rates, etc.)
      */
@@ -49,7 +51,7 @@ public class PerformanceMonitoringController {
         logger.debug("API call: GET performance metrics");
         return ResponseEntity.ok(monitoringService.getPerformanceMetrics());
     }
-    
+
     /**
      * Get performance alerts
      */
@@ -58,7 +60,7 @@ public class PerformanceMonitoringController {
         logger.debug("API call: GET performance alerts");
         return ResponseEntity.ok(monitoringService.getAlerts());
     }
-    
+
     /**
      * Clear performance alerts
      */
@@ -68,7 +70,7 @@ public class PerformanceMonitoringController {
         monitoringService.clearAlerts();
         return ResponseEntity.noContent().build();
     }
-    
+
     /**
      * Enable or disable monitoring
      */
@@ -78,7 +80,7 @@ public class PerformanceMonitoringController {
         if (enabled == null) {
             return ResponseEntity.badRequest().build();
         }
-        
+
         if (enabled) {
             logger.info("Enabling performance monitoring");
             monitoringService.enableMonitoring();
@@ -86,18 +88,19 @@ public class PerformanceMonitoringController {
             logger.info("Disabling performance monitoring");
             monitoringService.disableMonitoring();
         }
-        
+
         return ResponseEntity.ok(Map.of("enabled", monitoringService.isMonitoringEnabled()));
     }
-    
+
     /**
      * Get monitoring status
-     */    @GetMapping("/status")
+     */
+    @GetMapping("/status")
     public ResponseEntity<Map<String, Boolean>> getMonitoringStatus() {
         logger.debug("API call: GET monitoring status");
         return ResponseEntity.ok(Map.of("enabled", monitoringService.isMonitoringEnabled()));
     }
-    
+
     /**
      * Get system health information
      */
@@ -105,15 +108,15 @@ public class PerformanceMonitoringController {
     public ResponseEntity<Map<String, Object>> getHealthInfo() {
         logger.debug("API call: GET health information");
         Map<String, Object> healthInfo = new HashMap<>();
-        
+
         // Get JVM information
         RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        
+
         // System status
         healthInfo.put("status", "UP");
-        
+
         // JVM information
         Map<String, Object> jvmInfo = new HashMap<>();
         jvmInfo.put("uptime", runtimeBean.getUptime());
@@ -121,22 +124,22 @@ public class PerformanceMonitoringController {
         jvmInfo.put("vmName", runtimeBean.getVmName());
         jvmInfo.put("vmVersion", runtimeBean.getVmVersion());
         healthInfo.put("jvm", jvmInfo);
-        
+
         // Memory information
         Map<String, Object> memoryInfo = new HashMap<>();
         memoryInfo.put("heapUsed", memoryBean.getHeapMemoryUsage().getUsed());
         memoryInfo.put("heapMax", memoryBean.getHeapMemoryUsage().getMax());
-        double usagePercentage = (double) memoryBean.getHeapMemoryUsage().getUsed() / 
-                                 (double) memoryBean.getHeapMemoryUsage().getMax() * 100.0;
+        double usagePercentage = (double) memoryBean.getHeapMemoryUsage().getUsed() /
+                (double) memoryBean.getHeapMemoryUsage().getMax() * 100.0;
         memoryInfo.put("heapUsagePercentage", Math.round(usagePercentage * 100.0) / 100.0);
         healthInfo.put("memory", memoryInfo);
-        
+
         // CPU information
         Map<String, Object> cpuInfo = new HashMap<>();
         cpuInfo.put("availableProcessors", osBean.getAvailableProcessors());
         cpuInfo.put("systemLoadAverage", osBean.getSystemLoadAverage());
         healthInfo.put("cpu", cpuInfo);
-          // Disk space information (get real values from monitoring service)
+        // Disk space information (get real values from monitoring service)
         SystemMetrics metrics = monitoringService.getSystemMetrics();
         SystemMetrics.DiskSpace diskSpace = metrics.getDiskSpace();
         Map<String, Object> diskInfo = new HashMap<>();
@@ -146,7 +149,7 @@ public class PerformanceMonitoringController {
         double diskUsagePercentage = (double) diskSpace.getUsed() / Math.max(1, diskSpace.getTotal()) * 100.0;
         diskInfo.put("usagePercentage", Math.round(diskUsagePercentage * 100.0) / 100.0);
         healthInfo.put("disk", diskInfo);
-        
+
         return ResponseEntity.ok(healthInfo);
     }
 }

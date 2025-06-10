@@ -1,0 +1,191 @@
+@startuml Port Management System - User Experience Journey
+
+title Port Management System - User Experience & Capabilities
+
+actor "Port Manager" as PM
+actor "Dock Worker" as DW
+actor "Supervisor" as SV
+actor "System Admin" as SA
+participant "Login Page" as LP
+participant "Dashboard" as DB
+participant "Container Management" as CM
+participant "Vessel Management" as VM
+participant "Analytics Dashboard" as AD
+participant "Performance Monitor" as PMon
+participant "Settings Panel" as SP
+participant "System" as SYS
+
+== User Login & Authentication ==
+
+PM -> LP: Navigate to Port Management System
+LP -> PM: Display login form
+PM -> LP: Enter credentials (username/password)
+LP -> SYS: Validate credentials
+
+alt Successful Authentication
+    SYS --> LP: Authentication successful
+    LP -> DB: Redirect to main dashboard
+    DB -> PM: Show personalized dashboard with role-based features
+else Authentication Failed
+    SYS --> LP: Invalid credentials error
+    LP -> PM: Show error message & retry option
+end
+
+note over PM: Port Manager has full system access
+note over DW: Dock Worker has limited container operations
+note over SV: Supervisor can manage teams and operations
+note over SA: System Admin manages users and system settings
+
+== Main Dashboard Experience ==
+
+PM -> DB: View system overview
+DB -> PM: Display: Active containers count, Vessels in port, Recent operations, System alerts, Quick action buttons
+
+PM -> DB: Check today's operations
+DB -> PM: Show: Scheduled arrivals/departures, Container movements, Team assignments, Performance metrics
+
+== Container Management Experience ==
+
+PM -> CM: Access container management
+CM -> PM: Display container list with: Container ID & status, Current location, Assigned vessel, Personnel responsible
+
+PM -> CM: Search for specific container
+CM -> PM: Show filtered results with container details
+
+PM -> CM: Create new container entry
+CM -> PM: Show container form
+PM -> CM: Fill container details (ID, type, weight, contents)
+CM -> SYS: Save container information
+SYS --> CM: Confirmation message
+CM -> PM: "Container created successfully"
+
+DW -> CM: View assigned containers
+CM -> DW: Show only containers assigned to worker
+DW -> CM: Update container status (Loading/Unloading/Complete)
+CM -> SYS: Record status change
+SYS --> DW: Status updated confirmation
+
+PM -> CM: Assign container to vessel
+CM -> PM: Show vessel selection dropdown
+PM -> CM: Select vessel and confirm assignment
+CM -> SYS: Process assignment
+SYS --> PM: "Container assigned to vessel successfully"
+
+== Vessel Management Experience ==
+
+PM -> VM: Access vessel operations
+VM -> PM: Display vessels with: Vessel name & ID, Current status (Arriving/Docked/Departing), Assigned berth, Container count, Estimated times
+
+PM -> VM: Schedule new vessel arrival (Escale)
+VM -> PM: Show scheduling form
+PM -> VM: Enter vessel details, arrival time, berth assignment
+VM -> SYS: Create escale record
+SYS --> PM: "Vessel scheduled successfully"
+
+SV -> VM: Monitor vessel operations
+VM -> SV: Real-time vessel status updates
+VM -> SV: Alert for delays or issues
+
+PM -> VM: View vessel history and details
+VM -> PM: Show: Previous port calls, Container loading history, Performance metrics, Associated operations
+
+== Team & Personnel Management ==
+
+SV -> CM: Assign personnel to containers
+CM -> SV: Show personnel list and container assignments
+SV -> CM: Drag & drop personnel to containers
+CM -> SYS: Update assignments
+SYS --> SV: "Personnel assigned successfully"
+
+SV -> SP: Manage team schedules
+SP -> SV: Show shift management interface
+SV -> SP: Create/modify work shifts
+SP -> SYS: Save schedule changes
+SYS --> SV: "Schedule updated"
+
+== Analytics & Reporting Experience ==
+
+PM -> AD: View analytics dashboard
+AD -> PM: Display visual analytics: Container throughput charts, Vessel turnaround times, Equipment utilization, Performance trends, Revenue metrics
+
+PM -> AD: Generate custom reports
+AD -> PM: Show report builder interface
+PM -> AD: Select date range, metrics, filters
+AD -> SYS: Generate report
+SYS --> PM: Download/display custom report
+
+PM -> AD: Compare performance periods
+AD -> PM: Show comparative charts and insights
+
+== Performance Monitoring Experience ==
+
+SA -> PMon: Access system performance
+PMon -> SA: Display real-time metrics: System CPU & memory usage, Database performance, API response times, Active user sessions, Error rates
+
+SA -> PMon: Set up alerts and thresholds
+PMon -> SA: Configuration interface
+SA -> PMon: Define alert conditions
+PMon -> SYS: Save alert settings
+SYS --> SA: "Alerts configured successfully"
+
+PMon -> SA: Real-time alerts for system issues
+SA -> PMon: Acknowledge and investigate alerts
+
+== Settings & Configuration Experience ==
+
+SA -> SP: Access system settings
+SP -> SA: Display configuration options: User management, Role permissions, System parameters, Backup settings, Integration settings
+
+SA -> SP: Create new user account
+SP -> SA: Show user creation form
+SA -> SP: Enter user details and assign role
+SP -> SYS: Create user account
+SYS --> SA: "User created successfully"
+
+SA -> SP: Modify system parameters
+SP -> SA: Show parameter configuration
+SA -> SP: Update settings
+SP -> SYS: Apply changes
+SYS --> SA: "Settings updated"
+
+== Password Management Experience ==
+
+PM -> SP: Change password
+SP -> PM: Show change password form
+PM -> SP: Enter current and new password
+SP -> SYS: Validate and update password
+SYS --> PM: "Password changed successfully"
+
+PM -> LP: Forgot password
+LP -> PM: Show forgot password form
+PM -> LP: Enter email address
+LP -> SYS: Send reset link
+SYS --> PM: "Password reset link sent to email"
+
+== Error Handling & User Feedback ==
+
+alt System Error
+    SYS --> PM: Display user-friendly error message
+    PM -> SYS: Retry action or contact support
+else Session Timeout
+    SYS --> PM: "Session expired, please login again"
+    PM -> LP: Redirect to login page
+else Permission Denied
+    SYS --> DW: "Access denied - insufficient permissions"
+    DW -> DB: Return to dashboard
+end
+
+== Real-time Updates & Notifications ==
+
+note over PM, DW, SV, SA: All users receive real-time updates
+
+SYS -> PM: Container status changed notification
+SYS -> SV: New vessel arrival alert
+SYS -> DW: Task assignment notification
+SYS -> SA: System performance alert
+
+PM -> SYS: Mark notifications as read
+SV -> SYS: Respond to alerts
+DW -> SYS: Acknowledge task assignments
+
+@enduml

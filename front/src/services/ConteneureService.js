@@ -38,14 +38,6 @@ class ConteneureService {
         // Removed location field as it's determined by id_type
       };
 
-      // Debug data being sent
-      console.log("Creating container with data:", dataToSend);
-      console.log("Auth info:", {
-        userRole: userRole,
-        hasToken: !!token,
-        tokenPreview: token ? `${token.substring(0, 15)}...` : "none",
-      });
-
       // Create headers with token
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -116,10 +108,20 @@ class ConteneureService {
   // Get all port containers (not assigned to any ship)
   getPortContainers() {
     return axiosInstance.get(`${ENDPOINT}/port`);
-  }
-
-  // Get all ship containers
+  } // Get all ship containers
   getShipContainers(shipId) {
+    // Validate shipId before making the API call
+    if (
+      !shipId ||
+      (typeof shipId === "string" && shipId.trim() === "") ||
+      (typeof shipId !== "string" && !shipId)
+    ) {
+      console.warn(
+        "getShipContainers: shipId is empty or invalid, rejecting request"
+      );
+      return Promise.reject(new Error("Ship ID is required"));
+    }
+
     return axiosInstance.get(`${ENDPOINT}/ship/${shipId}`);
   }
 

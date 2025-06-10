@@ -1,0 +1,333 @@
+@startuml Port Management System - Detailed Use Case Diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+    ArrowColor #333333
+}
+skinparam actor {
+    BackgroundColor #FFF8E1
+    BorderColor #FF9800
+}
+skinparam rectangle {
+    BackgroundColor #F3E5F5
+    BorderColor #9C27B0
+}
+skinparam package {
+    BackgroundColor #E1F5FE
+    BorderColor #03A9F4
+}
+
+title Port Management System - Detailed Use Case Diagram\nwith Role-Based Access Control
+
+' Actors
+:Administrator\n(ADMIN): as Admin
+:Port User\n(USER): as User
+:System\n(Automated): as System
+:Email Service\n(External): as EmailService
+
+' System boundary
+rectangle "Port Management System" {
+    
+    ' Authentication & User Management
+    package "Authentication & User Management" as Auth #LightBlue {
+        usecase (Login to System) as Login
+        usecase (Logout from System) as Logout
+        usecase (Register New User) as Register
+        usecase (Change Own Password) as ChangePass
+        usecase (Request Password Reset) as ResetRequest
+        usecase (Reset Password with Token) as ResetPass
+        usecase (Create User Account) as CreateUser
+        usecase (Update User Account) as UpdateUser
+        usecase (Delete User Account) as DeleteUser
+        usecase (View All Users) as ViewUsers
+        usecase (Debug Authentication) as DebugAuth
+        usecase (Validate JWT Token) as ValidateToken
+    }
+    
+    ' Ship Operations
+    package "Ship Operations Management" as Ships #LightGreen {
+        usecase (View All Ships) as ViewShips
+        usecase (Create New Ship) as CreateShip
+        usecase (Update Ship Details) as UpdateShip
+        usecase (Delete Ship) as DeleteShip
+        usecase (Assign Containers to Ship) as AssignContainers
+        usecase (View Ship Debug Info) as DebugShip
+    }
+    
+    ' Container Management
+    package "Container Management" as Containers #LightYellow {
+        usecase (View All Containers) as ViewContainers
+        usecase (Create New Container) as CreateContainer
+        usecase (Update Container) as UpdateContainer
+        usecase (Delete Container) as DeleteContainer
+        usecase (Manage Container Types) as ManageContainerTypes
+        usecase (Test Container Auth) as TestContainerAuth
+    }
+    
+    ' Port Call Operations
+    package "Port Call Operations" as PortCalls #LightCoral {
+        usecase (View Port Calls) as ViewEscales
+        usecase (Create Port Call) as CreateEscale
+        usecase (Update Port Call) as UpdateEscale
+        usecase (Delete Port Call) as DeleteEscale
+        usecase (Schedule Ship Arrival) as ScheduleArrival
+        usecase (Log Ship Departure) as LogDeparture
+    }
+    
+    ' Operations Tracking
+    package "Operations Tracking" as Operations #LightPink {
+        usecase (View Operations) as ViewOperations
+        usecase (Create Operation) as CreateOperation
+        usecase (Update Operation) as UpdateOperation
+        usecase (Delete Operation) as DeleteOperation
+        usecase (View Operation Details) as ViewOpDetails
+        usecase (Track Operation Progress) as TrackProgress
+    }
+    
+    ' Resource Management
+    package "Resource Management" as Resources #LightGray {
+        usecase (Manage Teams) as ManageTeams
+        usecase (Manage Personnel) as ManagePersonnel
+        usecase (Manage Equipment) as ManageEquipment
+        usecase (Manage Subcontractors) as ManageSubcontractors
+        usecase (Manage Work Shifts) as ManageShifts
+        usecase (Manage Downtime/Stops) as ManageStops
+        usecase (View Resource Availability) as ViewAvailability
+    }
+    
+    ' Analytics and Reporting
+    package "Analytics & Reporting" as Analytics #Lavender {
+        usecase (View Dashboard Analytics) as ViewDashboard
+        usecase (Generate Summary Reports) as GenerateReports
+        usecase (View All Analytics) as ViewAnalytics
+        usecase (Export Analytics Data) as ExportData
+        usecase (Monitor KPIs) as MonitorKPIs
+        usecase (Test Analytics API) as TestAnalytics
+    }
+    
+    ' Performance Monitoring (Admin Only)
+    package "Performance Monitoring" as Performance #MistyRose {
+        usecase (View System Metrics) as ViewMetrics
+        usecase (View Performance Metrics) as ViewPerfMetrics
+        usecase (Manage Performance Alerts) as ManageAlerts
+        usecase (View System Health) as ViewHealth
+        usecase (Control Monitoring Status) as ControlMonitoring
+        usecase (Start/Stop Monitoring) as StartStopMonitoring
+    }
+    
+    ' System Administration (Admin Only)
+    package "System Administration" as SysAdmin #AliceBlue {
+        usecase (Access System Settings) as AccessSettings
+        usecase (Configure Email Settings) as ConfigEmail
+        usecase (Configure Security Settings) as ConfigSecurity
+        usecase (Perform Maintenance) as PerformMaintenance
+        usecase (Fix System Passwords) as FixPasswords
+        usecase (Backup System Data) as BackupData
+        usecase (View System Status) as ViewStatus
+    }
+    
+    ' Automated System Services
+    package "Automated System Services" as AutoServices #Honeydew {
+        usecase (Auto Account Lockout) as AutoLockout
+        usecase (Auto Performance Monitoring) as AutoMonitoring
+        usecase (Auto Password Reset) as AutoPasswordReset
+        usecase (Auto Backup Operations) as AutoBackup
+        usecase (Auto Token Cleanup) as AutoTokenCleanup
+        usecase (Auto Failed Login Tracking) as AutoFailedLogin
+        usecase (Auto System Health Check) as AutoHealthCheck
+    }
+    
+    ' Email Notification Services
+    package "Email Notification Services" as EmailServices #Linen {
+        usecase (Send Password Reset Email) as SendResetEmail
+        usecase (Send User Creation Email) as SendUserEmail
+        usecase (Send System Alert Email) as SendAlertEmail
+        usecase (Send Operation Notification) as SendOpNotification
+        usecase (Send Maintenance Notification) as SendMaintenanceEmail
+    }
+}
+
+' Administrator (ADMIN) Connections - Full Access
+Admin --> Login
+Admin --> Logout
+Admin --> Register
+Admin --> ChangePass
+Admin --> ResetRequest
+Admin --> ResetPass
+Admin --> CreateUser
+Admin --> UpdateUser
+Admin --> DeleteUser
+Admin --> ViewUsers
+Admin --> DebugAuth
+Admin --> ValidateToken
+
+Admin --> ViewShips
+Admin --> CreateShip
+Admin --> UpdateShip
+Admin --> DeleteShip
+Admin --> AssignContainers
+Admin --> DebugShip
+
+Admin --> ViewContainers
+Admin --> CreateContainer
+Admin --> UpdateContainer
+Admin --> DeleteContainer
+Admin --> ManageContainerTypes
+Admin --> TestContainerAuth
+
+Admin --> ViewEscales
+Admin --> CreateEscale
+Admin --> UpdateEscale
+Admin --> DeleteEscale
+Admin --> ScheduleArrival
+Admin --> LogDeparture
+
+Admin --> ViewOperations
+Admin --> CreateOperation
+Admin --> UpdateOperation
+Admin --> DeleteOperation
+Admin --> ViewOpDetails
+Admin --> TrackProgress
+
+Admin --> ManageTeams
+Admin --> ManagePersonnel
+Admin --> ManageEquipment
+Admin --> ManageSubcontractors
+Admin --> ManageShifts
+Admin --> ManageStops
+Admin --> ViewAvailability
+
+Admin --> ViewDashboard
+Admin --> GenerateReports
+Admin --> ViewAnalytics
+Admin --> ExportData
+Admin --> MonitorKPIs
+Admin --> TestAnalytics
+
+Admin --> ViewMetrics
+Admin --> ViewPerfMetrics
+Admin --> ManageAlerts
+Admin --> ViewHealth
+Admin --> ControlMonitoring
+Admin --> StartStopMonitoring
+
+Admin --> AccessSettings
+Admin --> ConfigEmail
+Admin --> ConfigSecurity
+Admin --> PerformMaintenance
+Admin --> FixPasswords
+Admin --> BackupData
+Admin --> ViewStatus
+
+' User (USER) Connections - Limited Access
+User --> Login
+User --> Logout
+User --> ChangePass
+User --> ResetRequest
+User --> ResetPass
+User --> ValidateToken
+
+User --> ViewShips
+User --> ViewContainers
+User --> ViewEscales
+User --> ViewOperations
+User --> ViewOpDetails
+User --> ViewAvailability
+
+User --> ViewDashboard
+User --> GenerateReports
+User --> ViewAnalytics
+User --> ExportData
+User --> MonitorKPIs
+
+' System Automated Connections
+System --> AutoLockout
+System --> AutoMonitoring
+System --> AutoPasswordReset
+System --> AutoBackup
+System --> AutoTokenCleanup
+System --> AutoFailedLogin
+System --> AutoHealthCheck
+
+' Email Service Connections
+EmailService --> SendResetEmail
+EmailService --> SendUserEmail
+EmailService --> SendAlertEmail
+EmailService --> SendOpNotification
+EmailService --> SendMaintenanceEmail
+
+' Include Relationships
+ResetRequest .> SendResetEmail : <<include>>
+CreateUser .> SendUserEmail : <<include>>
+ManageAlerts .> SendAlertEmail : <<include>>
+CreateOperation .> SendOpNotification : <<include>>
+PerformMaintenance .> SendMaintenanceEmail : <<include>>
+
+AssignContainers .> ViewShips : <<include>>
+AssignContainers .> ViewContainers : <<include>>
+
+ScheduleArrival .> ViewShips : <<include>>
+LogDeparture .> ViewShips : <<include>>
+
+CreateOperation .> ViewEscales : <<include>>
+CreateOperation .> ManageTeams : <<include>>
+CreateOperation .> ManageEquipment : <<include>>
+
+' Extend Relationships
+AutoLockout ..> Login : <<extend>>
+AutoFailedLogin ..> Login : <<extend>>
+AutoTokenCleanup ..> ValidateToken : <<extend>>
+AutoMonitoring ..> ViewMetrics : <<extend>>
+
+' Generalization Relationships
+CreateUser --|> Register
+UpdateUser --|> Register
+DeleteUser --|> Register
+
+' Notes
+note right of Admin
+  **ADMIN Role:**
+  • Full CRUD access to all modules
+  • System administration capabilities
+  • Performance monitoring access
+  • User management privileges
+end note
+
+note right of User
+  **USER Role:**
+  • Read access to operational data
+  • Limited write permissions
+  • Dashboard and analytics access
+  • Own profile management
+end note
+
+note left of System
+  **Automated System:**
+  • Background security monitoring
+  • Performance data collection
+  • Automated maintenance tasks
+  • System health monitoring
+end note
+
+note left of EmailService
+  **External Email Service:**
+  • Password reset notifications
+  • User account notifications
+  • System alert notifications
+  • Operational notifications
+end note
+
+' Color coding legend
+note bottom
+  **Access Control Legend:**
+  🔴 **ADMIN Only** - System Administration, Performance Monitoring
+  🟡 **ADMIN CRUD** - Full Create, Read, Update, Delete access
+  🟢 **USER Read** - Read-only access to operational data
+  🔵 **Both Roles** - Authentication, Analytics, Dashboard
+  ⚪ **System/External** - Automated and external services
+end note
+
+@enduml

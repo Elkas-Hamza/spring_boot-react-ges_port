@@ -1,7 +1,6 @@
 package com.hamzaelkasmi.stage.service;
 
 import com.hamzaelkasmi.stage.model.Personnel;
-import com.hamzaelkasmi.stage.model.PersonnelId;
 import com.hamzaelkasmi.stage.repository.PersonnelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,17 +20,18 @@ public class PersonnelService {
     }
 
     /**
-     * Find personnel by its composite ID
+     * Find personnel by its matricule (now the primary key)
      */
-    public Optional<Personnel> getPersonnelById(PersonnelId id) {
-        return personnelRepository.findById(id);
+    public Optional<Personnel> getPersonnelById(String matricule) {
+        return personnelRepository.findById(matricule);
     }
-    
+
     /**
-     * Find personnel by just the matricule part of the ID
+     * Find personnel by matricule (same as above since matricule is now the primary
+     * key)
      */
     public Optional<Personnel> getPersonnelByMatricule(String matricule) {
-        return personnelRepository.findByMatricule(matricule);
+        return personnelRepository.findById(matricule);
     }
 
     public List<Personnel> getPersonnelByEquipeId(String equipeId) {
@@ -42,15 +42,15 @@ public class PersonnelService {
         return personnelRepository.save(personnel);
     }
 
-    public void deletePersonnel(PersonnelId id) {
-        personnelRepository.deleteById(id);
+    public void deletePersonnel(String matricule) {
+        personnelRepository.deleteById(matricule);
     }
-    
+
     /**
-     * Delete personnel by matricule
+     * Delete personnel by matricule (same as above since matricule is now the
+     * primary key)
      */
     public void deletePersonnelByMatricule(String matricule) {
-        Optional<Personnel> personnel = personnelRepository.findByMatricule(matricule);
-        personnel.ifPresent(p -> personnelRepository.delete(p));
+        personnelRepository.deleteById(matricule);
     }
 }

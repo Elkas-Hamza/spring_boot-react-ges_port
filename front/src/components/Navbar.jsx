@@ -135,12 +135,6 @@ const Navbar = () => {
     navigate("/change-password");
   };
 
-  const handleDebugUserData = () => {
-    handleMenuClose();
-    UserService.debugUserData();
-    fetchUserDetails();
-  };
-
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
   };
@@ -246,7 +240,7 @@ const Navbar = () => {
       id: "conteneures",
       label: "Conteneurs",
       path: "/conteneures",
-      roles: ["ADMIN"],
+      roles: ["ADMIN", "USER"],
       icon: <InventoryIcon />,
     },
     {
@@ -574,17 +568,9 @@ const Navbar = () => {
             <MenuItem onClick={() => fetchUserDetails()}>
               <ListItemIcon>
                 <RefreshIcon fontSize="small" />
-              </ListItemIcon>
+              </ListItemIcon>{" "}
               <ListItemText primary="Refresh User Data" />
             </MenuItem>
-            {process.env.NODE_ENV === "development" && (
-              <MenuItem onClick={handleDebugUserData}>
-                <ListItemIcon>
-                  <CodeIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Debug User Data" />
-              </MenuItem>
-            )}
             <MenuItem onClick={handleLogout}>
               <ListItemIcon sx={{ color: "error.main" }}>
                 <LogoutIcon fontSize="small" />

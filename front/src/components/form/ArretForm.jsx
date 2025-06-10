@@ -153,7 +153,8 @@ const ArretForm = () => {
 
   const fetchOperationsByEscale = (escaleId) => {
     setLoading(true);
-    OperationService.getOperationsByEscaleId(escaleId)
+    // Fetch only operations with "En cours" status for creating arrests
+    OperationService.getOperationsByEscaleIdAndStatus(escaleId, "En cours")
       .then((response) => {
         setOperations(response.data || []);
         setLoading(false);
@@ -383,7 +384,7 @@ const ArretForm = () => {
                 value={operation.id_operation}
               >
                 {operation.id_operation} -{" "}
-                {operation.nom_operation || "Sans nom"}
+                {operation.type_operation || "Sans nom"}
               </MenuItem>
             ))}
           </TextField>
@@ -409,7 +410,7 @@ const ArretForm = () => {
                       </Typography>
                       <Typography variant="body2">
                         <strong>Nom:</strong>{" "}
-                        {selectedOperationDetails.nom_operation ||
+                        {selectedOperationDetails.type_operation ||
                           "Non spécifié"}
                       </Typography>
                       <Typography variant="body2">

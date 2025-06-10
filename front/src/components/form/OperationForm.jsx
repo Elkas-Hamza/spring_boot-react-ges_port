@@ -49,7 +49,7 @@ const OperationForm = () => {
     date_debut: "",
     date_fin: "",
     status: "En cours",
-    type_operation: "AUTRE", 
+    type_operation: "AUTRE",
   });
 
   const [shifts, setShifts] = useState([]);
@@ -60,7 +60,7 @@ const OperationForm = () => {
   const [engins, setEngins] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedNavireId, setSelectedNavireId] = useState([]);
+  const [selectedNavireId, setSelectedNavireId] = useState("");
 
   const [notification, setNotification] = useState({
     open: false,
@@ -123,14 +123,20 @@ const OperationForm = () => {
       .catch((error) => {
         console.error("Error fetching ships:", error);
       });
-  }, []);
-
-  // Fetch containers based on operation type
+  }, []);  // Fetch containers based on operation type
   useEffect(() => {
+    console.log("Container fetch effect triggered:", {
+      operationType: operation.type_operation,
+      selectedNavireId,
+      selectedNavireIdType: typeof selectedNavireId,
+    });
+
     if (operation.type_operation === "CHARGEMENT") {
+      console.log("Fetching port containers for CHARGEMENT operation");
       // For loading operations, we need port containers
       ConteneureService.getPortContainers()
         .then((response) => {
+          console.log("Port containers fetched:", response.data);
           setPortContainers(response.data || []);
         })
         .catch((error) => {
@@ -138,28 +144,86 @@ const OperationForm = () => {
         });
     } else if (
       operation.type_operation === "DECHARGEMENT" &&
-      selectedNavireId
+      selectedNavireId &&
+      typeof selectedNavireId === "string" &&
+      selectedNavireId.trim() !== ""
     ) {
+      console.log("Fetching ship containers for DECHARGEMENT operation, shipId:", selectedNavireId);
       // For unloading operations, we need ship containers
+      // Only call if selectedNavireId is not empty
       ConteneureService.getShipContainers(selectedNavireId)
         .then((response) => {
+          console.log("Ship containers fetched:", response.data);
           setShipContainers(response.data || []);
         })
         .catch((error) => {
           console.error("Error fetching ship containers:", error);
+          setShipContainers([]);
         });
+    } else if (
+      operation.type_operation === "DECHARGEMENT" &&
+      !selectedNavireId
+    ) {
+      console.log("DECHARGEMENT selected but no navire ID - clearing ship containers");
+      // Clear ship containers if no navire is selected
+      setShipContainers([]);
     }
-  }, [operation.type_operation, selectedNavireId]);
-
-  // Get ship ID when escale changes
+  }, [operation.type_operation, selectedNavireId]);  // Get ship ID when escale changes
   useEffect(() => {
     if (operation.id_escale) {
+      console.log("Looking for escale:", operation.id_escale);
+      console.log("Available escales:", escales);
+      
       const selectedEscale = escales.find(
         (escale) => escale.num_escale === operation.id_escale
       );
-      if (selectedEscale && selectedEscale.navire) {
-        setSelectedNavireId(selectedEscale.navire.idNavire);
+      
+      console.log("Found escale:", selectedEscale);
+      
+      if (selectedEscale) {
+        // The escale has matricule_navire and nom_navire fields
+        // We need to find the navire by matricule and get its ID
+        if (selectedEscale.matricule_navire) {
+          console.log("Found matricule_navire in escale:", selectedEscale.matricule_navire);
+          
+          // Fetch the navire using the matricule to get the actual navire ID
+          NavireService.getAllNavires()
+            .then((response) => {
+              if (response.success && response.data) {
+                console.log("Available navires:", response.data);
+                
+                const matchingNavire = response.data.find(
+                  (navire) => navire.matriculeNavire === selectedEscale.matricule_navire
+                );
+                
+                console.log("Found matching navire:", matchingNavire);
+                
+                if (matchingNavire) {
+                  console.log("Setting selectedNavireId to:", matchingNavire.idNavire);
+                  setSelectedNavireId(matchingNavire.idNavire);
+                } else {
+                  console.warn("No navire found with matricule:", selectedEscale.matricule_navire);
+                  setSelectedNavireId("");
+                }
+              } else {
+                console.error("Failed to fetch navires:", response);
+                setSelectedNavireId("");
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching navires:", error);
+              setSelectedNavireId("");
+            });
+        } else {
+          console.warn("No matricule_navire found in escale:", selectedEscale);
+          setSelectedNavireId("");
+        }
+      } else {
+        console.warn("Escale not found for id:", operation.id_escale);
+        setSelectedNavireId("");
       }
+    } else {
+      setSelectedNavireId("");
     }
   }, [operation.id_escale, escales]);
 
@@ -601,9 +665,10 @@ const OperationForm = () => {
                   label="Equipe"
                   required
                 >
+                  {" "}
                   {equipes.map((equipe) => (
-                    <MenuItem key={equipe.ID_equipe} value={equipe.ID_equipe}>
-                      {equipe.NOM_equipe}
+                    <MenuItem key={equipe.id_equipe} value={equipe.id_equipe}>
+                      {equipe.nom_equipe}
                     </MenuItem>
                   ))}
                 </Select>
@@ -669,9 +734,7 @@ const OperationForm = () => {
                 required
                 sx={{ mb: 1 }}
               />
-            </div>
-
-            {/* Container section with title */}
+            </div>            {/* Container section with title */}
             {(operation.type_operation === "CHARGEMENT" ||
               operation.type_operation === "DECHARGEMENT" ||
               operation.type_operation === "AUTRE") && (
@@ -681,10 +744,10 @@ const OperationForm = () => {
                     {operation.type_operation === "CHARGEMENT"
                       ? "📦 Conteneurs à charger"
                       : operation.type_operation === "DECHARGEMENT"
-                      ? "📥 Conteneurs à décharger"
+                      ? `📥 Conteneurs à décharger ${selectedNavireId ? `(Navire: ${selectedNavireId})` : '(Navire non défini)'}`
                       : "📦 Sélection des conteneurs"}
                   </Typography>
-                  <Divider />
+                  <Divider />                  
                 </Box>
               </div>
             )}
@@ -764,13 +827,16 @@ const OperationForm = () => {
                         />
                       </MenuItem>
                     ))}
-                  </Select>
-                  {getContainersForSelection().length === 0 && (
+                  </Select>                  {getContainersForSelection().length === 0 && (
                     <FormHelperText sx={{ color: theme.palette.warning.main }}>
                       {operation.type_operation === "CHARGEMENT"
                         ? "Aucun conteneur disponible au port"
-                        : operation.id_escale
-                        ? "Aucun conteneur disponible sur ce navire"
+                        : operation.type_operation === "DECHARGEMENT"
+                        ? operation.id_escale 
+                          ? selectedNavireId
+                            ? "Aucun conteneur disponible sur ce navire"
+                            : "Navire non trouvé pour cette escale"
+                          : "Veuillez d'abord sélectionner une escale"
                         : "Veuillez d'abord sélectionner une escale"}
                     </FormHelperText>
                   )}
@@ -860,13 +926,13 @@ const OperationForm = () => {
                   renderValue={(selected) => (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {selected.map((value) => {
-                        const engin = engins.find((e) => e.ID_engin === value);
+                        const engin = engins.find((e) => e.id_engin === value);
                         return (
                           <Chip
                             key={value}
                             label={
                               engin
-                                ? `${engin.ID_engin} - ${engin.NOM_engin}`
+                                ? `${engin.id_engin} - ${engin.nom_engin}`
                                 : value
                             }
                             sx={{
@@ -881,15 +947,15 @@ const OperationForm = () => {
                   MenuProps={MenuProps}
                 >
                   {engins.map((engin) => (
-                    <MenuItem key={engin.ID_engin} value={engin.ID_engin}>
+                    <MenuItem key={engin.id_engin} value={engin.id_engin}>
                       <Checkbox
                         checked={
-                          operation.id_engin.indexOf(engin.ID_engin) > -1
+                          operation.id_engin.indexOf(engin.id_engin) > -1
                         }
                       />
                       <ListItemText
-                        primary={`${engin.ID_engin} - ${engin.NOM_engin}`}
-                        secondary={engin.TYPE_engin}
+                        primary={`${engin.id_engin} - ${engin.nom_engin}`}
+                        secondary={engin.type_engin}
                       />
                     </MenuItem>
                   ))}

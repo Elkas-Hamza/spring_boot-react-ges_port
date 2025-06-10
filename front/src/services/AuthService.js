@@ -128,7 +128,7 @@ const register = async (email, password, role) => {
 
     return data;
   } catch (error) {
-    console.error("Registration error:", error);
+    // Registration error handled
     throw error;
   }
 };

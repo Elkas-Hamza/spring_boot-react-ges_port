@@ -31,6 +31,9 @@ import {
   Group as GroupIcon,
   CheckCircle as CheckCircleIcon,
   Timeline as TimelineIcon,
+  LocalShipping as LocalShippingIcon,
+  TrendingUp as TrendingUpIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 
 // Import services
@@ -38,6 +41,9 @@ import UserService from "../../services/UserService";
 import OperationService from "../../services/OperationService";
 import EscaleService from "../../services/EscaleService";
 import AuthService from "../../services/AuthService";
+import AnalyticsService from "../../services/AnalyticsService";
+import ConteneureService from "../../services/ConteneureService";
+import { NavireService } from "../../services/NavireService";
 
 // StatCard component for displaying key metrics
 const StatCard = ({ title, value, icon, color, onClick }) => {
@@ -118,17 +124,28 @@ const RecentOperationsList = ({ operations }) => {
         >
           <ListItemIcon>
             <WorkIcon color="primary" />
-          </ListItemIcon>
+          </ListItemIcon>{" "}
           <ListItemText
-            primary={operation.typeOperation || "Opération"}
+            primary={
+              operation.type_operation || operation.typeOperation || "Opération"
+            }
             secondary={`Date: ${new Date(
-              operation.dateCreation
+              operation.dateCreation || operation.date_debut
             ).toLocaleDateString()}`}
           />
           <Chip
             size="small"
-            label={operation.status || "En cours"}
-            color={operation.status === "COMPLETED" ? "success" : "primary"}
+            label={operation.realStatus || operation.status || "En cours"}
+            color={
+              operation.realStatus === "Terminé" ||
+              operation.status === "COMPLETED"
+                ? "success"
+                : operation.realStatus === "Planifié"
+                ? "info"
+                : operation.realStatus === "En pause"
+                ? "warning"
+                : "primary"
+            }
             variant="outlined"
           />
           <ArrowForwardIcon
@@ -170,7 +187,7 @@ const RecentEscalesList = ({ escales }) => {
         >
           <ListItemIcon>
             <DirectionsBoatIcon color="primary" />
-          </ListItemIcon>
+          </ListItemIcon>{" "}
           <ListItemText
             primary={escale.NOM_navire || "Navire"}
             secondary={`Arrivée: ${new Date(
@@ -193,26 +210,131 @@ const RecentEscalesList = ({ escales }) => {
   );
 };
 
+// Component to display recent containers list
+const RecentContainersList = ({ conteneurs }) => {
+  const navigate = useNavigate();
+
+  if (!conteneurs || conteneurs.length === 0) {
+    return (
+      <Box sx={{ p: 2, textAlign: "center" }}>
+        <Typography variant="body2" color="text.secondary">
+          No recent containers found
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <List sx={{ width: "100%" }}>
+      {conteneurs.map((conteneur) => (
+        <ListItem
+          key={conteneur.id || conteneur.numeroConteneur}
+          button
+          onClick={() =>
+            navigate(
+              `/conteneures/${conteneur.id || conteneur.numeroConteneur}`
+            )
+          }
+          sx={{
+            borderRadius: 1,
+            mb: 1,
+            "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+          }}
+        >
+          <ListItemIcon>
+            <LocalShippingIcon color="primary" />
+          </ListItemIcon>{" "}
+          <ListItemText
+            primary={conteneur.numeroConteneur || `Container ${conteneur.id}`}
+            secondary={`Type: ${
+              conteneur.typeConteneur || conteneur.id_type || "N/A"
+            } | Lieu: ${conteneur.location || "Inconnu"}`}
+          />
+          <Chip
+            size="small"
+            label={conteneur.statut || "Active"}
+            color={conteneur.statut === "Assigné" ? "success" : "primary"}
+            variant="outlined"
+          />
+          <ArrowForwardIcon
+            fontSize="small"
+            sx={{ ml: 1, color: "text.secondary" }}
+          />
+        </ListItem>
+      ))}
+    </List>
+  );
+};
+
 // Main UserDashboard Component
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [operations, setOperations] = useState([]);
   const [escales, setEscales] = useState([]);
+  const [conteneurs, setConteneurs] = useState([]);
+  const [navires, setNavires] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [stats, setStats] = useState({
     completedOperations: null,
     pendingOperations: null,
     activeEscales: null,
+    totalConteneurs: null,
+    totalNavires: null,
+    portContainers: null,
+    assignedContainers: null,
+    operationEfficiency: null,
+    avgEscaleDuration: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  // Get user role from localStorage
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "ADMIN";
 
+  // Helper function to calculate operation efficiency
+  const calculateOperationEfficiency = (operations) => {
+    if (!operations || operations.length === 0) return 0;
+
+    const now = new Date();
+    const recentOperations = operations.filter((op) => {
+      const opDate = new Date(op.date_debut || op.dateCreation);
+      const daysDiff = (now - opDate) / (1000 * 60 * 60 * 24);
+      return daysDiff <= 30; // Last 30 days
+    });
+
+    if (recentOperations.length === 0) return 0;
+
+    const completedRecent = recentOperations.filter(
+      (op) => op.realStatus === "Terminé"
+    ).length;
+    return Math.round((completedRecent / recentOperations.length) * 100);
+  };
+
+  // Helper function to calculate average escale duration
+  const calculateAverageEscaleDuration = (escales) => {
+    if (!escales || escales.length === 0) return 0;
+
+    const completedEscales = escales.filter((escale) => escale.DATE_sortie);
+    if (completedEscales.length === 0) return 0;
+
+    const totalDuration = completedEscales.reduce((total, escale) => {
+      const arrival = new Date(escale.DATE_accostage);
+      const departure = new Date(escale.DATE_sortie);
+      const duration = (departure - arrival) / (1000 * 60 * 60); // hours
+      return total + duration;
+    }, 0);
+
+    return Math.round(totalDuration / completedEscales.length);
+  };
   // Fetch user data and statistics
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         // Get current user ID
         const userId = localStorage.getItem("userId");
@@ -229,47 +351,201 @@ const UserDashboard = () => {
           // Continue with the localStorage data
         }
 
-        setUserData(user);
+        setUserData(user); // Fetch all data in parallel with enhanced error handling
+        console.log("Starting to fetch dashboard data...");
 
-        // Get all operations with details
-        const operationsResponse =
-          await OperationService.getAllOperationsWithDetails();
+        const dataPromises = [
+          OperationService.getAllOperationsWithDetails()
+            .then((res) => {
+              console.log("Operations response:", res);
+              return res;
+            })
+            .catch((err) => {
+              console.error("Operations fetch error:", err);
+              return { data: [] };
+            }),
+          EscaleService.getAllEscales()
+            .then((res) => {
+              console.log("Escales response:", res);
+              return res;
+            })
+            .catch((err) => {
+              console.error("Escales fetch error:", err);
+              return { data: [] };
+            }),
+          ConteneureService.getAllConteneures()
+            .then((res) => {
+              console.log("Conteneurs response:", res);
+              return res;
+            })
+            .catch((err) => {
+              console.error("Conteneurs fetch error:", err);
+              return { data: [] };
+            }),
+          NavireService.getAllNavires()
+            .then((res) => {
+              console.log("Navires response:", res);
+              return res;
+            })
+            .catch((err) => {
+              console.error("Navires fetch error:", err);
+              return { data: [] };
+            }),
+          AnalyticsService.getSummaryData()
+            .then((res) => {
+              console.log("Analytics response:", res);
+              return res;
+            })
+            .catch((err) => {
+              console.error("Analytics fetch error:", err);
+              return null;
+            }),
+        ];
+
+        const [
+          operationsResponse,
+          escalesResponse,
+          conteneursResponse,
+          naviresResponse,
+          analyticsData,
+        ] = await Promise.all(dataPromises);
+
         const allOperations = operationsResponse.data || [];
-
-        // Get all escales
-        const escalesResponse = await EscaleService.getAllEscales();
         const allEscales = escalesResponse.data || [];
+        const allConteneurs = conteneursResponse.data || [];
+        const allNavires = naviresResponse.data || [];
 
-        // Filter most recent operations (up to 5)
-        const sortedOperations = [...allOperations].sort(
+        console.log("Processed data:", {
+          operations: allOperations.length,
+          escales: allEscales.length,
+          conteneurs: allConteneurs.length,
+          navires: allNavires.length,
+        }); // Process operations with real business logic
+        const processedOperations = allOperations.map((operation) => {
+          // Determine real status based on dates
+          const now = new Date();
+          const startDate = operation.date_debut
+            ? new Date(operation.date_debut)
+            : null;
+          const endDate = operation.date_fin
+            ? new Date(operation.date_fin)
+            : null;
+
+          let realStatus = operation.status || "En cours";
+          if (startDate && endDate) {
+            if (startDate > now) {
+              realStatus = "Planifié";
+            } else if (endDate < now) {
+              realStatus = "Terminé";
+            } else {
+              realStatus = "En cours";
+            }
+          }
+
+          return {
+            ...operation,
+            realStatus,
+            dateCreation: operation.date_debut || new Date().toISOString(),
+          };
+        });
+
+        const sortedOperations = [...processedOperations].sort(
           (a, b) => new Date(b.dateCreation) - new Date(a.dateCreation)
         );
         setOperations(sortedOperations.slice(0, 5));
 
-        // Filter active escales (up to 5)
-        const activeEscales = allEscales.filter(
-          (escale) =>
-            !escale.DATE_sortie || new Date(escale.DATE_sortie) > new Date()
-        );
+        // Process escales with proper active filtering logic
+        const currentDate = new Date();
+        const activeEscales = allEscales.filter((escale) => {
+          // An escale is active if:
+          // 1. It has started (DATE_accostage <= now)
+          // 2. It hasn't ended yet (no DATE_sortie or DATE_sortie > now)
+          const accostageDate = escale.DATE_accostage
+            ? new Date(escale.DATE_accostage)
+            : null;
+          const sortieDate = escale.DATE_sortie
+            ? new Date(escale.DATE_sortie)
+            : null;
+
+          if (!accostageDate) return false;
+
+          const hasStarted = accostageDate <= currentDate;
+          const hasNotEnded = !sortieDate || sortieDate > currentDate;
+
+          return hasStarted && hasNotEnded;
+        });
+
         const sortedEscales = activeEscales.sort(
           (a, b) => new Date(b.DATE_accostage) - new Date(a.DATE_accostage)
         );
         setEscales(sortedEscales.slice(0, 5));
 
-        // Calculate statistics
-        const completedOps = allOperations.filter(
-          (op) => op.status === "COMPLETED"
+        // Process containers with location-based filtering
+        const processedContainers = allConteneurs.map((container) => ({
+          ...container,
+          location:
+            container.id_type === 1
+              ? "TERRE"
+              : container.id_type === 2
+              ? "NAVIRE"
+              : "UNKNOWN",
+          statut: container.navire ? "Assigné" : "Disponible",
+        }));
+
+        // Sort by most recently added or updated
+        const sortedContainers = processedContainers.sort((a, b) => {
+          const dateA = a.dateAjout ? new Date(a.dateAjout) : new Date(0);
+          const dateB = b.dateAjout ? new Date(b.dateAjout) : new Date(0);
+          return dateB - dateA;
+        });
+        setConteneurs(sortedContainers.slice(0, 10));
+
+        setNavires(allNavires);
+        setAnalytics(analyticsData); // Calculate real statistics based on business logic
+        const completedOps = processedOperations.filter(
+          (op) => op.realStatus === "Terminé"
         ).length;
-        const pendingOps = allOperations.filter(
-          (op) => op.status !== "COMPLETED"
+        const pendingOps = processedOperations.filter(
+          (op) => op.realStatus === "En cours" || op.realStatus === "Planifié"
         ).length;
         const activeEscCount = activeEscales.length;
+        // Calculate container distribution
+        const portContainers = processedContainers.filter(
+          (c) => c.location === "TERRE"
+        ).length;
+        const assignedContainers = processedContainers.filter(
+          (c) => c.statut === "Assigné"
+        ).length;
 
+        // Calculate efficiency metrics
+        const operationEfficiency =
+          calculateOperationEfficiency(processedOperations);
+        const avgEscaleDuration = calculateAverageEscaleDuration(allEscales);
         setStats({
           completedOperations: completedOps,
           pendingOperations: pendingOps,
-          activeEscales: activeEscCount,
+          activeEscales: allEscales.length, // Show total escales instead of just active ones
+          totalConteneurs: allConteneurs.length,
+          totalNavires: allNavires.length,
+          portContainers: portContainers,
+          assignedContainers: assignedContainers,
+          operationEfficiency: operationEfficiency,
+          avgEscaleDuration: avgEscaleDuration,
         });
+        console.log("Final stats set:", {
+          completedOperations: completedOps,
+          pendingOperations: pendingOps,
+          activeEscales: allEscales.length, // Show total escales instead of just active ones
+          totalConteneurs: allConteneurs.length,
+          totalNavires: allNavires.length,
+          portContainers: portContainers,
+          assignedContainers: assignedContainers,
+          operationEfficiency: operationEfficiency,
+          avgEscaleDuration: avgEscaleDuration,
+        });
+
+        setLastUpdated(new Date());
+        console.log("Dashboard data loading completed successfully");
       } catch (err) {
         console.error("Error loading dashboard data:", err);
         setError("Failed to load dashboard data. Please try again later.");
@@ -280,9 +556,12 @@ const UserDashboard = () => {
 
     loadDashboardData();
   }, []);
-
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   if (loading) {
@@ -327,6 +606,7 @@ const UserDashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
+      {" "}
       {/* User Welcome */}
       <Paper
         elevation={0}
@@ -338,41 +618,63 @@ const UserDashboard = () => {
           borderRadius: 2,
         }}
       >
-        <Box display="flex" alignItems="center">
-          <Avatar
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center">
+            <Avatar
+              sx={{
+                width: 56,
+                height: 56,
+                bgcolor: "primary.main",
+                color: "white",
+                mr: 2,
+              }}
+            >
+              {userData.nom?.charAt(0) || userData.email?.charAt(0) || "U"}
+            </Avatar>
+            <Box>
+              <Typography variant="h4">
+                Bonjour, {userData.prenom || userData.nom || "User"}
+              </Typography>
+              <Typography variant="body1">
+                Welcome to your port operations dashboard
+              </Typography>
+              {lastUpdated && (
+                <Typography variant="caption" sx={{ mt: 1, opacity: 0.8 }}>
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
             sx={{
-              width: 56,
-              height: 56,
-              bgcolor: "primary.main",
-              color: "white",
-              mr: 2,
+              color: "primary.contrastText",
+              borderColor: "primary.contrastText",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                borderColor: "primary.contrastText",
+              },
             }}
           >
-            {userData.nom?.charAt(0) || userData.email?.charAt(0) || "U"}
-          </Avatar>
-          <Box>
-            <Typography variant="h4">
-              Bonjour, {userData.prenom || userData.nom || "User"}
-            </Typography>
-            <Typography variant="body1">
-              Welcome to your port operations dashboard
-            </Typography>
-          </Box>
+            Refresh
+          </Button>
         </Box>
-      </Paper>
-
+      </Paper>{" "}
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={4}>
+        {" "}
+        <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Active Escales"
+            title="Total Escales"
             value={stats.activeEscales}
             icon={<DirectionsBoatIcon />}
             color="#2196f3"
             onClick={() => navigate("/escales")}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Pending Operations"
             value={stats.pendingOperations}
@@ -381,7 +683,7 @@ const UserDashboard = () => {
             onClick={() => navigate("/operations")}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Completed Operations"
             value={stats.completedOperations}
@@ -390,9 +692,47 @@ const UserDashboard = () => {
             onClick={() => navigate("/operations")}
           />
         </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Containers"
+            value={stats.totalConteneurs}
+            icon={<LocalShippingIcon />}
+            color="#9c27b0"
+            onClick={() => navigate("/conteneures")}
+          />
+        </Grid>
       </Grid>
-
-      {/* Tabs for Operations and Escales */}
+      {/* Efficiency metrics row - Admin only */}
+      {isAdmin && (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6}>
+            <StatCard
+              title="Operation Efficiency (30d)"
+              value={
+                stats.operationEfficiency !== null
+                  ? `${stats.operationEfficiency}%`
+                  : null
+              }
+              icon={<TrendingUpIcon />}
+              color="#4caf50"
+              onClick={() => navigate("/analytics")}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <StatCard
+              title="Avg Escale Duration"
+              value={
+                stats.avgEscaleDuration !== null
+                  ? `${stats.avgEscaleDuration}h`
+                  : null
+              }
+              icon={<ScheduleIcon />}
+              color="#ff5722"
+              onClick={() => navigate("/analytics")}
+            />
+          </Grid>
+        </Grid>
+      )}
       <Paper sx={{ mb: 4, borderRadius: 2 }}>
         <Tabs
           value={tabValue}
@@ -407,15 +747,20 @@ const UserDashboard = () => {
             label="Recent Operations"
             id="tab-0"
             aria-controls="tabpanel-0"
-          />
+          />{" "}
           <Tab
             icon={<DirectionsBoatIcon />}
-            label="Active Escales"
+            label="Recent Escales"
             id="tab-1"
             aria-controls="tabpanel-1"
           />
+          <Tab
+            icon={<LocalShippingIcon />}
+            label="Recent Containers"
+            id="tab-2"
+            aria-controls="tabpanel-2"
+          />
         </Tabs>
-
         <Box
           p={3}
           role="tabpanel"
@@ -444,8 +789,7 @@ const UserDashboard = () => {
               <RecentOperationsList operations={operations} />
             </>
           )}
-        </Box>
-
+        </Box>{" "}
         <Box
           p={3}
           role="tabpanel"
@@ -475,8 +819,36 @@ const UserDashboard = () => {
             </>
           )}
         </Box>
+        <Box
+          p={3}
+          role="tabpanel"
+          hidden={tabValue !== 2}
+          id="tabpanel-2"
+          aria-labelledby="tab-2"
+        >
+          {tabValue === 2 && (
+            <>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={2}
+              >
+                <Typography variant="h6">Recent Containers</Typography>{" "}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate("/conteneures")}
+                  endIcon={<ArrowForwardIcon />}
+                >
+                  View All
+                </Button>
+              </Box>
+              <RecentContainersList conteneurs={conteneurs} />
+            </>
+          )}{" "}
+        </Box>
       </Paper>
-
       {/* Quick Access Section */}
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom>
@@ -485,6 +857,7 @@ const UserDashboard = () => {
         <Divider sx={{ mb: 2 }} />
 
         <Grid container spacing={2}>
+          {/* Always available for both ADMIN and USER roles */}
           <Grid item xs={6} md={3}>
             <Card
               sx={{
@@ -537,12 +910,52 @@ const UserDashboard = () => {
                   boxShadow: 3,
                 },
               }}
+              onClick={() => navigate("/conteneures")}
+            >
+              <LocalShippingIcon
+                sx={{ fontSize: 40, color: "primary.main", mb: 1 }}
+              />
+              <Typography>Containers</Typography>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} md={3}>
+            <Card
+              sx={{
+                p: 2,
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: 3,
+                },
+              }}
               onClick={() => navigate("/navires")}
             >
               <DirectionsBoatIcon
-                sx={{ fontSize: 40, color: "primary.main", mb: 1 }}
+                sx={{ fontSize: 40, color: "secondary.main", mb: 1 }}
               />
-              <Typography>Navires</Typography>
+              <Typography>Vessels</Typography>
+            </Card>
+          </Grid>
+
+          <Grid item xs={6} md={3}>
+            <Card
+              sx={{
+                p: 2,
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: 3,
+                },
+              }}
+              onClick={() => navigate("/equipes")}
+            >
+              <GroupIcon sx={{ fontSize: 40, color: "info.main", mb: 1 }} />
+              <Typography>Teams</Typography>
             </Card>
           </Grid>
 
@@ -564,6 +977,53 @@ const UserDashboard = () => {
               <Typography>Account</Typography>
             </Card>
           </Grid>
+
+          {/* ADMIN-only quick access cards */}
+          {isAdmin && (
+            <>
+              <Grid item xs={6} md={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 3,
+                    },
+                  }}
+                  onClick={() => navigate("/analytics")}
+                >
+                  <TrendingUpIcon
+                    sx={{ fontSize: 40, color: "success.main", mb: 1 }}
+                  />
+                  <Typography>Analytics</Typography>
+                </Card>
+              </Grid>
+
+              <Grid item xs={6} md={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 3,
+                    },
+                  }}
+                  onClick={() => navigate("/monitoring")}
+                >
+                  <TimelineIcon
+                    sx={{ fontSize: 40, color: "warning.main", mb: 1 }}
+                  />
+                  <Typography>Monitoring</Typography>
+                </Card>
+              </Grid>
+            </>
+          )}
         </Grid>
       </Paper>
     </Box>

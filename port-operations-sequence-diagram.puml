@@ -1,0 +1,232 @@
+@startuml Gestion des Opérations Portuaires
+
+title Système de Gestion Portuaire - Parcours Utilisateur des Opérations Portuaires
+
+actor "Gestionnaire Portuaire" as PM
+participant "Page de Connexion" as LP
+participant "Tableau de Bord" as DB
+participant "Gestion des Conteneurs" as CM
+participant "Gestion des Navires" as VM
+participant "Gestion du Personnel" as PER
+participant "Tableau de Bord Analytique" as AD
+participant "Panneau d'Opérations" as OP
+participant "Système de Planification" as SCH
+participant "Système" as SYS
+
+== Authentification Utilisateur ==
+
+PM -> LP: Naviguer vers le Système de Gestion Portuaire
+LP -> PM: Afficher le formulaire de connexion
+PM -> LP: Entrer identifiants (nom d'utilisateur/mot de passe)
+LP -> SYS: Valider les identifiants
+
+alt Authentification Réussie
+    SYS --> LP: Authentification réussie
+    LP -> DB: Rediriger vers le tableau de bord principal
+    DB -> PM: Afficher tableau de bord personnalisé avec fonctionnalités basées sur le rôle
+else Échec de l'Authentification
+    SYS --> LP: Erreur d'identifiants invalides
+    LP -> PM: Afficher message d'erreur et option de nouvelle tentative
+end
+
+note over PM: Le Gestionnaire Portuaire représente tous les utilisateurs opérationnels (Administrateur, Gestionnaire Portuaire) avec les permissions appropriées
+
+== Expérience du Tableau de Bord Principal ==
+
+PM -> DB: Voir aperçu des opérations
+DB -> PM: Afficher: Nombre de conteneurs actifs, Navires au port, Opérations du jour, Alertes système, Boutons d'action rapide, Métriques de performance
+
+PM -> DB: Vérifier le statut des opérations quotidiennes
+DB -> PM: Afficher: Arrivées/départs programmés, Mouvements de conteneurs, Affectations d'équipe, Statut des équipements, Conditions météorologiques
+
+PM -> DB: Voir l'activité portuaire en temps réel
+DB -> PM: Afficher: Suivi des navires en direct, Mises à jour du statut des conteneurs, Affectations du personnel, Utilisation des équipements
+
+== Opérations de Gestion des Conteneurs ==
+
+PM -> CM: Accéder à la gestion des conteneurs
+CM -> PM: Afficher liste des conteneurs avec: ID et statut du conteneur, Emplacement actuel, Navire assigné, Personnel responsable, Heures d'arrivée/départ
+
+PM -> CM: Rechercher et filtrer les conteneurs
+CM -> PM: Afficher résultats filtrés avec options de recherche avancée
+PM -> CM: Appliquer filtres (statut, navire, plage de dates, personnel)
+CM -> SYS: Exécuter requête de recherche
+SYS --> PM: Afficher résultats de conteneurs filtrés
+
+PM -> CM: Créer nouvelle entrée de conteneur
+CM -> PM: Afficher formulaire d'enregistrement de conteneur
+PM -> CM: Remplir détails du conteneur (ID, type, poids, contenu, origine, destination)
+CM -> SYS: Enregistrer nouveau conteneur
+SYS --> CM: Enregistrement de conteneur réussi
+CM -> PM: "Conteneur enregistré avec succès"
+
+PM -> CM: Mettre à jour le statut du conteneur
+CM -> PM: Afficher options de statut du conteneur (Chargement, Déchargement, En Transit, Terminé, En Attente)
+PM -> CM: Sélectionner nouveau statut et ajouter notes
+CM -> SYS: Mettre à jour statut du conteneur
+SYS --> PM: "Statut du conteneur mis à jour avec succès"
+
+PM -> CM: Assigner conteneur au navire
+CM -> PM: Afficher navires disponibles et affectations de quai
+PM -> CM: Sélectionner navire et confirmer affectation
+CM -> SYS: Traiter affectation conteneur-navire
+SYS --> PM: "Conteneur assigné au navire avec succès"
+
+PM -> CM: Assigner personnel aux opérations de conteneurs
+CM -> PM: Afficher personnel disponible et leurs affectations actuelles
+PM -> CM: Assigner personnel à des conteneurs spécifiques
+CM -> SYS: Mettre à jour affectations du personnel
+SYS --> PM: "Personnel assigné aux opérations de conteneurs"
+
+== Opérations de Gestion des Navires ==
+
+PM -> VM: Accéder aux opérations de navires
+VM -> PM: Afficher navires avec: Nom et ID du navire, Statut actuel, Quai assigné, Nombre de conteneurs, ETA/ETD, Informations de l'équipage
+
+PM -> VM: Programmer nouvelle arrivée de navire (Escale)
+VM -> PM: Afficher formulaire de planification de navire
+PM -> VM: Entrer détails du navire, heure d'arrivée, affectation de quai, cargaison attendue
+VM -> SYS: Créer enregistrement d'escale
+SYS --> PM: "Arrivée de navire programmée avec succès"
+
+PM -> VM: Surveiller les opérations de navires en temps réel
+VM -> PM: Afficher mises à jour du statut des navires en direct
+VM -> PM: Afficher: Progrès de chargement/déchargement, Retards ou problèmes, Affectations du personnel, Utilisation des équipements
+
+PM -> VM: Mettre à jour le statut du navire
+VM -> PM: Afficher options de statut (En Approche, Amarré, Chargement, Déchargement, En Départ)
+PM -> VM: Mettre à jour statut avec horodatage et notes
+VM -> SYS: Enregistrer changement de statut du navire
+SYS --> PM: "Statut du navire mis à jour"
+
+PM -> VM: Gérer les affectations de quai
+VM -> PM: Afficher disponibilité des quais et affectations actuelles
+PM -> VM: Assigner ou réassigner navires aux quais
+VM -> SYS: Mettre à jour affectations de quai
+SYS --> PM: "Affectation de quai mise à jour"
+
+PM -> VM: Voir historique et performance des navires
+VM -> PM: Afficher: Escales précédentes, Temps de rotation, Historique de chargement de conteneurs, Métriques de performance
+
+== Gestion du Personnel et des Équipes ==
+
+PM -> PER: Accéder à la gestion du personnel
+PER -> PM: Afficher: Liste du personnel, Affectations actuelles, Horaires des équipes, Compétences, Statut de disponibilité
+
+PM -> PER: Assigner personnel aux opérations
+PER -> PM: Afficher disponibilité du personnel et charge de travail actuelle
+PM -> PER: Assigner personnel à des navires ou opérations de conteneurs spécifiques
+PER -> SYS: Mettre à jour affectations du personnel
+SYS --> PM: "Affectations du personnel mises à jour"
+
+PM -> PER: Gérer les équipes de travail
+PER -> PM: Afficher interface de planification des équipes
+PM -> PER: Créer ou modifier équipes de travail et affectations
+PER -> SYS: Mettre à jour horaires des équipes
+SYS --> PM: "Horaires de travail mis à jour"
+
+PM -> PER: Suivre performance du personnel
+PER -> PM: Afficher: Métriques de productivité, Taux d'achèvement des tâches, Dossiers de sécurité, Statut de formation
+
+== Planification et Organisation des Opérations ==
+
+PM -> SCH: Accéder au planificateur d'opérations
+SCH -> PM: Afficher: Programme d'opérations quotidiennes, Allocation des ressources, Affectations d'équipements, Tâches prioritaires
+
+PM -> SCH: Planifier les opérations quotidiennes
+SCH -> PM: Afficher interface de planification avec arrivées de navires et mouvements de conteneurs
+PM -> SCH: Organiser tâches, assigner ressources, définir priorités
+SCH -> SYS: Sauvegarder plans d'opération
+SYS --> PM: "Opérations quotidiennes programmées"
+
+PM -> SCH: Surveiller progrès des opérations
+SCH -> PM: Afficher suivi du progrès en temps réel
+SCH -> PM: Afficher: Tâches terminées, Opérations en cours, Retards, Utilisation des ressources
+
+PM -> SCH: Ajuster horaires dynamiquement
+SCH -> PM: Afficher options de modification d'horaire
+PM -> SCH: Mettre à jour horaires basés sur conditions en temps réel
+SCH -> SYS: Appliquer changements d'horaire
+SYS --> PM: "Horaire mis à jour avec succès"
+
+== Analyses et Rapports ==
+
+PM -> AD: Voir analyses opérationnelles
+AD -> PM: Afficher analyses visuelles: Graphiques de débit de conteneurs, Temps de rotation des navires, Utilisation des équipements, Productivité du personnel, Métriques de revenus
+
+PM -> AD: Générer rapports opérationnels
+AD -> PM: Afficher interface de création de rapports
+PM -> AD: Sélectionner type de rapport, plage de dates, métriques, filtres
+AD -> SYS: Générer rapport personnalisé
+SYS --> PM: Télécharger/afficher rapport opérationnel
+
+PM -> AD: Comparer périodes de performance
+AD -> PM: Afficher analyse comparative: Mois après mois, Année après année, Tendances saisonnières, Améliorations d'efficacité
+
+PM -> AD: Surveiller KPI
+AD -> PM: Afficher indicateurs clés de performance: Efficacité portuaire, Satisfaction client, Métriques de sécurité, Performance financière
+
+== Contrôle et Surveillance des Opérations ==
+
+PM -> OP: Accéder au centre de contrôle des opérations
+OP -> PM: Afficher: Carte du port en direct, Positions des navires, Mouvements de conteneurs, Statut des équipements, Notifications d'alertes
+
+PM -> OP: Coordonner les opérations portuaires
+OP -> PM: Afficher outils de coordination pour gérer opérations simultanées
+PM -> OP: Coordonner mouvements de navires, transferts de conteneurs, déploiement du personnel
+OP -> SYS: Exécuter commandes de coordination
+SYS --> PM: "Opérations coordonnées avec succès"
+
+PM -> OP: Gérer problèmes opérationnels
+OP -> PM: Afficher problèmes actuels et alertes
+PM -> OP: Répondre aux problèmes, assigner ressources, escalader si nécessaire
+OP -> SYS: Enregistrer résolution de problème
+SYS --> PM: "Problème résolu et enregistré"
+
+== Gestion des Mots de Passe et Comptes ==
+
+PM -> LP: Changer mot de passe du compte
+LP -> PM: Afficher formulaire de changement de mot de passe
+PM -> LP: Entrer mot de passe actuel et nouveau
+LP -> SYS: Valider et mettre à jour mot de passe
+SYS --> PM: "Mot de passe changé avec succès"
+
+PM -> LP: Mettre à jour informations du profil
+LP -> PM: Afficher formulaire de mise à jour du profil
+PM -> LP: Mettre à jour informations de contact et préférences
+LP -> SYS: Sauvegarder changements du profil
+SYS --> PM: "Profil mis à jour avec succès"
+
+== Gestion des Erreurs et Récupération ==
+
+alt Erreur Opérationnelle
+    SYS --> PM: Afficher message d'erreur opérationnelle
+    PM -> OP: Examiner détails de l'erreur et prendre action corrective
+    OP -> SYS: Exécuter procédures de récupération
+else Défaillance d'Équipement
+    SYS --> PM: Alerte de défaillance d'équipement
+    PM -> OP: Coordonner ressources alternatives
+    OP -> SYS: Mettre à jour statut équipement et réassigner tâches
+else Retards Météo/Externes
+    SYS --> PM: Notification d'alerte météo
+    PM -> SCH: Ajuster horaires pour conditions météorologiques
+    SCH -> SYS: Mettre à jour programme d'opérations
+end
+
+== Mises à Jour Opérationnelles en Temps Réel ==
+
+note over PM: Le Gestionnaire Portuaire reçoit des mises à jour opérationnelles et notifications en temps réel
+
+SYS -> PM: Notifications de changement de statut des conteneurs
+SYS -> PM: Alertes d'arrivée/départ de navires
+SYS -> PM: Mises à jour d'affectations du personnel
+SYS -> PM: Changements de statut des équipements
+SYS -> PM: Notifications d'étapes opérationnelles
+SYS -> PM: Alertes d'urgence ou de sécurité
+
+PM -> SYS: Accuser réception des notifications opérationnelles
+PM -> SYS: Répondre aux alertes opérationnelles
+PM -> SYS: Mettre à jour statut opérationnel
+PM -> SYS: Coordonner réponses d'urgence
+
+@enduml

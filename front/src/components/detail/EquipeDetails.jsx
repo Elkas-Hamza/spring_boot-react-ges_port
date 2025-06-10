@@ -533,10 +533,10 @@ const EquipeDetails = () => {
               </TableRow>
             </TableHead>
             <TableBody>
+              {" "}
               {(equipe.personnel || []).length > 0 ? (
                 equipe.personnel.map((person) => (
                   <TableRow key={person.matricule_personnel}>
-                    {" "}
                     <TableCell>{person.matricule_personnel}</TableCell>
                     <TableCell>{person.nom_personnel}</TableCell>
                     <TableCell>{person.prenom_personnel}</TableCell>
@@ -644,10 +644,10 @@ const EquipeDetails = () => {
                     <TableCell>{soustraiteur.prenom_soustraiteure}</TableCell>
                     <TableCell>{soustraiteur.fonction_soustraiteure}</TableCell>
                     <TableCell>
-                      {soustraiteur.ENTREPRISE_soustraiteure || "Non spécifiée"}
+                      {soustraiteur.entreprise_soustraiteure || "Non spécifiée"}
                     </TableCell>
                     <TableCell>
-                      {soustraiteur.CONTACT_soustraiteure || "Non spécifié"}
+                      {soustraiteur.contact_soustraiteure || "Non spécifié"}
                     </TableCell>
                     <TableCell>
                       <Button

@@ -175,7 +175,7 @@ const OperationList = () => {
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Nom</TableCell>
+                <TableCell>Type</TableCell>
                 <TableCell>Shift</TableCell>
                 <TableCell>Escale</TableCell>
                 <TableCell>Date/Heure Début</TableCell>

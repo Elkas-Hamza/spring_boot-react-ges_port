@@ -1046,20 +1046,7 @@ const NavireDetail = () => {
             </FormHelperText>
           </FormControl>
 
-          <Box sx={{ mt: 2, p: 1, bgcolor: "grey.100", borderRadius: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-              Configuration du conteneur:
-            </Typography>
-            <Typography variant="caption" sx={{ display: "block" }}>
-              • Type ID: 2
-            </Typography>
-            <Typography variant="caption" sx={{ display: "block" }}>
-              • Location: NAVIRE
-            </Typography>
-            <Typography variant="caption" sx={{ display: "block" }}>
-              • Navire: {navire?.nomNavire} ({navire?.idNavire})
-            </Typography>
-          </Box>
+         
         </DialogContent>
         <DialogActions>
           <Button
@@ -1281,6 +1268,7 @@ const NavireDetail = () => {
           onClose={handleCloseNotification}
           severity={notification.severity}
           sx={{ width: "100%" }}
+          variant="filled"
         >
           {notification.message}
         </Alert>

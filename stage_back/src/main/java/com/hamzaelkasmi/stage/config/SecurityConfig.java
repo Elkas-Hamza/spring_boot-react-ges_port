@@ -29,53 +29,54 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/test/**").permitAll()
-                .requestMatchers("/api/maintenance/**").permitAll()
-                .requestMatchers("/api/analytics/test").permitAll()
-                .requestMatchers("/api/settings/**").permitAll()
-                
-                // Explicitly allow all container operations for ADMIN role
-                .requestMatchers(HttpMethod.GET, "/api/conteneurs/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
-                
-                // Secured admin-only endpoints - use hasAuthority with ROLE_ prefix
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                
-                // User endpoints - do not restrict here, let method-level security handle it
-                .requestMatchers("/api/users/**").authenticated()
-                  // Endpoints accessible to both ADMIN and USER roles
-                .requestMatchers("/api/operations/**").authenticated()
-                .requestMatchers("/api/escales/**").authenticated()
-                .requestMatchers("/api/equipes/**").authenticated()
-                .requestMatchers("/api/shifts/**").authenticated()
-                .requestMatchers("/api/engins/**").authenticated()
-                .requestMatchers("/api/soustraitants/**").authenticated()
-                .requestMatchers("/api/soustraiteurs/**").authenticated() // Added correct endpoint with 'e'
-                .requestMatchers("/api/personnel/**").authenticated()
-                .requestMatchers("/api/analytics/**").authenticated()
-                .requestMatchers("/api/navires/**").authenticated()
-                .requestMatchers("/api/monitoring/**").authenticated() // Allow all authenticated users to access monitoring endpoints
-                
-                // Admin bypass - give admins access to all remaining endpoints
-                // This must be after the specific rules
-                .requestMatchers("/**").hasAuthority("ROLE_ADMIN")
-                
-                // Any other endpoint requires authentication
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/api/maintenance/**").permitAll()
+                        .requestMatchers("/api/analytics/test").permitAll()
+                        .requestMatchers("/api/settings/**").permitAll()
+
+                        // Explicitly allow all container operations for ADMIN role
+                        .requestMatchers(HttpMethod.GET, "/api/conteneurs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/conteneurs/**").hasAuthority("ROLE_ADMIN")
+
+                        // Secured admin-only endpoints - use hasAuthority with ROLE_ prefix
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // User endpoints - do not restrict
+                                                                                     // here, let method-level security
+                                                                                     // handle it
+                        .requestMatchers("/api/users/**").authenticated()
+                        // Endpoints accessible to both ADMIN and USER roles
+                        .requestMatchers("/api/operations/**").authenticated()
+                        .requestMatchers("/api/escales/**").authenticated()
+                        .requestMatchers("/api/equipes/**").authenticated()
+                        .requestMatchers("/api/shifts/**").authenticated()
+                        .requestMatchers("/api/engins/**").authenticated()
+                        .requestMatchers("/api/arrets/**").authenticated() // Add arrets endpoint
+                        .requestMatchers("/api/soustraitants/**").authenticated()
+                        .requestMatchers("/api/soustraiteurs/**").authenticated() // Added correct endpoint with 'e'
+                        .requestMatchers("/api/personnel/**").authenticated().requestMatchers("/api/analytics/**")
+                        .authenticated()
+                        .requestMatchers("/api/navires/**").authenticated()
+                        .requestMatchers("/api/monitoring/**").hasAuthority("ROLE_ADMIN") // Restrict monitoring to
+                                                                                          // ADMIN only
+
+                        // Admin bypass - give admins access to all remaining endpoints
+                        // This must be after the specific rules
+                        .requestMatchers("/**").hasAuthority("ROLE_ADMIN")
+
+                        // Any other endpoint requires authentication
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-    
+
     @Bean
     public RoleHierarchy roleHierarchy() {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
@@ -83,23 +84,27 @@ public class SecurityConfig {
         roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
         return roleHierarchy;
     }
-    
+
     @Bean
     public MethodSecurityExpressionHandler methodSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy);
         expressionHandler.setPermissionEvaluator(new DenyAllPermissionEvaluator());
         return expressionHandler;
-    }    @Bean
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"));
+        configuration.setAllowedOrigins(
+                Arrays.asList("http://localhost:3000", "https://spring-boot-react-ges-port.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count", "cache-control", "pragma"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Retry-Count", "x-retry-count",
+                "cache-control", "pragma", "expires", "X-Requested-With"));
         configuration.setExposedHeaders(Arrays.asList("X-Retry-Count", "x-retry-count"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

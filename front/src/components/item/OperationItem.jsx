@@ -126,14 +126,14 @@ const OperationItem = ({ operation, onDelete }) => {
     console.error("Invalid operation data:", operation);
     return null; // Don't render anything if data is invalid
   }
-  
+
   // Show a default status if displayStatus is empty
   const status = displayStatus || operation.status || "En cours";
 
   return (
     <TableRow>
       <TableCell>{operation.id_operation}</TableCell>
-      <TableCell>{operation.nom_operation || "Non spécifié"}</TableCell>
+      <TableCell>{operation.type_operation || "Non spécifié"}</TableCell>
       <TableCell>{operation.nom_shift || operation.id_shift}</TableCell>
       <TableCell>{operation.id_escale}</TableCell>
       <TableCell>{formatDateTime(operation.date_debut)}</TableCell>
@@ -167,4 +167,3 @@ const OperationItem = ({ operation, onDelete }) => {
 };
 
 export default OperationItem;
-

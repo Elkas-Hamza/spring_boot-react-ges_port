@@ -261,21 +261,6 @@ const NavireForm = () => {
         </Alert>
       </Snackbar>
 
-      {/* Debug info section (hidden in production) */}
-      {process.env.NODE_ENV !== "production" && (
-        <Paper
-          elevation={1}
-          sx={{ mt: 4, p: 2, maxHeight: "200px", overflow: "auto" }}
-        >
-          <Typography
-            variant="caption"
-            component="pre"
-            sx={{ whiteSpace: "pre-wrap" }}
-          >
-            {debugInfo}
-          </Typography>
-        </Paper>
-      )}
     </Container>
   );
 };

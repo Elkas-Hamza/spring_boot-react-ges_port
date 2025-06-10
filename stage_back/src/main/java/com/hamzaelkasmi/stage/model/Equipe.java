@@ -11,31 +11,18 @@ import java.util.Set;
 public class Equipe {
     @Id
     @GeneratedValue(generator = "equipe-id-generator")
-    @GenericGenerator(
-            name = "equipe-id-generator",
-            strategy = "com.hamzaelkasmi.stage.generateure.EquipeIdGenerator"
-    )
+    @GenericGenerator(name = "equipe-id-generator", strategy = "com.hamzaelkasmi.stage.generateure.EquipeIdGenerator")
     @Column(name = "ID_equipe", nullable = false, unique = true)
     private String id_equipe;
 
     @Column(name = "NOM_equipe", nullable = false, length = 100)
-    private String nom_equipe;    @ManyToMany
-    @JoinTable(
-        name = "equipe_has_personnel",
-        joinColumns = @JoinColumn(name = "equipe_ID_equipe"),
-        inverseJoinColumns = {
-            @JoinColumn(name = "personnel_ID_personnel", referencedColumnName = "ID_personnel"),
-            @JoinColumn(name = "personnel_MATRICULE_personnel", referencedColumnName = "MATRICULE_personnel")
-        }
-    )
+    private String nom_equipe;
+    @ManyToMany
+    @JoinTable(name = "equipe_has_personnel", joinColumns = @JoinColumn(name = "equipe_ID_equipe"), inverseJoinColumns = @JoinColumn(name = "personnel_MATRICULE_personnel", referencedColumnName = "MATRICULE_personnel"))
     private Set<Personnel> personnel = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "equipe_has_soustraiteure",
-        joinColumns = @JoinColumn(name = "equipe_ID_equipe"),
-        inverseJoinColumns = @JoinColumn(name = "soustraiteure_MATRICULE_soustraiteure", referencedColumnName = "MATRICULE_soustraiteure")
-    )
+    @JoinTable(name = "equipe_has_soustraiteure", joinColumns = @JoinColumn(name = "equipe_ID_equipe"), inverseJoinColumns = @JoinColumn(name = "soustraiteure_MATRICULE_soustraiteure", referencedColumnName = "MATRICULE_soustraiteure"))
     private Set<Soustraiteure> soustraiteurs = new HashSet<>();
 
     // Constructors

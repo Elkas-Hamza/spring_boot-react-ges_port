@@ -60,21 +60,21 @@ const OperationDetails = () => {
   useEffect(() => {
     // Fetch all engins using EnginService
     EnginService.getAllEngins()
-      .then(response => {
+      .then((response) => {
         setEngins(response.data || []);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error fetching all engins:", error);
         // Don't show error notification for 403 errors, just use empty array
         setEngins([]);
       });
-    
+
     // Fetch all conteneurs using ConteneureService
     ConteneureService.getAllConteneures()
-      .then(response => {
+      .then((response) => {
         setConteneurs(response.data || []);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error fetching all conteneurs:", error);
         // Don't show error notification for 403 errors, just use empty array
         setConteneurs([]);
@@ -89,21 +89,23 @@ const OperationDetails = () => {
       if (response.data) {
         setOperation(response.data);
         operationRef.current = response.data;
-        
+
         // Try to get additional shift name data separately
         try {
-          const shiftResponse = await ShiftService.getShiftById(response.data.id_shift);
+          const shiftResponse = await ShiftService.getShiftById(
+            response.data.id_shift
+          );
           if (shiftResponse.data && shiftResponse.data.nom_shift) {
             // Merge the shift name into our operation data
-            setOperation(prev => ({
+            setOperation((prev) => ({
               ...prev,
-              nom_shift: shiftResponse.data.nom_shift
+              nom_shift: shiftResponse.data.nom_shift,
             }));
           }
         } catch (shiftError) {
           console.error("Error fetching shift details:", shiftError);
         }
-        
+
         return response.data;
       } else {
         setNotification({
@@ -117,7 +119,8 @@ const OperationDetails = () => {
       console.error("Error fetching operation:", error);
       setNotification({
         open: true,
-        message: "Erreur lors du chargement de l'opération. Veuillez réessayer.",
+        message:
+          "Erreur lors du chargement de l'opération. Veuillez réessayer.",
         severity: "error",
       });
       return null;
@@ -131,13 +134,13 @@ const OperationDetails = () => {
     try {
       // Fetch in parallel for better performance
       const promises = [];
-      
+
       // Fetch escale data
       if (operationData.id_escale) {
         promises.push(
           EscaleService.getEscaleById(operationData.id_escale)
-            .then(response => setEscale(response.data))
-            .catch(error => {
+            .then((response) => setEscale(response.data))
+            .catch((error) => {
               console.error("Error fetching escale:", error);
               return null;
             })
@@ -148,8 +151,8 @@ const OperationDetails = () => {
       if (operationData.id_shift) {
         promises.push(
           ShiftService.getShiftById(operationData.id_shift)
-            .then(response => setShift(response.data))
-            .catch(error => {
+            .then((response) => setShift(response.data))
+            .catch((error) => {
               console.error("Error fetching shift:", error);
               return null;
             })
@@ -160,7 +163,7 @@ const OperationDetails = () => {
       if (operationData.id_engin) {
         promises.push(
           EnginService.getEnginById(operationData.id_engin)
-            .then(response => {
+            .then((response) => {
               // If it's multiple items, it will be an array
               if (Array.isArray(response.data)) {
                 setEngins(response.data);
@@ -169,7 +172,7 @@ const OperationDetails = () => {
                 setEngin(response.data);
               }
             })
-            .catch(error => {
+            .catch((error) => {
               console.error("Error fetching engin:", error);
               return null;
             })
@@ -180,7 +183,7 @@ const OperationDetails = () => {
       if (operationData.id_conteneure) {
         promises.push(
           ConteneureService.getConteneureById(operationData.id_conteneure)
-            .then(response => {
+            .then((response) => {
               // If it's multiple items, it will be an array
               if (Array.isArray(response.data)) {
                 setConteneurs(response.data);
@@ -189,7 +192,7 @@ const OperationDetails = () => {
                 setConteneure(response.data);
               }
             })
-            .catch(error => {
+            .catch((error) => {
               console.error("Error fetching conteneure:", error);
               return null;
             })
@@ -200,8 +203,8 @@ const OperationDetails = () => {
       if (operationData.id_equipe) {
         promises.push(
           PersonnelService.getPersonnelByEquipeId(operationData.id_equipe)
-            .then(response => setPersonnel(response.data || []))
-            .catch(error => {
+            .then((response) => setPersonnel(response.data || []))
+            .catch((error) => {
               console.error("Error fetching personnel:", error);
               setPersonnel([]);
               return null;
@@ -209,9 +212,11 @@ const OperationDetails = () => {
         );
 
         promises.push(
-          SoustraiteureService.getSoustraiteureByEquipeId(operationData.id_equipe)
-            .then(response => setSoustraiteurs(response.data || []))
-            .catch(error => {
+          SoustraiteureService.getSoustraiteureByEquipeId(
+            operationData.id_equipe
+          )
+            .then((response) => setSoustraiteurs(response.data || []))
+            .catch((error) => {
               console.error("Error fetching soustraiteurs:", error);
               setSoustraiteurs([]);
               return null;
@@ -221,7 +226,6 @@ const OperationDetails = () => {
 
       // Wait for all promises to resolve
       await Promise.allSettled(promises);
-      
     } catch (error) {
       console.error("Error fetching related entities:", error);
       setNotification({
@@ -235,20 +239,24 @@ const OperationDetails = () => {
   // Add a function to determine status based on dates
   const determineStatus = useCallback((operationData) => {
     if (!operationData) return "En cours";
-    
+
     try {
       // Get current date
       const now = new Date();
-      
+
       // Parse operation dates
-      const startDate = operationData.date_debut ? new Date(operationData.date_debut) : null;
-      const endDate = operationData.date_fin ? new Date(operationData.date_fin) : null;
-      
+      const startDate = operationData.date_debut
+        ? new Date(operationData.date_debut)
+        : null;
+      const endDate = operationData.date_fin
+        ? new Date(operationData.date_fin)
+        : null;
+
       // If dates are not available, use the existing status
       if (!startDate || !endDate) {
         return operationData.status || "En cours";
       }
-      
+
       // Determine status based on dates
       if (startDate > now) {
         return "Planifié"; // Operation is in the future
@@ -264,32 +272,37 @@ const OperationDetails = () => {
   }, []);
 
   // Add function to check for active arrêts
-  const checkForActiveArrets = useCallback(async (operationId) => {
-    try {
-      const activeArrets = await ArretService.getActiveArretsForOperation(operationId);
-      setActiveArrets(activeArrets);
-      
-      // First determine the base status based on dates
-      const baseStatus = determineStatus(operationRef.current);
-      
-      // If there are active arrêts, update the display status to "En pause"
-      if (activeArrets && activeArrets.length > 0) {
-        setDisplayStatus("En pause");
-      } else {
-        // Otherwise, use the status determined by dates
-        setDisplayStatus(baseStatus);
+  const checkForActiveArrets = useCallback(
+    async (operationId) => {
+      try {
+        const activeArrets = await ArretService.getActiveArretsForOperation(
+          operationId
+        );
+        setActiveArrets(activeArrets);
+
+        // First determine the base status based on dates
+        const baseStatus = determineStatus(operationRef.current);
+
+        // If there are active arrêts, update the display status to "En pause"
+        if (activeArrets && activeArrets.length > 0) {
+          setDisplayStatus("En pause");
+        } else {
+          // Otherwise, use the status determined by dates
+          setDisplayStatus(baseStatus);
+        }
+        // Mark that we've checked for arrêts
+        hasCheckedArretsRef.current = true;
+      } catch (error) {
+        console.error("Error checking for active arrêts:", error);
+        // Default to operation's status if there was an error
+        setDisplayStatus(determineStatus(operationRef.current));
+        // Mark that we've checked even if there was an error
+        hasCheckedArretsRef.current = true;
       }
-      // Mark that we've checked for arrêts
-      hasCheckedArretsRef.current = true;
-    } catch (error) {
-      console.error("Error checking for active arrêts:", error);
-      // Default to operation's status if there was an error
-      setDisplayStatus(determineStatus(operationRef.current));
-      // Mark that we've checked even if there was an error
-      hasCheckedArretsRef.current = true;
-    }
-  // Add determineStatus to the dependency array
-  }, [determineStatus]);
+      // Add determineStatus to the dependency array
+    },
+    [determineStatus]
+  );
 
   // Update useEffect to call the checkForActiveArrets function only if we haven't already
   useEffect(() => {
@@ -300,7 +313,7 @@ const OperationDetails = () => {
           // First set an initial status based on dates
           const initialStatus = determineStatus(operationData);
           setDisplayStatus(initialStatus);
-          
+
           // Then check for active arrêts if we haven't done so already
           if (!hasCheckedArretsRef.current) {
             checkForActiveArrets(operationData.id_operation);
@@ -311,7 +324,12 @@ const OperationDetails = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [fetchOperation, fetchRelatedEntities, checkForActiveArrets, determineStatus]);
+  }, [
+    fetchOperation,
+    fetchRelatedEntities,
+    checkForActiveArrets,
+    determineStatus,
+  ]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -332,24 +350,24 @@ const OperationDetails = () => {
   };
   const formatTime = (timeString) => {
     if (!timeString) return "N/A";
-    return timeString.substring(0, 5); 
+    return timeString.substring(0, 5);
   };
 
   // Update getStatusColor function to work with displayStatus
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Planifié':
-        return 'info';
-      case 'En cours':
-        return 'primary';
-      case 'Terminé':
-        return 'success';
-      case 'En pause':
-        return 'warning';
-      case 'Annulé':
-        return 'error';
+      case "Planifié":
+        return "info";
+      case "En cours":
+        return "primary";
+      case "Terminé":
+        return "success";
+      case "En pause":
+        return "warning";
+      case "Annulé":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -376,30 +394,46 @@ const OperationDetails = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
         <Box>
           <Typography variant="h4" gutterBottom>
-            Opération: {operation.nom_operation || "Sans nom"}
+            Opération: {operation.type_operation || "Sans nom"}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <Chip 
+            <Chip
               label={displayStatus}
               color={getStatusColor(displayStatus)}
               size="medium"
-              sx={{ 
-                fontSize: "1rem", 
+              sx={{
+                fontSize: "1rem",
                 py: 0.5,
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             />
             {activeArrets.length > 0 && (
-              <Typography variant="body2" color="warning.main" sx={{ display: 'inline', ml: 2 }}>
+              <Typography
+                variant="body2"
+                color="warning.main"
+                sx={{ display: "inline", ml: 2 }}
+              >
                 <strong>{activeArrets.length} arrêt(s) actif(s)</strong>
               </Typography>
             )}
           </Box>
         </Box>
-        <Button component={Link} to="/operations" variant="outlined" startIcon={<ArrowBack />}>
+        <Button
+          component={Link}
+          to="/operations"
+          variant="outlined"
+          startIcon={<ArrowBack />}
+        >
           Retour à la liste
         </Button>
       </Box>
@@ -419,7 +453,8 @@ const OperationDetails = () => {
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="body1">
-                <strong>Nom:</strong> {operation.nom_operation || "Non spécifié"}
+                <strong>Type:</strong>{" "}
+                {operation.type_operation || "Non spécifié"}
               </Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
@@ -429,20 +464,31 @@ const OperationDetails = () => {
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="body1">
-                <strong>Shift:</strong> {operation.nom_shift || operation.id_shift}
+                <strong>Shift:</strong>{" "}
+                {operation.nom_shift || operation.id_shift}
               </Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
-              <Typography variant="body1" component="div" sx={{ display: "flex", alignItems: "center" }}>
-                <span style={{ marginRight: "8px" }}><strong>Statut:</strong></span>
-                <Chip 
-                  label={displayStatus} 
+              <Typography
+                variant="body1"
+                component="div"
+                sx={{ display: "flex", alignItems: "center" }}
+              >
+                <span style={{ marginRight: "8px" }}>
+                  <strong>Statut:</strong>
+                </span>
+                <Chip
+                  label={displayStatus}
                   size="small"
                   color={getStatusColor(displayStatus)}
                   sx={{ fontWeight: "medium" }}
                 />
                 {activeArrets.length > 0 && (
-                  <Typography variant="caption" color="warning.main" sx={{ ml: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="warning.main"
+                    sx={{ ml: 1 }}
+                  >
                     ({activeArrets.length} arrêt(s) actif(s))
                   </Typography>
                 )}
@@ -468,7 +514,9 @@ const OperationDetails = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 2 }}>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 2 }}
+        >
           <Button
             component={Link}
             to={`/arret/add/${operation.id_escale}/${operation.id_operation}`}
@@ -512,10 +560,15 @@ const OperationDetails = () => {
         {/* Escale Tab */}
         {activeTab === 0 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Détails de l'Escale
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Détails de l'Escale</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             {escale ? (
@@ -548,10 +601,15 @@ const OperationDetails = () => {
         {/* Shift Tab */}
         {activeTab === 1 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Détails du Shift
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Détails du Shift</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             {shift ? (
@@ -584,10 +642,15 @@ const OperationDetails = () => {
         {/* Engin Tab */}
         {activeTab === 2 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Détails des Engins
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Détails des Engins</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             {operation && operation.id_engin ? (
@@ -601,21 +664,30 @@ const OperationDetails = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {operation.id_engin.split(',').map((enginId) => {
+                    {operation.id_engin.split(",").map((enginId) => {
                       // Check in the engins array first (from multiple fetch)
-                      const enginInfo = engins.find(e => e.id_engin === enginId.trim()) || 
-                                       (engin && engin.id_engin === enginId.trim() ? engin : null);
-                      
+                      const enginInfo =
+                        engins.find((e) => e.id_engin === enginId.trim()) ||
+                        (engin && engin.id_engin === enginId.trim()
+                          ? engin
+                          : null);
+
                       return enginInfo ? (
                         <TableRow key={enginId}>
                           <TableCell>{enginInfo.id_engin}</TableCell>
-                          <TableCell>{enginInfo.nom_engin || "Non spécifié"}</TableCell>
-                          <TableCell>{enginInfo.type_engin || "Non spécifié"}</TableCell>
+                          <TableCell>
+                            {enginInfo.nom_engin || "Non spécifié"}
+                          </TableCell>
+                          <TableCell>
+                            {enginInfo.type_engin || "Non spécifié"}
+                          </TableCell>
                         </TableRow>
                       ) : (
                         <TableRow key={enginId}>
                           <TableCell>{enginId}</TableCell>
-                          <TableCell colSpan={2}>Information d'engin non disponible</TableCell>
+                          <TableCell colSpan={2}>
+                            Information d'engin non disponible
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -623,7 +695,9 @@ const OperationDetails = () => {
                 </Table>
               </TableContainer>
             ) : (
-              <Alert severity="info">Aucun engin associé à cette opération</Alert>
+              <Alert severity="info">
+                Aucun engin associé à cette opération
+              </Alert>
             )}
           </Box>
         )}
@@ -631,10 +705,15 @@ const OperationDetails = () => {
         {/* Conteneure Tab */}
         {activeTab === 3 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Détails des Conteneurs
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Détails des Conteneurs</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             {operation && operation.id_conteneure ? (
@@ -648,21 +727,33 @@ const OperationDetails = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {operation.id_conteneure.split(',').map((conteneurId) => {
+                    {operation.id_conteneure.split(",").map((conteneurId) => {
                       // Check in the conteneurs array first (from multiple fetch)
-                      const conteneurInfo = conteneurs.find(c => c.id_conteneure === conteneurId.trim()) || 
-                                          (conteneure && conteneure.id_conteneure === conteneurId.trim() ? conteneure : null);
-                      
+                      const conteneurInfo =
+                        conteneurs.find(
+                          (c) => c.id_conteneure === conteneurId.trim()
+                        ) ||
+                        (conteneure &&
+                        conteneure.id_conteneure === conteneurId.trim()
+                          ? conteneure
+                          : null);
+
                       return conteneurInfo ? (
                         <TableRow key={conteneurId}>
                           <TableCell>{conteneurInfo.id_conteneure}</TableCell>
-                          <TableCell>{conteneurInfo.nom_conteneure || "Non spécifié"}</TableCell>
-                          <TableCell>{conteneurInfo.type_conteneure || "Non spécifié"}</TableCell>
+                          <TableCell>
+                            {conteneurInfo.nom_conteneure || "Non spécifié"}
+                          </TableCell>
+                          <TableCell>
+                            {conteneurInfo.type_conteneure || "Non spécifié"}
+                          </TableCell>
                         </TableRow>
                       ) : (
                         <TableRow key={conteneurId}>
                           <TableCell>{conteneurId}</TableCell>
-                          <TableCell colSpan={2}>Information de conteneur non disponible</TableCell>
+                          <TableCell colSpan={2}>
+                            Information de conteneur non disponible
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -670,7 +761,9 @@ const OperationDetails = () => {
                 </Table>
               </TableContainer>
             ) : (
-              <Alert severity="info">Aucun conteneur associé à cette opération</Alert>
+              <Alert severity="info">
+                Aucun conteneur associé à cette opération
+              </Alert>
             )}
           </Box>
         )}
@@ -678,10 +771,15 @@ const OperationDetails = () => {
         {/* Personnel Tab */}
         {activeTab === 4 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Personnel de l'Équipe
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Personnel de l'Équipe</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             <TableContainer component={Paper} elevation={2}>
@@ -703,7 +801,9 @@ const OperationDetails = () => {
                         <TableCell>{person.nom_personnel}</TableCell>
                         <TableCell>{person.prenom_personnel}</TableCell>
                         <TableCell>{person.fonction_personnel}</TableCell>
-                        <TableCell>{person.contact_personnel || "Non spécifié"}</TableCell>
+                        <TableCell>
+                          {person.contact_personnel || "Non spécifié"}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -722,10 +822,15 @@ const OperationDetails = () => {
         {/* Sous-traiteurs Tab */}
         {activeTab === 5 && (
           <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6">
-                Sous-traitants de l'Équipe
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6">Sous-traitants de l'Équipe</Typography>
             </Box>
             <Divider sx={{ mb: 2 }} />
             <TableContainer component={Paper} elevation={2}>
@@ -744,12 +849,22 @@ const OperationDetails = () => {
                   {soustraiteurs.length > 0 ? (
                     soustraiteurs.map((soustraiteur) => (
                       <TableRow key={soustraiteur.matricule_soustraiteure}>
-                        <TableCell>{soustraiteur.matricule_soustraiteure}</TableCell>
+                        <TableCell>
+                          {soustraiteur.matricule_soustraiteure}
+                        </TableCell>
                         <TableCell>{soustraiteur.nom_soustraiteure}</TableCell>
-                        <TableCell>{soustraiteur.prenom_soustraiteure}</TableCell>
-                        <TableCell>{soustraiteur.fonction_soustraiteure}</TableCell>
-                        <TableCell>{soustraiteur.entreprise_soustraiteure}</TableCell>
-                        <TableCell>{soustraiteur.contact_soustraiteure}</TableCell>
+                        <TableCell>
+                          {soustraiteur.prenom_soustraiteure}
+                        </TableCell>
+                        <TableCell>
+                          {soustraiteur.fonction_soustraiteure}
+                        </TableCell>
+                        <TableCell>
+                          {soustraiteur.entreprise_soustraiteure}
+                        </TableCell>
+                        <TableCell>
+                          {soustraiteur.contact_soustraiteure}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -784,4 +899,4 @@ const OperationDetails = () => {
   );
 };
 
-export default OperationDetails; 
+export default OperationDetails;

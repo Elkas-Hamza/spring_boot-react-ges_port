@@ -48,6 +48,7 @@ import EscaleApiTester from "./components/debug/EscaleApiTester";
 import MonitoringDashboard from "./components/monitoring/MonitoringDashboard";
 import SettingsService from "./services/SettingsService";
 import PerformanceMonitor from "./components/monitoring/PerformanceMonitor";
+import AuthDebug from "./components/debug/AuthDebug";
 
 // PrivateRoute component for protected routes
 const PrivateRoute = ({ children, requiredRole }) => {
@@ -239,7 +240,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Arret Routes */}
           <Route
             path="/arrets"
@@ -281,7 +281,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Escale Routes */}
           <Route
             path="/escales"
@@ -332,7 +331,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* User Management Routes */}
           <Route
             path="/users"
@@ -358,7 +356,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Soustraiteure Routes */}
           <Route
             path="/soustraiteure"
@@ -384,7 +381,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Operation Routes */}
           <Route
             path="/operations"
@@ -417,13 +413,12 @@ function App() {
                 <OperationDetails />
               </PrivateRoute>
             }
-          />
-
-          {/* Conteneures Routes */}
+          />{" "}
+          {/* Conteneures Routes */}{" "}
           <Route
             path="/conteneures"
             element={
-              <PrivateRoute requiredRole="ADMIN">
+              <PrivateRoute>
                 <ConteneureList />
               </PrivateRoute>
             }
@@ -448,7 +443,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/conteneure/add"
             element={<Navigate to="/conteneures/create" />}
@@ -465,7 +459,6 @@ function App() {
             path="/conteneure/:action"
             element={<Navigate replace to="/conteneures/:action" />}
           />
-
           {/* Equipe Routes */}
           <Route
             path="/equipes"
@@ -523,7 +516,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Shift Routes */}
           <Route
             path="/shifts"
@@ -534,15 +526,6 @@ function App() {
             }
           />
           <Route
-            path="/shift/create"
-            element={
-              <PrivateRoute requiredRole="ADMIN">
-                <ShiftForm />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
             path="/shifts/create"
             element={
               <PrivateRoute requiredRole="ADMIN">
@@ -550,16 +533,14 @@ function App() {
               </PrivateRoute>
             }
           />
-
           <Route
-            path="/shift/edit/:id"
+            path="/shifts/edit/:id"
             element={
               <PrivateRoute requiredRole="ADMIN">
                 <ShiftForm />
               </PrivateRoute>
             }
           />
-
           {/* Engin Routes */}
           <Route
             path="/engins"
@@ -570,7 +551,7 @@ function App() {
             }
           />
           <Route
-            path="/engin/create"
+            path="/engins/create"
             element={
               <PrivateRoute requiredRole="ADMIN">
                 <EnginForm />
@@ -578,14 +559,13 @@ function App() {
             }
           />
           <Route
-            path="/engin/edit/:id"
+            path="/engins/edit/:id"
             element={
               <PrivateRoute requiredRole="ADMIN">
                 <EnginForm />
               </PrivateRoute>
             }
           />
-
           {/* Navire Routes */}
           <Route
             path="/navires"
@@ -610,7 +590,7 @@ function App() {
                 <NavireForm />
               </PrivateRoute>
             }
-          />
+          />{" "}
           <Route
             path="/navire/edit/:id"
             element={
@@ -619,7 +599,14 @@ function App() {
               </PrivateRoute>
             }
           />
-
+          <Route
+            path="/navires/edit/:id"
+            element={
+              <PrivateRoute>
+                <NavireForm />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/navire/details/:id"
             element={
@@ -628,14 +615,12 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Debug Routes */}
           <Route path="/debug/user-role-test" element={<UserRoleTest />} />
           <Route
             path="/debug/escale-api-tester"
             element={<EscaleApiTester />}
           />
-
           {/* Settings Routes */}
           <Route
             path="/settings"
@@ -645,7 +630,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Analytics Routes */}
           <Route
             path="/analytics"
@@ -655,7 +639,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* Performance Routes */}
           <Route
             path="/performance"
@@ -664,11 +647,16 @@ function App() {
                 <MonitoringDashboard />
               </PrivateRoute>
             }
+          />{" "}
+          {/* Performance Monitor Route (restricted to ADMIN only) */}
+          <Route
+            path="/monitoring"
+            element={
+              <PrivateRoute requiredRole="ADMIN">
+                <PerformanceMonitor />
+              </PrivateRoute>
+            }
           />
-
-          {/* Performance Monitor Route (always-on, for all roles) */}
-          <Route path="/monitoring" element={<PerformanceMonitor />} />
-
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>

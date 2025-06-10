@@ -11,11 +11,10 @@ public class Engin {
     @GenericGenerator(name = "engin-id", strategy = "com.hamzaelkasmi.stage.generateure.EnginIdGenerator")
     @Column(name = "ID_engin")
     private String id_engin;
-
     @Column(name = "NOM_engin", nullable = false, length = 45)
     private String nom_engin;
-    
-    @Column(name = "TYPE_engin", length = 100)
+
+    @Column(name = "TYPE_engin", nullable = false, length = 45)
     private String type_engin;
 
     // Constructors
@@ -43,7 +42,7 @@ public class Engin {
     public void setNom_engin(String nom_engin) {
         this.nom_engin = nom_engin;
     }
-    
+
     public String getType_engin() {
         return type_engin;
     }
@@ -60,4 +59,4 @@ public class Engin {
                 ", type_engin='" + type_engin + '\'' +
                 '}';
     }
-} 
+}
