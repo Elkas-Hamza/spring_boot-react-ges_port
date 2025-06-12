@@ -68,8 +68,7 @@ const EquipeDetails = () => {
           console.log("Retrying fetch for equipe ID:", id);
           const retryResponse = await EquipeService.getEquipeById(id);
           console.log("Retry fetch response:", retryResponse.data);
-          setEquipe(retryResponse.data);
-        } catch (retryError) {
+          setEquipe(retryResponse.data);        } catch (retryError) {
           console.error("Error in retry fetch:", retryError);
           setNotification({
             open: true,
@@ -376,6 +375,7 @@ const EquipeDetails = () => {
         return "default";
     }
   };
+
 
   const handleDeleteOperation = async (operationId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette opération?")) {
